@@ -41,12 +41,6 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    @staticmethod
-    @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> "OstromAdvancedOptionsFlow":
-        """Get the options flow for this handler."""
-        return OstromAdvancedOptionsFlow(config_entry)
-
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -235,4 +229,15 @@ class OstromAdvancedOptionsFlow(OptionsFlow):
                 }
             ),
         )
+
+
+# Register options flow handler after OptionsFlow class is defined
+@callback
+def async_get_options_flow(config_entry: ConfigEntry) -> OstromAdvancedOptionsFlow:
+    """Get the options flow for this handler."""
+    return OstromAdvancedOptionsFlow(config_entry)
+
+
+# Attach to ConfigFlow class as staticmethod
+OstromAdvancedConfigFlow.async_get_options_flow = staticmethod(async_get_options_flow)
 
