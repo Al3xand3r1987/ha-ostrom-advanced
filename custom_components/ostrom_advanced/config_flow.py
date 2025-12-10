@@ -15,7 +15,6 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import OstromApiClient, OstromApiError, OstromAuthError
@@ -41,8 +40,7 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> "OstromAdvancedOptionsFlow":
+    def async_get_options_flow(self, config_entry: ConfigEntry) -> "OstromAdvancedOptionsFlow":
         """Get the options flow for this handler."""
         return OstromAdvancedOptionsFlow(config_entry)
 
@@ -82,12 +80,14 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     # Try to authenticate and validate the connection
                     try:
                         await self._test_credentials(user_input)
-                    except OstromAuthError:
+                    except OstromAuthError as err:
+                        LOGGER.warning("Authentication failed during config flow: %s", err)
                         errors["base"] = "invalid_auth"
-                    except OstromApiError:
+                    except OstromApiError as err:
+                        LOGGER.warning("API error during config flow: %s", err)
                         errors["base"] = "cannot_connect"
-                    except Exception:  # pylint: disable=broad-except
-                        LOGGER.exception("Unexpected exception during config flow")
+                    except Exception as err:  # pylint: disable=broad-except
+                        LOGGER.exception("Unexpected exception during config flow: %s", err)
                         errors["base"] = "unknown"
                     
                     if not errors:
@@ -180,10 +180,6 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
 
 class OstromAdvancedOptionsFlow(OptionsFlow):
     """Handle options for Ostrom Advanced."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
