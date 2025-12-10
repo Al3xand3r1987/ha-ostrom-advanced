@@ -1,0 +1,9 @@
+{
+  "name": "Ostrom Advanced",
+  "content_in_root": false,
+  "domains": ["ostrom_advanced"],
+  "country": "DE",
+  "homeassistant": "2024.1.0",
+  "render_readme": true
+}
+

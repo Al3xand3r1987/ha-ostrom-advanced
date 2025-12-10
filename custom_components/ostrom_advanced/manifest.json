@@ -1,0 +1,13 @@
+{
+  "domain": "ostrom_advanced",
+  "name": "Ostrom Advanced",
+  "version": "0.1.0",
+  "documentation": "https://github.com/Al3xand3r1987/ha-ostrom-advanced",
+  "issue_tracker": "https://github.com/Al3xand3r1987/ha-ostrom-advanced/issues",
+  "codeowners": ["@Al3xand3r1987"],
+  "config_flow": true,
+  "requirements": [],
+  "integration_type": "service",
+  "iot_class": "cloud_polling"
+}
+

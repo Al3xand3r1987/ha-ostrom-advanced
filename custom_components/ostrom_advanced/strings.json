@@ -1,0 +1,102 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ostrom Advanced Setup",
+        "description": "Enter your Ostrom API credentials. You can find your Client ID and Client Secret in the Ostrom Developer Portal at https://developer.ostrom-api.io/",
+        "data": {
+          "environment": "Environment",
+          "client_id": "Client ID",
+          "client_secret": "Client Secret",
+          "zip_code": "Zip Code",
+          "contract_id": "Contract ID",
+          "poll_interval_minutes": "Price Poll Interval (minutes)",
+          "consumption_interval_minutes": "Consumption Poll Interval (minutes)"
+        },
+        "data_description": {
+          "environment": "Select Sandbox for testing or Production for real data",
+          "client_id": "OAuth2 Client ID from Ostrom Developer Portal",
+          "client_secret": "OAuth2 Client Secret from Ostrom Developer Portal",
+          "zip_code": "German zip code for your location (e.g., 10115)",
+          "contract_id": "Your Ostrom contract ID",
+          "poll_interval_minutes": "How often to fetch price data (5-120 minutes)",
+          "consumption_interval_minutes": "How often to fetch consumption data (15-1440 minutes)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid credentials. Please check your Client ID and Client Secret.",
+      "cannot_connect": "Cannot connect to Ostrom API. Please check your internet connection.",
+      "unknown": "An unexpected error occurred. Please check the logs for more details."
+    },
+    "abort": {
+      "already_configured": "This contract is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ostrom Advanced Options",
+        "description": "Configure polling intervals for the integration.",
+        "data": {
+          "poll_interval_minutes": "Price Poll Interval (minutes)",
+          "consumption_interval_minutes": "Consumption Poll Interval (minutes)"
+        },
+        "data_description": {
+          "poll_interval_minutes": "How often to fetch price data (5-120 minutes)",
+          "consumption_interval_minutes": "How often to fetch consumption data (15-1440 minutes)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "spot_prices_raw": {
+        "name": "Spot Prices Raw"
+      },
+      "price_now": {
+        "name": "Current Price"
+      },
+      "price_today_min": {
+        "name": "Today Min Price"
+      },
+      "price_today_max": {
+        "name": "Today Max Price"
+      },
+      "price_today_avg": {
+        "name": "Today Avg Price"
+      },
+      "price_today_cheapest_hour_start": {
+        "name": "Today Cheapest Hour"
+      },
+      "price_today_cheapest_3h_block_start": {
+        "name": "Today Cheapest 3h Block"
+      },
+      "price_tomorrow_min": {
+        "name": "Tomorrow Min Price"
+      },
+      "price_tomorrow_max": {
+        "name": "Tomorrow Max Price"
+      },
+      "price_tomorrow_avg": {
+        "name": "Tomorrow Avg Price"
+      },
+      "price_tomorrow_cheapest_3h_block_start": {
+        "name": "Tomorrow Cheapest 3h Block"
+      },
+      "consumption_today_kwh": {
+        "name": "Consumption Today"
+      },
+      "consumption_yesterday_kwh": {
+        "name": "Consumption Yesterday"
+      },
+      "cost_today_eur": {
+        "name": "Cost Today"
+      },
+      "cost_yesterday_eur": {
+        "name": "Cost Yesterday"
+      }
+    }
+  }
+}
+

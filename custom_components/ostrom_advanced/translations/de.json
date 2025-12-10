@@ -1,0 +1,102 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ostrom Advanced Einrichtung",
+        "description": "Gib deine Ostrom API-Zugangsdaten ein. Du findest deine Client ID und dein Client Secret im Ostrom Developer Portal unter https://developer.ostrom-api.io/",
+        "data": {
+          "environment": "Umgebung",
+          "client_id": "Client ID",
+          "client_secret": "Client Secret",
+          "zip_code": "Postleitzahl",
+          "contract_id": "Vertragsnummer",
+          "poll_interval_minutes": "Preis-Abfrageintervall (Minuten)",
+          "consumption_interval_minutes": "Verbrauchs-Abfrageintervall (Minuten)"
+        },
+        "data_description": {
+          "environment": "Wähle Sandbox zum Testen oder Production für echte Daten",
+          "client_id": "OAuth2 Client ID aus dem Ostrom Developer Portal",
+          "client_secret": "OAuth2 Client Secret aus dem Ostrom Developer Portal",
+          "zip_code": "Deutsche Postleitzahl deines Standorts (z.B. 10115)",
+          "contract_id": "Deine Ostrom Vertragsnummer",
+          "poll_interval_minutes": "Wie oft Preisdaten abgefragt werden (5-120 Minuten)",
+          "consumption_interval_minutes": "Wie oft Verbrauchsdaten abgefragt werden (15-1440 Minuten)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ungültige Zugangsdaten. Bitte überprüfe deine Client ID und dein Client Secret.",
+      "cannot_connect": "Verbindung zur Ostrom API nicht möglich. Bitte überprüfe deine Internetverbindung.",
+      "unknown": "Ein unerwarteter Fehler ist aufgetreten. Bitte überprüfe die Logs für weitere Details."
+    },
+    "abort": {
+      "already_configured": "Dieser Vertrag ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ostrom Advanced Optionen",
+        "description": "Konfiguriere die Abfrageintervalle für die Integration.",
+        "data": {
+          "poll_interval_minutes": "Preis-Abfrageintervall (Minuten)",
+          "consumption_interval_minutes": "Verbrauchs-Abfrageintervall (Minuten)"
+        },
+        "data_description": {
+          "poll_interval_minutes": "Wie oft Preisdaten abgefragt werden (5-120 Minuten)",
+          "consumption_interval_minutes": "Wie oft Verbrauchsdaten abgefragt werden (15-1440 Minuten)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "spot_prices_raw": {
+        "name": "Spot-Preise Roh"
+      },
+      "price_now": {
+        "name": "Aktueller Preis"
+      },
+      "price_today_min": {
+        "name": "Heute Mindestpreis"
+      },
+      "price_today_max": {
+        "name": "Heute Höchstpreis"
+      },
+      "price_today_avg": {
+        "name": "Heute Durchschnittspreis"
+      },
+      "price_today_cheapest_hour_start": {
+        "name": "Heute Günstigste Stunde"
+      },
+      "price_today_cheapest_3h_block_start": {
+        "name": "Heute Günstigster 3h-Block"
+      },
+      "price_tomorrow_min": {
+        "name": "Morgen Mindestpreis"
+      },
+      "price_tomorrow_max": {
+        "name": "Morgen Höchstpreis"
+      },
+      "price_tomorrow_avg": {
+        "name": "Morgen Durchschnittspreis"
+      },
+      "price_tomorrow_cheapest_3h_block_start": {
+        "name": "Morgen Günstigster 3h-Block"
+      },
+      "consumption_today_kwh": {
+        "name": "Verbrauch Heute"
+      },
+      "consumption_yesterday_kwh": {
+        "name": "Verbrauch Gestern"
+      },
+      "cost_today_eur": {
+        "name": "Kosten Heute"
+      },
+      "cost_yesterday_eur": {
+        "name": "Kosten Gestern"
+      }
+    }
+  }
+}
+
