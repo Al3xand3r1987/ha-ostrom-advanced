@@ -36,6 +36,7 @@ class OstromSensorEntityDescription(SensorEntityDescription):
 
     value_fn: Callable[[dict[str, Any]], Any]
     extra_state_attributes_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None
+    icon: str | None = None
 
 
 def _get_current_price(data: dict[str, Any]) -> float | None:
@@ -46,45 +47,49 @@ def _get_current_price(data: dict[str, Any]) -> float | None:
     return None
 
 
-def _get_today_min_price(data: dict[str, Any]) -> float | None:
-    """Get minimum price for today."""
-    slots = data.get("today_slots", [])
+# Generic helper functions for price calculations
+def _get_min_price(slots: list[dict[str, Any]]) -> float | None:
+    """Get minimum price from slots (generic for today/tomorrow)."""
     if not slots:
         return None
     prices = [s.get("total_price", 0) for s in slots]
     return round(min(prices), 5) if prices else None
 
 
-def _get_today_max_price(data: dict[str, Any]) -> float | None:
-    """Get maximum price for today."""
-    slots = data.get("today_slots", [])
+def _get_max_price(slots: list[dict[str, Any]]) -> float | None:
+    """Get maximum price from slots (generic for today/tomorrow)."""
     if not slots:
         return None
     prices = [s.get("total_price", 0) for s in slots]
     return round(max(prices), 5) if prices else None
 
 
-def _get_today_avg_price(data: dict[str, Any]) -> float | None:
-    """Get average price for today."""
-    slots = data.get("today_slots", [])
+def _get_avg_price(slots: list[dict[str, Any]]) -> float | None:
+    """Get average price from slots (generic for today/tomorrow)."""
     if not slots:
         return None
     prices = [s.get("total_price", 0) for s in slots]
     return round(sum(prices) / len(prices), 5) if prices else None
 
 
-def _get_today_cheapest_hour(data: dict[str, Any]) -> datetime | None:
-    """Get start time of cheapest hour today."""
-    slots = data.get("today_slots", [])
+def _get_cheapest_hour(slots: list[dict[str, Any]]) -> datetime | None:
+    """Get start time of cheapest hour from slots (generic for today/tomorrow)."""
     if not slots:
         return None
     cheapest = min(slots, key=lambda s: s.get("total_price", float("inf")))
     return cheapest.get("start")
 
 
-def _get_today_cheapest_3h_block(data: dict[str, Any]) -> datetime | None:
-    """Get start time of cheapest 3-hour block today."""
-    slots = data.get("today_slots", [])
+def _get_most_expensive_hour(slots: list[dict[str, Any]]) -> datetime | None:
+    """Get start time of most expensive hour from slots (generic for today/tomorrow)."""
+    if not slots:
+        return None
+    most_expensive = max(slots, key=lambda s: s.get("total_price", float("-inf")))
+    return most_expensive.get("start")
+
+
+def _get_cheapest_3h_block(slots: list[dict[str, Any]]) -> datetime | None:
+    """Get start time of cheapest 3-hour block from slots (generic for today/tomorrow)."""
     if len(slots) < 3:
         return None
 
@@ -102,50 +107,66 @@ def _get_today_cheapest_3h_block(data: dict[str, Any]) -> datetime | None:
     return best_start
 
 
+# Wrapper functions for today
+def _get_today_min_price(data: dict[str, Any]) -> float | None:
+    """Get minimum price for today."""
+    return _get_min_price(data.get("today_slots", []))
+
+
+def _get_today_max_price(data: dict[str, Any]) -> float | None:
+    """Get maximum price for today."""
+    return _get_max_price(data.get("today_slots", []))
+
+
+def _get_today_avg_price(data: dict[str, Any]) -> float | None:
+    """Get average price for today."""
+    return _get_avg_price(data.get("today_slots", []))
+
+
+def _get_today_cheapest_hour(data: dict[str, Any]) -> datetime | None:
+    """Get start time of cheapest hour today."""
+    return _get_cheapest_hour(data.get("today_slots", []))
+
+
+def _get_today_most_expensive_hour(data: dict[str, Any]) -> datetime | None:
+    """Get start time of most expensive hour today."""
+    return _get_most_expensive_hour(data.get("today_slots", []))
+
+
+def _get_today_cheapest_3h_block(data: dict[str, Any]) -> datetime | None:
+    """Get start time of cheapest 3-hour block today."""
+    return _get_cheapest_3h_block(data.get("today_slots", []))
+
+
+# Wrapper functions for tomorrow
 def _get_tomorrow_min_price(data: dict[str, Any]) -> float | None:
     """Get minimum price for tomorrow."""
-    slots = data.get("tomorrow_slots", [])
-    if not slots:
-        return None
-    prices = [s.get("total_price", 0) for s in slots]
-    return round(min(prices), 5) if prices else None
+    return _get_min_price(data.get("tomorrow_slots", []))
 
 
 def _get_tomorrow_max_price(data: dict[str, Any]) -> float | None:
     """Get maximum price for tomorrow."""
-    slots = data.get("tomorrow_slots", [])
-    if not slots:
-        return None
-    prices = [s.get("total_price", 0) for s in slots]
-    return round(max(prices), 5) if prices else None
+    return _get_max_price(data.get("tomorrow_slots", []))
 
 
 def _get_tomorrow_avg_price(data: dict[str, Any]) -> float | None:
     """Get average price for tomorrow."""
-    slots = data.get("tomorrow_slots", [])
-    if not slots:
-        return None
-    prices = [s.get("total_price", 0) for s in slots]
-    return round(sum(prices) / len(prices), 5) if prices else None
+    return _get_avg_price(data.get("tomorrow_slots", []))
+
+
+def _get_tomorrow_cheapest_hour(data: dict[str, Any]) -> datetime | None:
+    """Get start time of cheapest hour tomorrow."""
+    return _get_cheapest_hour(data.get("tomorrow_slots", []))
+
+
+def _get_tomorrow_most_expensive_hour(data: dict[str, Any]) -> datetime | None:
+    """Get start time of most expensive hour tomorrow."""
+    return _get_most_expensive_hour(data.get("tomorrow_slots", []))
 
 
 def _get_tomorrow_cheapest_3h_block(data: dict[str, Any]) -> datetime | None:
     """Get start time of cheapest 3-hour block tomorrow."""
-    slots = data.get("tomorrow_slots", [])
-    if len(slots) < 3:
-        return None
-
-    min_avg = float("inf")
-    best_start = None
-
-    for i in range(len(slots) - 2):
-        block = slots[i : i + 3]
-        avg_price = sum(s.get("total_price", 0) for s in block) / 3
-        if avg_price < min_avg:
-            min_avg = avg_price
-            best_start = block[0].get("start")
-
-    return best_start
+    return _get_cheapest_3h_block(data.get("tomorrow_slots", []))
 
 
 def _get_raw_price_attributes(data: dict[str, Any]) -> dict[str, Any]:
@@ -199,6 +220,7 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         suggested_display_precision=5,
         value_fn=_get_current_price,
         extra_state_attributes_fn=_get_raw_price_attributes,
+        icon="mdi:flash",
     ),
     OstromSensorEntityDescription(
         key="price_now",
@@ -207,6 +229,7 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=5,
         value_fn=_get_current_price,
+        icon="mdi:flash",
     ),
     OstromSensorEntityDescription(
         key="price_today_min",
@@ -214,6 +237,7 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         native_unit_of_measurement="€/kWh",
         suggested_display_precision=5,
         value_fn=_get_today_min_price,
+        icon="mdi:trending-down",
     ),
     OstromSensorEntityDescription(
         key="price_today_max",
@@ -221,6 +245,7 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         native_unit_of_measurement="€/kWh",
         suggested_display_precision=5,
         value_fn=_get_today_max_price,
+        icon="mdi:trending-up",
     ),
     OstromSensorEntityDescription(
         key="price_today_avg",
@@ -228,18 +253,28 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         native_unit_of_measurement="€/kWh",
         suggested_display_precision=5,
         value_fn=_get_today_avg_price,
+        icon="mdi:chart-bell-curve-cumulative",
     ),
     OstromSensorEntityDescription(
         key="price_today_cheapest_hour_start",
         translation_key="price_today_cheapest_hour_start",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=_get_today_cheapest_hour,
+        icon="mdi:clock-start",
     ),
     OstromSensorEntityDescription(
         key="price_today_cheapest_3h_block_start",
         translation_key="price_today_cheapest_3h_block_start",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=_get_today_cheapest_3h_block,
+        icon="mdi:timer-outline",
+    ),
+    OstromSensorEntityDescription(
+        key="price_today_most_expensive_hour_start",
+        translation_key="price_today_most_expensive_hour_start",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=_get_today_most_expensive_hour,
+        icon="mdi:clock-alert",
     ),
     OstromSensorEntityDescription(
         key="price_tomorrow_min",
@@ -247,6 +282,7 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         native_unit_of_measurement="€/kWh",
         suggested_display_precision=5,
         value_fn=_get_tomorrow_min_price,
+        icon="mdi:trending-down",
     ),
     OstromSensorEntityDescription(
         key="price_tomorrow_max",
@@ -254,6 +290,7 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         native_unit_of_measurement="€/kWh",
         suggested_display_precision=5,
         value_fn=_get_tomorrow_max_price,
+        icon="mdi:trending-up",
     ),
     OstromSensorEntityDescription(
         key="price_tomorrow_avg",
@@ -261,12 +298,28 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         native_unit_of_measurement="€/kWh",
         suggested_display_precision=5,
         value_fn=_get_tomorrow_avg_price,
+        icon="mdi:chart-bell-curve-cumulative",
+    ),
+    OstromSensorEntityDescription(
+        key="price_tomorrow_cheapest_hour_start",
+        translation_key="price_tomorrow_cheapest_hour_start",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=_get_tomorrow_cheapest_hour,
+        icon="mdi:clock-start",
     ),
     OstromSensorEntityDescription(
         key="price_tomorrow_cheapest_3h_block_start",
         translation_key="price_tomorrow_cheapest_3h_block_start",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=_get_tomorrow_cheapest_3h_block,
+        icon="mdi:timer-outline",
+    ),
+    OstromSensorEntityDescription(
+        key="price_tomorrow_most_expensive_hour_start",
+        translation_key="price_tomorrow_most_expensive_hour_start",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=_get_tomorrow_most_expensive_hour,
+        icon="mdi:clock-alert",
     ),
 )
 
@@ -409,6 +462,15 @@ class OstromPriceSensor(CoordinatorEntity[OstromPriceCoordinator], SensorEntity)
         if self.coordinator.data is None:
             return None
         return self.entity_description.value_fn(self.coordinator.data)
+
+    @property
+    def icon(self) -> str | None:
+        """Return the icon for the sensor."""
+        # Always use icon from description if available
+        if self.entity_description.icon:
+            return self.entity_description.icon
+        # Fallback icon only if no icon specified in description
+        return "mdi:clock-alert"
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:

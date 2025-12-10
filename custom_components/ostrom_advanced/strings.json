@@ -9,7 +9,7 @@
           "client_id": "Client ID",
           "client_secret": "Client Secret",
           "zip_code": "Zip Code",
-          "contract_id": "Contract ID (optional, only for consumption data)"
+          "contract_id": "Contract ID (optional, only for consumption data)",
           "poll_interval_minutes": "Price Poll Interval (minutes)",
           "consumption_interval_minutes": "Consumption Poll Interval (minutes)"
         },
@@ -72,6 +72,9 @@
       "price_today_cheapest_3h_block_start": {
         "name": "Today Cheapest 3h Block"
       },
+      "price_today_most_expensive_hour_start": {
+        "name": "Today Most Expensive Hour"
+      },
       "price_tomorrow_min": {
         "name": "Tomorrow Min Price"
       },
@@ -81,8 +84,14 @@
       "price_tomorrow_avg": {
         "name": "Tomorrow Avg Price"
       },
+      "price_tomorrow_cheapest_hour_start": {
+        "name": "Tomorrow Cheapest Hour"
+      },
       "price_tomorrow_cheapest_3h_block_start": {
         "name": "Tomorrow Cheapest 3h Block"
+      },
+      "price_tomorrow_most_expensive_hour_start": {
+        "name": "Tomorrow Most Expensive Hour"
       },
       "consumption_today_kwh": {
         "name": "Consumption Today"

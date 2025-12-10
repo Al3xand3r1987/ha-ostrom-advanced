@@ -72,6 +72,9 @@
       "price_today_cheapest_3h_block_start": {
         "name": "Heute Günstigster 3h-Block"
       },
+      "price_today_most_expensive_hour_start": {
+        "name": "Heute Teuerste Stunde"
+      },
       "price_tomorrow_min": {
         "name": "Morgen Mindestpreis"
       },
@@ -81,8 +84,14 @@
       "price_tomorrow_avg": {
         "name": "Morgen Durchschnittspreis"
       },
+      "price_tomorrow_cheapest_hour_start": {
+        "name": "Morgen Günstigste Stunde"
+      },
       "price_tomorrow_cheapest_3h_block_start": {
         "name": "Morgen Günstigster 3h-Block"
+      },
+      "price_tomorrow_most_expensive_hour_start": {
+        "name": "Morgen Teuerste Stunde"
       },
       "consumption_today_kwh": {
         "name": "Verbrauch Heute"
