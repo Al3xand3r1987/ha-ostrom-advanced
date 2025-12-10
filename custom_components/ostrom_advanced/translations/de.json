@@ -105,6 +105,14 @@
       "cost_yesterday_eur": {
         "name": "Kosten Gestern"
       }
+    },
+    "binary_sensor": {
+      "cheapest_3h_block_today_active": {
+        "name": "Günstigster 3h-Block Heute"
+      },
+      "cheapest_3h_block_tomorrow_active": {
+        "name": "Günstigster 3h-Block Morgen"
+      }
     }
   }
 }

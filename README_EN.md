@@ -1,3 +1,5 @@
+![Ostrom Advanced Banner](images/social_preview.png)
+
 # Ostrom Advanced - Home Assistant Integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
@@ -10,6 +12,7 @@ A custom Home Assistant integration for [Ostrom](https://www.ostrom.de/) dynamic
 - **Real-time Spot Prices**: Current all-in electricity prices (including taxes and levies)
 - **Comprehensive Price Statistics**: Min, max, and average prices for today and tomorrow
 - **Smart Time Sensors**: Find the cheapest hour, cheapest 3-hour block, and most expensive hour for both today and tomorrow
+- **Binary Sensors**: Show if the cheapest 3-hour block is currently active (On/Off) - perfect for simple automations
 - **Visual Icons**: All sensors have intuitive Material Design Icons for easy dashboard identification
 - **Consumption Tracking**: Today's and yesterday's energy consumption (requires Contract ID)
 - **Cost Calculation**: Automatic cost calculation based on actual consumption and prices
@@ -119,6 +122,15 @@ The integration provides comprehensive sensors for price monitoring, consumption
 |--------|-------------|------|
 | `sensor.ostrom_cost_today_eur` | Total energy cost today | € |
 | `sensor.ostrom_cost_yesterday_eur` | Total energy cost yesterday | € |
+
+### Binary Sensors
+
+| Entity | Description | Status | Icon |
+|--------|-------------|--------|------|
+| `binary_sensor.ostrom_cheapest_3h_block_today_active` | Cheapest 3h block today active | On/Off | 🔄 |
+| `binary_sensor.ostrom_cheapest_3h_block_tomorrow_active` | Cheapest 3h block tomorrow active | On/Off | 🔄 |
+
+**Note**: The binary sensors show "On" when the current time is within the cheapest 3-hour block, otherwise "Off". They include attributes with the block's start and end time.
 
 ### Raw Price Sensor Attributes
 
@@ -267,6 +279,43 @@ automation:
       - service: switch.turn_on
         target:
           entity_id: switch.battery_discharge
+```
+
+### Automation with Binary Sensor
+
+```yaml
+automation:
+  - alias: "Activate devices only during cheapest 3h block"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.ostrom_cheapest_3h_block_today_active
+        to: "on"
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id: 
+            - switch.washing_machine
+            - switch.dryer
+      - service: notify.mobile_app
+        data:
+          title: "Cheapest period active"
+          message: "Devices have been turned on"
+
+  - alias: "Turn off devices outside cheapest block"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.ostrom_cheapest_3h_block_today_active
+        to: "off"
+    condition:
+      - condition: state
+        entity_id: switch.washing_machine
+        state: "on"
+    action:
+      - service: switch.turn_off
+        target:
+          entity_id: 
+            - switch.washing_machine
+            - switch.dryer
 ```
 
 ## Sensor Details

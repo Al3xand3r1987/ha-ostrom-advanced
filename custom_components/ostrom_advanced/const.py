@@ -55,7 +55,7 @@ RESOLUTION_DAY: Final = "DAY"
 RESOLUTION_MONTH: Final = "MONTH"
 
 # Platforms
-PLATFORMS: Final = ["sensor"]
+PLATFORMS: Final = ["sensor", "binary_sensor"]
 
 # Attribution
 ATTRIBUTION: Final = "Data provided by Ostrom"

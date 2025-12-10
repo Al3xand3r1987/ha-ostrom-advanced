@@ -10,6 +10,7 @@ Eine umfassende Home Assistant Integration für Ostrom dynamische Stromtarife in
   - Startzeit der günstigsten Stunde (heute & morgen)
   - Startzeit des günstigsten 3-Stunden-Blocks (gleitendes Fenster-Algorithmus)
   - Startzeit der teuersten Stunde (heute & morgen)
+- **Binärsensoren**: Zeigen an, ob der günstigste 3-Stunden-Block gerade aktiv ist (Ein/Aus)
 - **Visuelle Icons**: Alle Sensoren enthalten intuitive Material Design Icons
 - **Verbrauchserfassung**: Täglicher Energieverbrauch und Kostenberechnung (erfordert Vertrags-ID)
 - **Zeitstempel-Unterstützung**: Zeitbasierte Sensoren verwenden die korrekte Device-Class für ApexCharts und Automatisierungen
@@ -32,6 +33,10 @@ Eine umfassende Home Assistant Integration für Ostrom dynamische Stromtarife in
 - **Startzeit Günstigste Stunde**: Beste Zeit zum Betrieb energieintensiver Geräte
 - **Startzeit Günstigster 3h-Block**: Optimales 3-Stunden-Fenster mit gleitendem Fenster-Algorithmus
 - **Startzeit Teuerste Stunde**: Zeit, um hohen Verbrauch zu vermeiden
+
+### Binärsensoren
+- **Günstigster 3h-Block Heute**: Zeigt "Ein" wenn der Block aktiv ist, sonst "Aus"
+- **Günstigster 3h-Block Morgen**: Zeigt "Ein" wenn der Block aktiv ist, sonst "Aus"
 
 ### Verbrauch & Kosten (Erfordert Vertrags-ID)
 - Tägliche Energieverbrauchserfassung
@@ -78,6 +83,20 @@ automation:
       - service: switch.turn_on
         target:
           entity_id: switch.battery_charger
+```
+
+### Binärsensor-Automatisierung
+```yaml
+automation:
+  - alias: "Geräte nur im günstigsten 3h-Block aktivieren"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.ostrom_cheapest_3h_block_today_active
+        to: "on"
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.washing_machine
 ```
 
 ## Technische Details

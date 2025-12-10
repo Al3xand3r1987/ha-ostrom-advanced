@@ -1,3 +1,5 @@
+![Ostrom Advanced Banner](images/social_preview.png)
+
 # Ostrom Advanced - Home Assistant Integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
@@ -10,6 +12,7 @@ Eine benutzerdefinierte Home Assistant Integration für [Ostrom](https://www.ost
 - **Echtzeit-Strompreise**: Aktuelle All-in-Strompreise (inklusive Steuern und Abgaben)
 - **Umfassende Preisstatistiken**: Min-, Max- und Durchschnittspreise für heute und morgen
 - **Intelligente Zeit-Sensoren**: Finden Sie die günstigste Stunde, den günstigsten 3-Stunden-Block und die teuerste Stunde für heute und morgen
+- **Binärsensoren**: Zeigen an, ob der günstigste 3-Stunden-Block gerade aktiv ist (Ein/Aus) - perfekt für einfache Automatisierungen
 - **Visuelle Icons**: Alle Sensoren haben intuitive Material Design Icons zur einfachen Dashboard-Identifikation
 - **Verbrauchserfassung**: Heutiger und gestriger Energieverbrauch (erfordert Vertrags-ID)
 - **Kostenberechnung**: Automatische Kostenberechnung basierend auf tatsächlichem Verbrauch und Preisen
@@ -119,6 +122,15 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 |---------|--------------|---------|
 | `sensor.ostrom_cost_today_eur` | Gesamtenergiekosten heute | € |
 | `sensor.ostrom_cost_yesterday_eur` | Gesamtenergiekosten gestern | € |
+
+### Binärsensoren
+
+| Entität | Beschreibung | Status | Icon |
+|---------|--------------|--------|------|
+| `binary_sensor.ostrom_cheapest_3h_block_today_active` | Günstigster 3h-Block heute aktiv | Ein/Aus | 🔄 |
+| `binary_sensor.ostrom_cheapest_3h_block_tomorrow_active` | Günstigster 3h-Block morgen aktiv | Ein/Aus | 🔄 |
+
+**Hinweis**: Die Binärsensoren zeigen "Ein" (ON), wenn die aktuelle Zeit innerhalb des günstigsten 3-Stunden-Blocks liegt, sonst "Aus" (OFF). Sie enthalten Attribute mit Start- und Endzeit des Blocks.
 
 ### Raw-Preis-Sensor Attribute
 
@@ -267,6 +279,43 @@ automation:
       - service: switch.turn_on
         target:
           entity_id: switch.battery_discharge
+```
+
+### Automatisierung mit Binärsensor
+
+```yaml
+automation:
+  - alias: "Geräte nur im günstigsten 3h-Block aktivieren"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.ostrom_cheapest_3h_block_today_active
+        to: "on"
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id: 
+            - switch.washing_machine
+            - switch.dryer
+      - service: notify.mobile_app
+        data:
+          title: "Günstigster Zeitraum aktiv"
+          message: "Geräte wurden eingeschaltet"
+
+  - alias: "Geräte außerhalb des günstigsten Blocks ausschalten"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.ostrom_cheapest_3h_block_today_active
+        to: "off"
+    condition:
+      - condition: state
+        entity_id: switch.washing_machine
+        state: "on"
+    action:
+      - service: switch.turn_off
+        target:
+          entity_id: 
+            - switch.washing_machine
+            - switch.dryer
 ```
 
 ## Sensordetails
