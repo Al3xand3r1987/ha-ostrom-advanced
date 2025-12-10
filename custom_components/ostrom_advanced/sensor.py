@@ -450,7 +450,7 @@ class OstromPriceSensor(CoordinatorEntity[OstromPriceCoordinator], SensorEntity)
         """Return device information."""
         return DeviceInfo(
             identifiers={(DOMAIN, self._contract_id)},
-            name=f"Ostrom Contract {self._contract_id[-4:]}",
+            name="Ostrom",
             manufacturer="Ostrom",
             model="Dynamic tariff integration",
             configuration_url=DEVELOPER_PORTAL_URL,
@@ -509,7 +509,7 @@ class OstromConsumptionSensor(
         """Return device information."""
         return DeviceInfo(
             identifiers={(DOMAIN, self._contract_id)},
-            name=f"Ostrom Contract {self._contract_id[-4:]}",
+            name="Ostrom",
             manufacturer="Ostrom",
             model="Dynamic tariff integration",
             configuration_url=DEVELOPER_PORTAL_URL,
@@ -559,7 +559,7 @@ class OstromCostSensor(SensorEntity):
         """Return device information."""
         return DeviceInfo(
             identifiers={(DOMAIN, self._contract_id)},
-            name=f"Ostrom Contract {self._contract_id[-4:]}",
+            name="Ostrom",
             manufacturer="Ostrom",
             model="Dynamic tariff integration",
             configuration_url=DEVELOPER_PORTAL_URL,

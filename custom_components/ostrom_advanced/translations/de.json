@@ -52,7 +52,7 @@
   "entity": {
     "sensor": {
       "spot_prices_raw": {
-        "name": "Spot-Preise Roh"
+        "name": "Preisdaten"
       },
       "price_now": {
         "name": "Aktueller Preis"
