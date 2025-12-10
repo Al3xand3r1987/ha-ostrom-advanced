@@ -42,6 +42,14 @@ class OstromApiError(HomeAssistantError):
 
 class OstromAuthError(ConfigEntryAuthFailed):
     """Exception for authentication errors."""
+    
+    def __init__(self, message: str = "Authentication failed") -> None:
+        """Initialize the authentication error.
+        
+        Args:
+            message: Error message
+        """
+        super().__init__(message)
 
 
 class OstromApiClient:
@@ -407,7 +415,8 @@ class OstromApiClient:
             result = await self._async_request("GET", path, params=params)
         except OstromApiError as err:
             # Check if this is a 404 error (data not available)
-            if err.status_code == 404:
+            # Use getattr to safely access status_code in case it's not set
+            if getattr(err, 'status_code', None) == 404:
                 LOGGER.warning(
                     "No consumption data available for period %s to %s: %s",
                     start,
