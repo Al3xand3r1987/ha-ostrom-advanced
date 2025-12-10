@@ -316,8 +316,8 @@ async def async_setup_entry(
     """Set up Ostrom sensors from a config entry."""
     data = hass.data[DOMAIN][entry.entry_id]
     price_coordinator: OstromPriceCoordinator = data["price_coordinator"]
-    consumption_coordinator: OstromConsumptionCoordinator = data["consumption_coordinator"]
-    contract_id = entry.data[CONF_CONTRACT_ID]
+    consumption_coordinator: OstromConsumptionCoordinator | None = data.get("consumption_coordinator")
+    contract_id = entry.data.get(CONF_CONTRACT_ID, "") or entry.data.get(CONF_ZIP_CODE, "")
 
     entities: list[SensorEntity] = []
 
@@ -331,33 +331,34 @@ async def async_setup_entry(
             )
         )
 
-    # Add consumption sensors
-    for description in CONSUMPTION_SENSORS:
+    # Add consumption sensors only if contract_id is provided
+    if consumption_coordinator:
+        for description in CONSUMPTION_SENSORS:
+            entities.append(
+                OstromConsumptionSensor(
+                    coordinator=consumption_coordinator,
+                    description=description,
+                    contract_id=contract_id,
+                )
+            )
+
+        # Add cost sensors (use both coordinators)
         entities.append(
-            OstromConsumptionSensor(
-                coordinator=consumption_coordinator,
-                description=description,
+            OstromCostSensor(
+                price_coordinator=price_coordinator,
+                consumption_coordinator=consumption_coordinator,
                 contract_id=contract_id,
+                is_today=True,
             )
         )
-
-    # Add cost sensors (use both coordinators)
-    entities.append(
-        OstromCostSensor(
-            price_coordinator=price_coordinator,
-            consumption_coordinator=consumption_coordinator,
-            contract_id=contract_id,
-            is_today=True,
+        entities.append(
+            OstromCostSensor(
+                price_coordinator=price_coordinator,
+                consumption_coordinator=consumption_coordinator,
+                contract_id=contract_id,
+                is_today=False,
+            )
         )
-    )
-    entities.append(
-        OstromCostSensor(
-            price_coordinator=price_coordinator,
-            consumption_coordinator=consumption_coordinator,
-            contract_id=contract_id,
-            is_today=False,
-        )
-    )
 
     async_add_entities(entities)
 

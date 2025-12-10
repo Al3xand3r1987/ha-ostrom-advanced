@@ -39,7 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     environment = entry.data[CONF_ENVIRONMENT]
     client_id = entry.data[CONF_CLIENT_ID]
     client_secret = entry.data[CONF_CLIENT_SECRET]
-    contract_id = entry.data[CONF_CONTRACT_ID]
+    contract_id = entry.data.get(CONF_CONTRACT_ID, "")
     zip_code = entry.data[CONF_ZIP_CODE]
 
     # Get options with defaults
@@ -71,24 +71,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         poll_interval_minutes=poll_interval,
     )
 
-    consumption_coordinator = OstromConsumptionCoordinator(
-        hass=hass,
-        client=client,
-        poll_interval_minutes=consumption_interval,
-    )
+    # Consumption coordinator only if contract_id is provided
+    consumption_coordinator = None
+    if contract_id:
+        consumption_coordinator = OstromConsumptionCoordinator(
+            hass=hass,
+            client=client,
+            poll_interval_minutes=consumption_interval,
+        )
 
     # Perform initial data fetch
     # This will raise ConfigEntryNotReady if it fails
     await price_coordinator.async_config_entry_first_refresh()
 
-    # Consumption data might not be available, so we don't fail if it does
-    try:
-        await consumption_coordinator.async_config_entry_first_refresh()
-    except Exception as err:
-        LOGGER.warning(
-            "Could not fetch initial consumption data: %s. "
-            "Consumption sensors may show unavailable initially.",
-            err,
+    # Consumption data only if contract_id is provided
+    if consumption_coordinator:
+        try:
+            await consumption_coordinator.async_config_entry_first_refresh()
+        except Exception as err:
+            LOGGER.warning(
+                "Could not fetch initial consumption data: %s. "
+                "Consumption sensors may show unavailable initially.",
+                err,
+            )
+    else:
+        LOGGER.info(
+            "Contract ID not provided. Consumption sensors will not be available."
         )
 
     # Store data for use by platforms
@@ -97,6 +105,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "client": client,
         "price_coordinator": price_coordinator,
         "consumption_coordinator": consumption_coordinator,
+        "contract_id": contract_id,
     }
 
     # Forward setup to sensor platform

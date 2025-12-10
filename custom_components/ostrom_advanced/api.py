@@ -51,7 +51,7 @@ class OstromApiClient:
             environment: "sandbox" or "production"
             client_id: OAuth2 client ID
             client_secret: OAuth2 client secret
-            contract_id: Ostrom contract ID
+            contract_id: Ostrom contract ID (optional, only needed for consumption)
             zip_code: German zip code for price lookups
         """
         self._hass = hass
@@ -348,6 +348,8 @@ class OstromApiClient:
     async def async_test_connection(self) -> bool:
         """Test the API connection by authenticating and making a simple request.
 
+        Only tests spot prices endpoint (contract_id not required for this).
+
         Returns:
             True if connection is successful
         """
@@ -357,6 +359,7 @@ class OstromApiClient:
             LOGGER.debug("Authentication successful, testing API call...")
 
             # Make a simple price request to verify API access
+            # Spot prices don't require contract_id
             # Use UTC timezone-aware datetime
             from datetime import timezone
             now = datetime.now(timezone.utc)

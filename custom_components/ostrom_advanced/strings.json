@@ -9,7 +9,7 @@
           "client_id": "Client ID",
           "client_secret": "Client Secret",
           "zip_code": "Zip Code",
-          "contract_id": "Contract ID",
+          "contract_id": "Contract ID (optional, only for consumption data)",
           "poll_interval_minutes": "Price Poll Interval (minutes)",
           "consumption_interval_minutes": "Consumption Poll Interval (minutes)"
         },
@@ -18,7 +18,7 @@
           "client_id": "OAuth2 Client ID from Ostrom Developer Portal",
           "client_secret": "OAuth2 Client Secret from Ostrom Developer Portal",
           "zip_code": "German zip code for your location (e.g., 10115)",
-          "contract_id": "Your Ostrom contract ID",
+          "contract_id": "Your Ostrom contract ID (optional, only needed for consumption tracking)"
           "poll_interval_minutes": "How often to fetch price data (5-120 minutes)",
           "consumption_interval_minutes": "How often to fetch consumption data (15-1440 minutes)"
         }

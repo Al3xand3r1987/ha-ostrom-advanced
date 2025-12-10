@@ -53,8 +53,9 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            # Validate the contract_id is unique
-            await self.async_set_unique_id(user_input[CONF_CONTRACT_ID])
+            # Use zip_code as unique_id if contract_id is not provided
+            unique_id = user_input.get(CONF_CONTRACT_ID) or user_input[CONF_ZIP_CODE]
+            await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured()
 
             # Try to authenticate and validate the connection
@@ -69,14 +70,18 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "unknown"
             else:
                 # Success - create the config entry
-                title = f"Ostrom Contract {user_input[CONF_CONTRACT_ID][-4:]}"
+                contract_id = user_input.get(CONF_CONTRACT_ID, "")
+                if contract_id:
+                    title = f"Ostrom Contract {contract_id[-4:]}"
+                else:
+                    title = f"Ostrom {user_input[CONF_ZIP_CODE]}"
 
                 # Separate data and options
                 data = {
                     CONF_ENVIRONMENT: user_input[CONF_ENVIRONMENT],
                     CONF_CLIENT_ID: user_input[CONF_CLIENT_ID],
                     CONF_CLIENT_SECRET: user_input[CONF_CLIENT_SECRET],
-                    CONF_CONTRACT_ID: user_input[CONF_CONTRACT_ID],
+                    CONF_CONTRACT_ID: user_input.get(CONF_CONTRACT_ID, ""),
                     CONF_ZIP_CODE: user_input[CONF_ZIP_CODE],
                 }
 
@@ -103,7 +108,7 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_CLIENT_ID): str,
                     vol.Required(CONF_CLIENT_SECRET): str,
                     vol.Required(CONF_ZIP_CODE): str,
-                    vol.Required(CONF_CONTRACT_ID): str,
+                    vol.Optional(CONF_CONTRACT_ID, default=""): str,
                     vol.Optional(
                         CONF_POLL_INTERVAL_MINUTES,
                         default=DEFAULT_POLL_INTERVAL_MINUTES,
@@ -133,13 +138,16 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
         """
         session = async_get_clientsession(self.hass)
 
+        # Contract ID is optional - only needed for consumption data
+        contract_id = user_input.get(CONF_CONTRACT_ID, "")
+        
         client = OstromApiClient(
             hass=self.hass,
             session=session,
             environment=user_input[CONF_ENVIRONMENT],
             client_id=user_input[CONF_CLIENT_ID],
             client_secret=user_input[CONF_CLIENT_SECRET],
-            contract_id=user_input[CONF_CONTRACT_ID],
+            contract_id=contract_id,
             zip_code=user_input[CONF_ZIP_CODE],
         )
 
