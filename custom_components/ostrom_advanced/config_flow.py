@@ -41,7 +41,6 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    @callback
     @staticmethod
     def async_get_options_flow(config_entry: ConfigEntry) -> "OstromAdvancedOptionsFlow":
         """Get the options flow for this handler."""
@@ -209,7 +208,7 @@ class OstromAdvancedOptionsFlow(OptionsFlow):
                     DEFAULT_CONSUMPTION_INTERVAL_MINUTES
                 )
 
-            return self.async_create_entry(title=self.config_entry.title, data=user_input)
+            return self.async_create_entry(data=user_input)
 
         # Get current values
         current_poll = self.config_entry.options.get(
