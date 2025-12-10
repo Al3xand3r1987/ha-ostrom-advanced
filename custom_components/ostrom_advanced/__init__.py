@@ -82,7 +82,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Perform initial data fetch
     # This will raise ConfigEntryNotReady if it fails
-    await price_coordinator.async_config_entry_first_refresh()
+    try:
+        await price_coordinator.async_config_entry_first_refresh()
+        LOGGER.info("Successfully fetched initial price data")
+    except Exception as err:
+        LOGGER.error("Failed to fetch initial price data: %s", err)
+        # Re-raise to trigger ConfigEntryNotReady
+        raise
 
     # Consumption data only if contract_id is provided
     if consumption_coordinator:
