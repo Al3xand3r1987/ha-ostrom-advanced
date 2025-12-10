@@ -314,6 +314,8 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Ostrom sensors from a config entry."""
+    LOGGER.info("Setting up Ostrom Advanced sensors for entry %s", entry.entry_id)
+    
     data = hass.data[DOMAIN][entry.entry_id]
     price_coordinator: OstromPriceCoordinator = data["price_coordinator"]
     consumption_coordinator: OstromConsumptionCoordinator | None = data.get("consumption_coordinator")
@@ -322,6 +324,7 @@ async def async_setup_entry(
     entities: list[SensorEntity] = []
 
     # Add price sensors
+    LOGGER.info("Creating %d price sensors", len(PRICE_SENSORS))
     for description in PRICE_SENSORS:
         entities.append(
             OstromPriceSensor(
@@ -333,6 +336,7 @@ async def async_setup_entry(
 
     # Add consumption sensors only if contract_id is provided
     if consumption_coordinator:
+        LOGGER.info("Creating %d consumption sensors", len(CONSUMPTION_SENSORS))
         for description in CONSUMPTION_SENSORS:
             entities.append(
                 OstromConsumptionSensor(
@@ -343,6 +347,7 @@ async def async_setup_entry(
             )
 
         # Add cost sensors (use both coordinators)
+        LOGGER.info("Creating 2 cost sensors")
         entities.append(
             OstromCostSensor(
                 price_coordinator=price_coordinator,
@@ -359,8 +364,12 @@ async def async_setup_entry(
                 is_today=False,
             )
         )
+    else:
+        LOGGER.info("No contract ID provided, skipping consumption and cost sensors")
 
+    LOGGER.info("Adding %d entities to Home Assistant", len(entities))
     async_add_entities(entities)
+    LOGGER.info("Successfully added %d Ostrom Advanced entities", len(entities))
 
 
 class OstromPriceSensor(CoordinatorEntity[OstromPriceCoordinator], SensorEntity):
