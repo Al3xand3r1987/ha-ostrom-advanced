@@ -106,22 +106,28 @@ def _is_tomorrow_cheapest_3h_block_active(
     if not tomorrow_slots:
         return (False, None)
 
+    # Always calculate the block start/end for attributes, even if we're not in tomorrow yet
+    block_start = _get_cheapest_3h_block(tomorrow_slots)
+    if not block_start:
+        return (False, None)
+
+    # Calculate end time (start + 3 hours)
+    block_end = block_start + timedelta(hours=3)
+
     # Check if we're already in tomorrow (after midnight)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow_start = today_start + timedelta(days=1)
 
-    # Only check if we're in tomorrow
-    if now < tomorrow_start:
-        return (False, None)
+    # Only check if we're in tomorrow AND within the block
+    is_active = False
+    if now >= tomorrow_start:
+        is_active = block_start <= now < block_end
 
-    is_active, block_start, block_end = _is_cheapest_3h_block_active(tomorrow_slots, now)
-
-    attrs = None
-    if block_start:
-        attrs = {
-            "block_start": block_start.isoformat(),
-            "block_end": block_end.isoformat() if block_end else None,
-        }
+    # Always return attributes if block_start is found
+    attrs = {
+        "block_start": block_start.isoformat(),
+        "block_end": block_end.isoformat() if block_end else None,
+    }
 
     return (is_active, attrs)
 
