@@ -86,6 +86,8 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     except Exception:  # pylint: disable=broad-except
                         LOGGER.exception("Unexpected exception during config flow")
                         errors["base"] = "unknown"
+                    if errors:
+                        LOGGER.debug("Config flow errors: %s", errors)
                     else:
                         # Success - create the config entry
                         contract_id_value = contract_id if contract_id else ""
