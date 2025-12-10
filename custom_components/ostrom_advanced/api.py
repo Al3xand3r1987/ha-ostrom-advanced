@@ -352,17 +352,33 @@ class OstromApiClient:
             True if connection is successful
         """
         try:
+            LOGGER.debug("Testing connection: Authenticating...")
             await self.async_authenticate()
+            LOGGER.debug("Authentication successful, testing API call...")
 
             # Make a simple price request to verify API access
-            now = datetime.utcnow()
+            # Use UTC timezone-aware datetime
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
             start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             end = start + timedelta(hours=1)
 
-            await self.async_get_spot_prices(start, end)
+            # Remove timezone info for API call (API expects naive UTC)
+            start_naive = start.replace(tzinfo=None)
+            end_naive = end.replace(tzinfo=None)
+
+            LOGGER.debug("Making test API call for prices from %s to %s", start_naive, end_naive)
+            await self.async_get_spot_prices(start_naive, end_naive)
+            LOGGER.debug("Connection test successful")
 
             return True
-        except (OstromApiError, OstromAuthError) as err:
-            LOGGER.error("Connection test failed: %s", err)
+        except OstromAuthError as err:
+            LOGGER.error("Connection test failed: Authentication error - %s", err)
             raise
+        except OstromApiError as err:
+            LOGGER.error("Connection test failed: API error - %s", err)
+            raise
+        except Exception as err:
+            LOGGER.exception("Connection test failed: Unexpected error - %s", err)
+            raise OstromApiError(f"Unexpected error during connection test: {err}") from err
 
