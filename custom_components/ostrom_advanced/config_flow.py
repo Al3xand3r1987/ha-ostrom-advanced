@@ -15,7 +15,9 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
 )
 from homeassistant.core import callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .api import OstromApiClient, OstromApiError, OstromAuthError
 from .const import (
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
@@ -71,20 +73,16 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     await self.async_set_unique_id(unique_id)
                     self._abort_if_unique_id_configured()
 
-                    # Credentials test temporarily disabled to fix import issues
-                    # Will be re-enabled after import works
-                    # try:
-                    #     await self._test_credentials(user_input)
-                    # except OstromAuthError:
-                    #     errors["base"] = "invalid_auth"
-                    # except OstromApiError:
-                    #     errors["base"] = "cannot_connect"
-                    # except Exception:  # pylint: disable=broad-except
-                    #     LOGGER.exception("Unexpected exception during config flow")
-                    #     errors["base"] = "unknown"
-                    
-                    # For now, skip credential validation to test import
-                    LOGGER.info("Skipping credential validation for testing")
+                    # Try to authenticate and validate the connection
+                    try:
+                        await self._test_credentials(user_input)
+                    except OstromAuthError:
+                        errors["base"] = "invalid_auth"
+                    except OstromApiError:
+                        errors["base"] = "cannot_connect"
+                    except Exception:  # pylint: disable=broad-except
+                        LOGGER.exception("Unexpected exception during config flow")
+                        errors["base"] = "unknown"
                     
                     if not errors:
                         # Success - create the config entry
@@ -141,36 +139,35 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    # Temporarily disabled to fix import issues
-    # async def _test_credentials(self, user_input: dict[str, Any]) -> None:
-    #     """Test the provided credentials.
-    #
-    #     Creates a temporary API client and attempts to:
-    #     1. Get an access token
-    #     2. Make a test API call to the prices endpoint
-    #
-    #     Args:
-    #         user_input: Dictionary with user configuration
-    #
-    #     Raises:
-    #         OstromAuthError: If authentication fails
-    #         OstromApiError: If API call fails
-    #     """
-    #     session = async_get_clientsession(self.hass)
-    #
-    #     # Contract ID is optional - only needed for consumption data
-    #     contract_id = user_input.get(CONF_CONTRACT_ID, "")
-    #     
-    #     client = OstromApiClient(
-    #         hass=self.hass,
-    #         session=session,
-    #         environment=user_input[CONF_ENVIRONMENT],
-    #         client_id=user_input[CONF_CLIENT_ID],
-    #         client_secret=user_input[CONF_CLIENT_SECRET],
-    #         contract_id=contract_id,
-    #         zip_code=user_input[CONF_ZIP_CODE],
-    #     )
-    #
-    #     # This will authenticate and make a test API call
-    #     await client.async_test_connection()
+    async def _test_credentials(self, user_input: dict[str, Any]) -> None:
+        """Test the provided credentials.
+
+        Creates a temporary API client and attempts to:
+        1. Get an access token
+        2. Make a test API call to the prices endpoint
+
+        Args:
+            user_input: Dictionary with user configuration
+
+        Raises:
+            OstromAuthError: If authentication fails
+            OstromApiError: If API call fails
+        """
+        session = async_get_clientsession(self.hass)
+
+        # Contract ID is optional - only needed for consumption data
+        contract_id = user_input.get(CONF_CONTRACT_ID, "")
+        
+        client = OstromApiClient(
+            hass=self.hass,
+            session=session,
+            environment=user_input[CONF_ENVIRONMENT],
+            client_id=user_input[CONF_CLIENT_ID],
+            client_secret=user_input[CONF_CLIENT_SECRET],
+            contract_id=contract_id,
+            zip_code=user_input[CONF_ZIP_CODE],
+        )
+
+        # This will authenticate and make a test API call
+        await client.async_test_connection()
 

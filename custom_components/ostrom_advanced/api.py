@@ -136,7 +136,8 @@ class OstromApiClient:
                     LOGGER.error("Rate limit exceeded during authentication")
                     raise OstromApiError("Rate limit exceeded")
 
-                if response.status != 200:
+                # Accept both 200 (OK) and 201 (Created) as success
+                if response.status not in (200, 201):
                     error_text = await response.text()
                     LOGGER.error(
                         "Unexpected error during authentication: %s - %s",
