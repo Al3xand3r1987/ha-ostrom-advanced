@@ -53,21 +53,38 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            # Use zip_code as unique_id if contract_id is not provided
-            unique_id = user_input.get(CONF_CONTRACT_ID) or user_input[CONF_ZIP_CODE]
-            await self.async_set_unique_id(unique_id)
-            self._abort_if_unique_id_configured()
+            # Validate required fields first
+            if not user_input.get(CONF_CLIENT_ID):
+                errors[CONF_CLIENT_ID] = "required"
+            if not user_input.get(CONF_CLIENT_SECRET):
+                errors[CONF_CLIENT_SECRET] = "required"
+            if not user_input.get(CONF_ZIP_CODE):
+                errors[CONF_ZIP_CODE] = "required"
 
-            # Try to authenticate and validate the connection
-            try:
-                await self._test_credentials(user_input)
-            except OstromAuthError:
-                errors["base"] = "invalid_auth"
-            except OstromApiError:
-                errors["base"] = "cannot_connect"
-            except Exception:  # pylint: disable=broad-except
-                LOGGER.exception("Unexpected exception during config flow")
-                errors["base"] = "unknown"
+            # Only proceed if no validation errors
+            if not errors:
+                # Use zip_code as unique_id if contract_id is not provided
+                # Ensure unique_id is never empty
+                contract_id = user_input.get(CONF_CONTRACT_ID, "").strip()
+                zip_code = user_input.get(CONF_ZIP_CODE, "").strip()
+                
+                if not zip_code:
+                    errors[CONF_ZIP_CODE] = "required"
+                else:
+                    unique_id = contract_id if contract_id else f"ostrom_{zip_code}"
+                    await self.async_set_unique_id(unique_id)
+                    self._abort_if_unique_id_configured()
+
+                # Try to authenticate and validate the connection
+                try:
+                    await self._test_credentials(user_input)
+                except OstromAuthError:
+                    errors["base"] = "invalid_auth"
+                except OstromApiError:
+                    errors["base"] = "cannot_connect"
+                except Exception:  # pylint: disable=broad-except
+                    LOGGER.exception("Unexpected exception during config flow")
+                    errors["base"] = "unknown"
             else:
                 # Success - create the config entry
                 contract_id = user_input.get(CONF_CONTRACT_ID, "")
