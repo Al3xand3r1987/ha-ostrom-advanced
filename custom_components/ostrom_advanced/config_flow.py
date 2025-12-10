@@ -1,9 +1,13 @@
 """Config flow for Ostrom Advanced integration."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import voluptuous as vol
+
+# Initialize logger early to help with debugging
+_LOGGER = logging.getLogger(__name__)
 
 from homeassistant.config_entries import (
     ConfigEntry,
