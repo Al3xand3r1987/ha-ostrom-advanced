@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
+
+if TYPE_CHECKING:
+    pass
 
 # Initialize logger early to help with debugging
 _LOGGER = logging.getLogger(__name__)
@@ -40,6 +43,15 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Ostrom Advanced."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> "OstromAdvancedOptionsFlow":
+        """Get the options flow for this handler."""
+        # The class is defined later in this same file
+        # Python will resolve this at runtime when the method is called, not at import time
+        # This avoids forward reference issues
+        return OstromAdvancedOptionsFlow(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -229,15 +241,4 @@ class OstromAdvancedOptionsFlow(OptionsFlow):
                 }
             ),
         )
-
-
-# Register options flow handler after OptionsFlow class is defined
-@callback
-def async_get_options_flow(config_entry: ConfigEntry) -> OstromAdvancedOptionsFlow:
-    """Get the options flow for this handler."""
-    return OstromAdvancedOptionsFlow(config_entry)
-
-
-# Attach to ConfigFlow class as staticmethod
-OstromAdvancedConfigFlow.async_get_options_flow = staticmethod(async_get_options_flow)
 
