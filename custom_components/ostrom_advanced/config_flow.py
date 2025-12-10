@@ -170,6 +170,21 @@ class OstromAdvancedOptionsFlow(OptionsFlow):
         Allows users to modify polling intervals.
         """
         if user_input is not None:
+            # Wenn Häkchen entfernt wurde (Feld nicht vorhanden oder None), verwende Default-Werte
+            if (
+                CONF_POLL_INTERVAL_MINUTES not in user_input
+                or user_input.get(CONF_POLL_INTERVAL_MINUTES) is None
+            ):
+                user_input[CONF_POLL_INTERVAL_MINUTES] = DEFAULT_POLL_INTERVAL_MINUTES
+
+            if (
+                CONF_CONSUMPTION_INTERVAL_MINUTES not in user_input
+                or user_input.get(CONF_CONSUMPTION_INTERVAL_MINUTES) is None
+            ):
+                user_input[CONF_CONSUMPTION_INTERVAL_MINUTES] = (
+                    DEFAULT_CONSUMPTION_INTERVAL_MINUTES
+                )
+
             return self.async_create_entry(title="", data=user_input)
 
         # Get current values
