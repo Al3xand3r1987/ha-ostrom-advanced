@@ -76,49 +76,45 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     await self.async_set_unique_id(unique_id)
                     self._abort_if_unique_id_configured()
 
-                # Try to authenticate and validate the connection
-                try:
-                    await self._test_credentials(user_input)
-                except OstromAuthError:
-                    errors["base"] = "invalid_auth"
-                except OstromApiError:
-                    errors["base"] = "cannot_connect"
-                except Exception:  # pylint: disable=broad-except
-                    LOGGER.exception("Unexpected exception during config flow")
-                    errors["base"] = "unknown"
-            else:
-                # Success - create the config entry
-                contract_id = user_input.get(CONF_CONTRACT_ID, "")
-                if contract_id:
-                    title = f"Ostrom Contract {contract_id[-4:]}"
-                else:
-                    title = f"Ostrom {user_input[CONF_ZIP_CODE]}"
+                    # Try to authenticate and validate the connection
+                    try:
+                        await self._test_credentials(user_input)
+                    except OstromAuthError:
+                        errors["base"] = "invalid_auth"
+                    except OstromApiError:
+                        errors["base"] = "cannot_connect"
+                    except Exception:  # pylint: disable=broad-except
+                        LOGGER.exception("Unexpected exception during config flow")
+                        errors["base"] = "unknown"
+                    else:
+                        # Success - create the config entry
+                        contract_id_value = contract_id if contract_id else ""
+                        
+                        if contract_id_value:
+                            title = f"Ostrom Contract {contract_id_value[-4:]}"
+                        else:
+                            title = f"Ostrom {zip_code}"
 
-                # Separate data and options
-                # Handle contract_id: if empty string, store as empty, don't include if truly not provided
-                contract_id_value = user_input.get(CONF_CONTRACT_ID, "")
-                if contract_id_value:
-                    contract_id_value = contract_id_value.strip()
-                
-                data = {
-                    CONF_ENVIRONMENT: user_input[CONF_ENVIRONMENT],
-                    CONF_CLIENT_ID: user_input[CONF_CLIENT_ID],
-                    CONF_CLIENT_SECRET: user_input[CONF_CLIENT_SECRET],
-                    CONF_CONTRACT_ID: contract_id_value,
-                    CONF_ZIP_CODE: user_input[CONF_ZIP_CODE],
-                }
+                        # Separate data and options
+                        data = {
+                            CONF_ENVIRONMENT: user_input[CONF_ENVIRONMENT],
+                            CONF_CLIENT_ID: user_input[CONF_CLIENT_ID],
+                            CONF_CLIENT_SECRET: user_input[CONF_CLIENT_SECRET],
+                            CONF_CONTRACT_ID: contract_id_value,
+                            CONF_ZIP_CODE: zip_code,
+                        }
 
-                options = {
-                    CONF_POLL_INTERVAL_MINUTES: user_input.get(
-                        CONF_POLL_INTERVAL_MINUTES, DEFAULT_POLL_INTERVAL_MINUTES
-                    ),
-                    CONF_CONSUMPTION_INTERVAL_MINUTES: user_input.get(
-                        CONF_CONSUMPTION_INTERVAL_MINUTES,
-                        DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
-                    ),
-                }
+                        options = {
+                            CONF_POLL_INTERVAL_MINUTES: user_input.get(
+                                CONF_POLL_INTERVAL_MINUTES, DEFAULT_POLL_INTERVAL_MINUTES
+                            ),
+                            CONF_CONSUMPTION_INTERVAL_MINUTES: user_input.get(
+                                CONF_CONSUMPTION_INTERVAL_MINUTES,
+                                DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
+                            ),
+                        }
 
-                return self.async_create_entry(title=title, data=data, options=options)
+                        return self.async_create_entry(title=title, data=data, options=options)
 
         # Show the form
         return self.async_show_form(
