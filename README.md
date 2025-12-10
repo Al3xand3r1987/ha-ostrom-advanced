@@ -3,147 +3,147 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A custom Home Assistant integration for [Ostrom](https://www.ostrom.de/) dynamic electricity tariffs in Germany. This integration provides real-time spot prices, consumption data, and calculated costs for automating your energy usage.
+Eine benutzerdefinierte Home Assistant Integration für [Ostrom](https://www.ostrom.de/) dynamische Stromtarife in Deutschland. Diese Integration bietet Echtzeit-Strompreise, Verbrauchsdaten und berechnete Kosten für die Automatisierung Ihres Energieverbrauchs.
 
-## Features
+## Funktionen
 
-- **Real-time Spot Prices**: Current all-in electricity prices (including taxes and levies)
-- **Comprehensive Price Statistics**: Min, max, and average prices for today and tomorrow
-- **Smart Time Sensors**: Find the cheapest hour, cheapest 3-hour block, and most expensive hour for both today and tomorrow
-- **Visual Icons**: All sensors have intuitive Material Design Icons for easy dashboard identification
-- **Consumption Tracking**: Today's and yesterday's energy consumption (requires Contract ID)
-- **Cost Calculation**: Automatic cost calculation based on actual consumption and prices
-- **Timestamp Support**: Time-based sensors use proper timestamp device class for ApexCharts and automation
-- **Full API Support**: Uses official Ostrom API with OAuth2 authentication
-- **Robust Error Handling**: Gracefully handles missing data (e.g., tomorrow prices not yet available)
+- **Echtzeit-Strompreise**: Aktuelle All-in-Strompreise (inklusive Steuern und Abgaben)
+- **Umfassende Preisstatistiken**: Min-, Max- und Durchschnittspreise für heute und morgen
+- **Intelligente Zeit-Sensoren**: Finden Sie die günstigste Stunde, den günstigsten 3-Stunden-Block und die teuerste Stunde für heute und morgen
+- **Visuelle Icons**: Alle Sensoren haben intuitive Material Design Icons zur einfachen Dashboard-Identifikation
+- **Verbrauchserfassung**: Heutiger und gestriger Energieverbrauch (erfordert Vertrags-ID)
+- **Kostenberechnung**: Automatische Kostenberechnung basierend auf tatsächlichem Verbrauch und Preisen
+- **Zeitstempel-Unterstützung**: Zeitbasierte Sensoren verwenden die korrekte Timestamp-Device-Class für ApexCharts und Automatisierungen
+- **Vollständige API-Unterstützung**: Verwendet die offizielle Ostrom API mit OAuth2-Authentifizierung
+- **Robuste Fehlerbehandlung**: Elegante Behandlung fehlender Daten (z.B. morgige Preise noch nicht verfügbar)
 
-## Prerequisites
+## Voraussetzungen
 
-1. **Ostrom Account**: You need an active Ostrom electricity contract
-2. **Ostrom Developer Portal Access**: 
-   - Log in to the [Ostrom Developer Portal](https://developer.ostrom-api.io/)
-   - Create an API client to get your **Client ID** and **Client Secret**
-3. **Contract ID**: Your Ostrom contract identifier
-4. **Zip Code**: Your German postal code for accurate tax/levy calculations
+1. **Ostrom-Konto**: Sie benötigen einen aktiven Ostrom-Stromvertrag
+2. **Ostrom Developer Portal Zugang**: 
+   - Melden Sie sich im [Ostrom Developer Portal](https://developer.ostrom-api.io/) an
+   - Erstellen Sie einen API-Client, um Ihre **Client ID** und **Client Secret** zu erhalten
+3. **Vertrags-ID**: Ihre Ostrom-Vertragsnummer (optional, nur für Verbrauchsdaten erforderlich)
+4. **Postleitzahl**: Ihre deutsche Postleitzahl für genaue Steuer-/Abgabenberechnungen
 
 ## Installation
 
-### HACS (Recommended)
+### HACS (Empfohlen)
 
-1. Open HACS in Home Assistant
-2. Go to **Integrations**
-3. Click the three dots menu (⋮) → **Custom repositories**
-4. Add repository URL: `https://github.com/Al3xand3r1987/ha-ostrom-advanced`
-5. Select category: **Integration**
-6. Click **Add**
-7. Search for "Ostrom Advanced" and install it
-8. Restart Home Assistant
+1. Öffnen Sie HACS in Home Assistant
+2. Gehen Sie zu **Integrations**
+3. Klicken Sie auf das Drei-Punkte-Menü (⋮) → **Custom repositories**
+4. Fügen Sie die Repository-URL hinzu: `https://github.com/Al3xand3r1987/ha-ostrom-advanced`
+5. Wählen Sie die Kategorie: **Integration**
+6. Klicken Sie auf **Add**
+7. Suchen Sie nach "Ostrom Advanced" und installieren Sie es
+8. Starten Sie Home Assistant neu
 
-### Manual Installation
+### Manuelle Installation
 
-1. Download the latest release
-2. Copy the `custom_components/ostrom_advanced` folder to your Home Assistant `config/custom_components/` directory
-3. Restart Home Assistant
+1. Laden Sie die neueste Version herunter
+2. Kopieren Sie den Ordner `custom_components/ostrom_advanced` in Ihr Home Assistant `config/custom_components/` Verzeichnis
+3. Starten Sie Home Assistant neu
 
-## Configuration
+## Konfiguration
 
-1. Go to **Settings** → **Devices & Services**
-2. Click **+ Add Integration**
-3. Search for "Ostrom Advanced"
-4. Fill in the configuration form:
+1. Gehen Sie zu **Einstellungen** → **Geräte & Dienste**
+2. Klicken Sie auf **+ Integration hinzufügen**
+3. Suchen Sie nach "Ostrom Advanced"
+4. Füllen Sie das Konfigurationsformular aus:
 
-| Field | Description | Required |
-|-------|-------------|----------|
-| Environment | `Production` for real data, `Sandbox` for testing | Yes |
-| Client ID | Your OAuth2 Client ID from Developer Portal | Yes |
-| Client Secret | Your OAuth2 Client Secret from Developer Portal | Yes |
-| Zip Code | German postal code (e.g., `10115`) | Yes |
-| Contract ID | Your Ostrom contract ID (optional, only for consumption data) | No |
-| Price Poll Interval | How often to fetch prices (5-120 minutes, default: 15 min) | Yes |
-| Consumption Poll Interval | How often to fetch consumption (15-1440 minutes, default: 60 min) | Yes |
+| Feld | Beschreibung | Erforderlich |
+|------|--------------|-------------|
+| Environment | `Production` für echte Daten, `Sandbox` zum Testen | Ja |
+| Client ID | Ihre OAuth2 Client ID vom Developer Portal | Ja |
+| Client Secret | Ihr OAuth2 Client Secret vom Developer Portal | Ja |
+| Postleitzahl | Deutsche Postleitzahl (z.B. `10115`) | Ja |
+| Vertrags-ID | Ihre Ostrom-Vertragsnummer (optional, nur für Verbrauchsdaten) | Nein |
+| Preis-Aktualisierungsintervall | Wie oft Preise abgerufen werden (5-120 Minuten, Standard: 15 Min) | Ja |
+| Verbrauch-Aktualisierungsintervall | Wie oft Verbrauch abgerufen wird (15-1440 Minuten, Standard: 60 Min) | Ja |
 
-**Note**: The Contract ID is optional. If not provided, only price sensors will be available. Consumption and cost sensors require a Contract ID.
+**Hinweis**: Die Vertrags-ID ist optional. Wenn sie nicht angegeben wird, sind nur Preis-Sensoren verfügbar. Verbrauchs- und Kosten-Sensoren erfordern eine Vertrags-ID.
 
-## Entities
+## Entitäten
 
-The integration provides comprehensive sensors for price monitoring, consumption tracking, and cost calculation. All sensors include intuitive Material Design Icons for easy visual identification in your dashboard.
+Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserfassung und Kostenberechnung. Alle Sensoren enthalten intuitive Material Design Icons zur einfachen visuellen Identifikation in Ihrem Dashboard.
 
-### Price Sensors
+### Preis-Sensoren
 
-#### Current Price
-| Entity | Description | Unit | Icon |
-|--------|-------------|------|------|
-| `sensor.ostrom_spot_prices_raw` | Current all-in price with detailed attributes (includes all hourly slots) | €/kWh | ⚡ |
-| `sensor.ostrom_price_now` | Current hourly all-in price | €/kWh | ⚡ |
+#### Aktueller Preis
+| Entität | Beschreibung | Einheit | Icon |
+|---------|--------------|---------|------|
+| `sensor.ostrom_spot_prices_raw` | Aktueller All-in-Preis mit detaillierten Attributen (enthält alle stündlichen Slots) | €/kWh | ⚡ |
+| `sensor.ostrom_price_now` | Aktueller stündlicher All-in-Preis | €/kWh | ⚡ |
 
-#### Today's Price Statistics
-| Entity | Description | Unit | Icon |
-|--------|-------------|------|------|
-| `sensor.ostrom_price_today_min` | Minimum price today | €/kWh | 📉 |
-| `sensor.ostrom_price_today_max` | Maximum price today | €/kWh | 📈 |
-| `sensor.ostrom_price_today_avg` | Average price today | €/kWh | 📊 |
+#### Preisstatistiken für Heute
+| Entität | Beschreibung | Einheit | Icon |
+|---------|--------------|---------|------|
+| `sensor.ostrom_price_today_min` | Minimalpreis heute | €/kWh | 📉 |
+| `sensor.ostrom_price_today_max` | Maximalpreis heute | €/kWh | 📈 |
+| `sensor.ostrom_price_today_avg` | Durchschnittspreis heute | €/kWh | 📊 |
 
-#### Today's Time-Based Sensors
-| Entity | Description | Type | Icon |
-|--------|-------------|------|------|
-| `sensor.ostrom_price_today_cheapest_hour_start` | Start time of cheapest hour today | Timestamp | 🕐 |
-| `sensor.ostrom_price_today_cheapest_3h_block_start` | Start time of cheapest 3-hour block today (sliding window) | Timestamp | ⏱️ |
-| `sensor.ostrom_price_today_most_expensive_hour_start` | Start time of most expensive hour today | Timestamp | ⚠️ |
+#### Zeitbasierte Sensoren für Heute
+| Entität | Beschreibung | Typ | Icon |
+|---------|--------------|-----|------|
+| `sensor.ostrom_price_today_cheapest_hour_start` | Startzeit der günstigsten Stunde heute | Timestamp | 🕐 |
+| `sensor.ostrom_price_today_cheapest_3h_block_start` | Startzeit des günstigsten 3-Stunden-Blocks heute (gleitendes Fenster) | Timestamp | ⏱️ |
+| `sensor.ostrom_price_today_most_expensive_hour_start` | Startzeit der teuersten Stunde heute | Timestamp | ⚠️ |
 
-#### Tomorrow's Price Statistics
-| Entity | Description | Unit | Icon |
-|--------|-------------|------|------|
-| `sensor.ostrom_price_tomorrow_min` | Minimum price tomorrow | €/kWh | 📉 |
-| `sensor.ostrom_price_tomorrow_max` | Maximum price tomorrow | €/kWh | 📈 |
-| `sensor.ostrom_price_tomorrow_avg` | Average price tomorrow | €/kWh | 📊 |
+#### Preisstatistiken für Morgen
+| Entität | Beschreibung | Einheit | Icon |
+|---------|--------------|---------|------|
+| `sensor.ostrom_price_tomorrow_min` | Minimalpreis morgen | €/kWh | 📉 |
+| `sensor.ostrom_price_tomorrow_max` | Maximalpreis morgen | €/kWh | 📈 |
+| `sensor.ostrom_price_tomorrow_avg` | Durchschnittspreis morgen | €/kWh | 📊 |
 
-#### Tomorrow's Time-Based Sensors
-| Entity | Description | Type | Icon |
-|--------|-------------|------|------|
-| `sensor.ostrom_price_tomorrow_cheapest_hour_start` | Start time of cheapest hour tomorrow | Timestamp | 🕐 |
-| `sensor.ostrom_price_tomorrow_cheapest_3h_block_start` | Start time of cheapest 3-hour block tomorrow (sliding window) | Timestamp | ⏱️ |
-| `sensor.ostrom_price_tomorrow_most_expensive_hour_start` | Start time of most expensive hour tomorrow | Timestamp | ⚠️ |
+#### Zeitbasierte Sensoren für Morgen
+| Entität | Beschreibung | Typ | Icon |
+|---------|--------------|-----|------|
+| `sensor.ostrom_price_tomorrow_cheapest_hour_start` | Startzeit der günstigsten Stunde morgen | Timestamp | 🕐 |
+| `sensor.ostrom_price_tomorrow_cheapest_3h_block_start` | Startzeit des günstigsten 3-Stunden-Blocks morgen (gleitendes Fenster) | Timestamp | ⏱️ |
+| `sensor.ostrom_price_tomorrow_most_expensive_hour_start` | Startzeit der teuersten Stunde morgen | Timestamp | ⚠️ |
 
-**Note**: Tomorrow's sensors will show as `unavailable` until day-ahead prices are published (typically after 13:00 CET).
+**Hinweis**: Die Sensoren für morgen werden als `unavailable` angezeigt, bis die Day-Ahead-Preise veröffentlicht werden (typischerweise nach 13:00 MEZ).
 
-### Consumption Sensors
+### Verbrauchs-Sensoren
 
-| Entity | Description | Unit |
-|--------|-------------|------|
-| `sensor.ostrom_consumption_today_kwh` | Total consumption today | kWh |
-| `sensor.ostrom_consumption_yesterday_kwh` | Total consumption yesterday | kWh |
+| Entität | Beschreibung | Einheit |
+|---------|--------------|---------|
+| `sensor.ostrom_consumption_today_kwh` | Gesamtverbrauch heute | kWh |
+| `sensor.ostrom_consumption_yesterday_kwh` | Gesamtverbrauch gestern | kWh |
 
-### Cost Sensors
+### Kosten-Sensoren
 
-| Entity | Description | Unit |
-|--------|-------------|------|
-| `sensor.ostrom_cost_today_eur` | Total energy cost today | € |
-| `sensor.ostrom_cost_yesterday_eur` | Total energy cost yesterday | € |
+| Entität | Beschreibung | Einheit |
+|---------|--------------|---------|
+| `sensor.ostrom_cost_today_eur` | Gesamtenergiekosten heute | € |
+| `sensor.ostrom_cost_yesterday_eur` | Gesamtenergiekosten gestern | € |
 
-### Raw Price Sensor Attributes
+### Raw-Preis-Sensor Attribute
 
-The `sensor.ostrom_spot_prices_raw` entity includes detailed attributes:
+Die Entität `sensor.ostrom_spot_prices_raw` enthält detaillierte Attribute:
 
-- `today_slots`: List of hourly price slots for today
-- `tomorrow_slots`: List of hourly price slots for tomorrow  
-- `current_slot_start`: Start time of current price slot
-- `current_slot_end`: End time of current price slot
-- `last_update`: Last data update timestamp
+- `today_slots`: Liste der stündlichen Preisslots für heute
+- `tomorrow_slots`: Liste der stündlichen Preisslots für morgen  
+- `current_slot_start`: Startzeit des aktuellen Preisslots
+- `current_slot_end`: Endzeit des aktuellen Preisslots
+- `last_update`: Zeitstempel der letzten Datenaktualisierung
 
-Each slot contains:
-- `start`: Slot start time (ISO format)
-- `end`: Slot end time (ISO format)
-- `net_price`: Net price without VAT (€/kWh)
-- `taxes_price`: Taxes and levies (€/kWh)
-- `total_price`: Total all-in price (€/kWh)
+Jeder Slot enthält:
+- `start`: Slot-Startzeit (ISO-Format)
+- `end`: Slot-Endzeit (ISO-Format)
+- `net_price`: Nettopreis ohne MwSt. (€/kWh)
+- `taxes_price`: Steuern und Abgaben (€/kWh)
+- `total_price`: Gesamt All-in-Preis (€/kWh)
 
-## Automation Examples
+## Automatisierungsbeispiele
 
-### Start EV Charging at Cheapest Time
+### E-Auto-Ladung zur günstigsten Zeit starten
 
 ```yaml
 automation:
-  - alias: "Start EV charging at cheapest 3h block"
+  - alias: "E-Auto-Ladung im günstigsten 3h-Block starten"
     trigger:
       - platform: time
         at: sensor.ostrom_price_today_cheapest_3h_block_start
@@ -158,15 +158,15 @@ automation:
           entity_id: switch.ev_charger
       - service: notify.mobile_app
         data:
-          title: "EV Charging Started"
-          message: "Charging at cheapest 3h block: {{ states('sensor.ostrom_price_today_min') }} €/kWh"
+          title: "E-Auto-Ladung gestartet"
+          message: "Ladung im günstigsten 3h-Block: {{ states('sensor.ostrom_price_today_min') }} €/kWh"
 ```
 
-### Avoid Charging During Expensive Hours
+### Ladung während teurer Stunden vermeiden
 
 ```yaml
 automation:
-  - alias: "Stop EV charging during expensive hour"
+  - alias: "E-Auto-Ladung während teurer Stunde stoppen"
     trigger:
       - platform: time
         at: sensor.ostrom_price_today_most_expensive_hour_start
@@ -180,15 +180,15 @@ automation:
           entity_id: switch.ev_charger
       - service: notify.mobile_app
         data:
-          title: "EV Charging Paused"
-          message: "Paused during expensive hour: {{ states('sensor.ostrom_price_today_max') }} €/kWh"
+          title: "E-Auto-Ladung pausiert"
+          message: "Pausiert während teurer Stunde: {{ states('sensor.ostrom_price_today_max') }} €/kWh"
 ```
 
-### Notify When Price is Below Average
+### Benachrichtigung bei niedrigem Preis
 
 ```yaml
 automation:
-  - alias: "Notify low electricity price"
+  - alias: "Benachrichtigung bei niedrigem Strompreis"
     trigger:
       - platform: template
         value_template: >
@@ -197,15 +197,15 @@ automation:
     action:
       - service: notify.mobile_app
         data:
-          title: "Low Electricity Price"
-          message: "Current price is {{ states('sensor.ostrom_price_now') }} €/kWh"
+          title: "Niedriger Strompreis"
+          message: "Aktueller Preis ist {{ states('sensor.ostrom_price_now') }} €/kWh"
 ```
 
-### Heat Pump Smart Scheduling
+### Wärmepumpe intelligente Steuerung
 
 ```yaml
 automation:
-  - alias: "Enable heat pump during cheap hours"
+  - alias: "Wärmepumpe während günstiger Stunden aktivieren"
     trigger:
       - platform: time_pattern
         minutes: "/5"
@@ -221,7 +221,7 @@ automation:
         data:
           hvac_mode: heat
 
-  - alias: "Pre-heat during cheapest 3h block"
+  - alias: "Vorheizen im günstigsten 3h-Block"
     trigger:
       - platform: time
         at: sensor.ostrom_price_today_cheapest_3h_block_start
@@ -233,11 +233,11 @@ automation:
           temperature: 22
 ```
 
-### Battery Charging Strategy
+### Batterie-Ladestrategie
 
 ```yaml
 automation:
-  - alias: "Charge battery at cheapest hour"
+  - alias: "Batterie zur günstigsten Stunde laden"
     trigger:
       - platform: time
         at: sensor.ostrom_price_today_cheapest_hour_start
@@ -255,7 +255,7 @@ automation:
         data:
           value: 100
 
-  - alias: "Discharge battery during expensive hour"
+  - alias: "Batterie während teurer Stunde entladen"
     trigger:
       - platform: time
         at: sensor.ostrom_price_today_most_expensive_hour_start
@@ -269,105 +269,104 @@ automation:
           entity_id: switch.battery_discharge
 ```
 
-## Sensor Details
+## Sensordetails
 
-### Time-Based Sensors (Timestamp Device Class)
+### Zeitbasierte Sensoren (Timestamp Device Class)
 
-All time-based sensors use the `timestamp` device class, which means:
-- They return ISO-formatted datetime strings (e.g., `2024-01-15T14:00:00+01:00`)
-- They work seamlessly with ApexCharts for visualization
-- They can be used directly in time-based automations
-- They show as `unavailable` when data is missing (e.g., tomorrow prices not yet published)
+Alle zeitbasierten Sensoren verwenden die `timestamp` Device-Class, was bedeutet:
+- Sie geben ISO-formatierte Datums-/Zeitstrings zurück (z.B. `2024-01-15T14:00:00+01:00`)
+- Sie funktionieren nahtlos mit ApexCharts zur Visualisierung
+- Sie können direkt in zeitbasierten Automatisierungen verwendet werden
+- Sie werden als `unavailable` angezeigt, wenn Daten fehlen (z.B. morgige Preise noch nicht veröffentlicht)
 
-### Price Calculation Logic
+### Preisberechnungslogik
 
-The integration uses generic helper functions to calculate statistics, ensuring:
-- **Consistent calculations** across today and tomorrow
-- **Robust error handling** when data is missing
-- **Efficient code** without duplication
+Die Integration verwendet generische Hilfsfunktionen zur Berechnung von Statistiken, was sicherstellt:
+- **Konsistente Berechnungen** für heute und morgen
+- **Robuste Fehlerbehandlung** bei fehlenden Daten
+- **Effizienter Code** ohne Duplikation
 
-#### 3-Hour Block Calculation
+#### 3-Stunden-Block-Berechnung
 
-The cheapest 3-hour block uses a **sliding window** algorithm:
-1. All possible 3-hour windows are evaluated
-2. The average price for each window is calculated
-3. The window with the lowest average price is selected
-4. The start time of that window is returned
+Der günstigste 3-Stunden-Block verwendet einen **gleitendes Fenster**-Algorithmus:
+1. Alle möglichen 3-Stunden-Fenster werden ausgewertet
+2. Der Durchschnittspreis für jedes Fenster wird berechnet
+3. Das Fenster mit dem niedrigsten Durchschnittspreis wird ausgewählt
+4. Die Startzeit dieses Fensters wird zurückgegeben
 
-This ensures you get the truly optimal 3-hour period, not just three consecutive cheap hours.
+Dies stellt sicher, dass Sie den wirklich optimalen 3-Stunden-Zeitraum erhalten, nicht nur drei aufeinanderfolgende günstige Stunden.
 
 ### Icons
 
-All sensors include Material Design Icons for visual identification:
-- ⚡ `mdi:flash` - Current price sensors
-- 📉 `mdi:trending-down` - Minimum price sensors
-- 📈 `mdi:trending-up` - Maximum price sensors
-- 📊 `mdi:chart-bell-curve-cumulative` - Average price sensors
-- 🕐 `mdi:clock-start` - Cheapest hour start time
-- ⏱️ `mdi:timer-outline` - Cheapest 3h block start time
-- ⚠️ `mdi:clock-alert` - Most expensive hour start time
+Alle Sensoren enthalten Material Design Icons zur visuellen Identifikation:
+- ⚡ `mdi:flash` - Aktuelle Preissensoren
+- 📉 `mdi:trending-down` - Minimalpreis-Sensoren
+- 📈 `mdi:trending-up` - Maximalpreis-Sensoren
+- 📊 `mdi:chart-bell-curve-cumulative` - Durchschnittspreis-Sensoren
+- 🕐 `mdi:clock-start` - Startzeit günstigste Stunde
+- ⏱️ `mdi:timer-outline` - Startzeit günstigster 3h-Block
+- ⚠️ `mdi:clock-alert` - Startzeit teuerste Stunde
 
-## Notes
+## Hinweise
 
-### Day-Ahead Prices
+### Day-Ahead-Preise
 
-- Day-ahead prices for tomorrow are typically available after 13:00 CET
-- The `tomorrow_*` sensors will show as `unavailable` until prices are published
-- Price data is based on EPEX Spot market prices
-- The integration gracefully handles missing tomorrow data without errors
+- Day-Ahead-Preise für morgen sind typischerweise nach 13:00 MEZ verfügbar
+- Die `tomorrow_*` Sensoren werden als `unavailable` angezeigt, bis Preise veröffentlicht werden
+- Preisdaten basieren auf EPEX Spot-Marktpreisen
+- Die Integration behandelt fehlende morgige Daten elegant ohne Fehler
 
 ### Rate Limits
 
-The Ostrom API has rate limits. The default polling intervals are set to be respectful of these limits:
-- Price updates: Every 15 minutes
-- Consumption updates: Every 60 minutes
+Die Ostrom API hat Rate Limits. Die Standard-Aktualisierungsintervalle sind so eingestellt, dass sie diese Limits respektieren:
+- Preisaktualisierungen: Alle 15 Minuten
+- Verbrauchsaktualisierungen: Alle 60 Minuten
 
-### Price Calculation
+### Preisberechnung
 
-The **total price** (all-in price) includes:
-- Day-ahead spot price (gross, including VAT)
-- Taxes and levies (gross, including VAT)
+Der **Gesamtpreis** (All-in-Preis) enthält:
+- Day-Ahead Spot-Preis (brutto, inklusive MwSt.)
+- Steuern und Abgaben (brutto, inklusive MwSt.)
 
-Formula: `total_price = (grossKwhPrice + grossKwhTaxAndLevies) / 100` (converted from cents to €/kWh)
+Formel: `total_price = (grossKwhPrice + grossKwhTaxAndLevies) / 100` (von Cent in €/kWh umgerechnet)
 
-## Troubleshooting
+## Fehlerbehebung
 
-### Authentication Issues
+### Authentifizierungsprobleme
 
-1. Verify your Client ID and Client Secret in the Developer Portal
-2. Check that your API client has the correct permissions
-3. Ensure you're using the correct environment (Production vs Sandbox)
+1. Überprüfen Sie Ihre Client ID und Client Secret im Developer Portal
+2. Stellen Sie sicher, dass Ihr API-Client die korrekten Berechtigungen hat
+3. Stellen Sie sicher, dass Sie die korrekte Umgebung verwenden (Production vs Sandbox)
 
-### Missing Tomorrow Prices
+### Fehlende morgige Preise
 
-- Day-ahead prices are published daily around 13:00 CET
-- Before this time, tomorrow's sensors will be unavailable
+- Day-Ahead-Preise werden täglich gegen 13:00 MEZ veröffentlicht
+- Vor dieser Zeit werden die Sensoren für morgen als unavailable angezeigt
 
-### No Consumption Data
+### Keine Verbrauchsdaten
 
-- Consumption data depends on smart meter readings
-- Data might be delayed by several hours
-- Check your Ostrom app if data appears in the official interface
+- Verbrauchsdaten hängen von Smart-Meter-Ablesungen ab
+- Daten können um mehrere Stunden verzögert sein
+- Überprüfen Sie Ihre Ostrom-App, ob Daten in der offiziellen Oberfläche erscheinen
 
-## Contributing
+## Mitwirken
 
-Contributions are welcome! Please:
+Beiträge sind willkommen! Bitte:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+1. Forken Sie das Repository
+2. Erstellen Sie einen Feature-Branch
+3. Nehmen Sie Ihre Änderungen vor
+4. Reichen Sie einen Pull Request ein
 
-## License
+## Lizenz
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe die [LICENSE](LICENSE) Datei für Details.
 
-## Disclaimer
+## Haftungsausschluss
 
-This is an unofficial integration and is not affiliated with Ostrom GmbH. Use at your own risk.
+Dies ist eine inoffizielle Integration und steht nicht in Verbindung mit Ostrom GmbH. Nutzung auf eigenes Risiko.
 
 ## Support
 
 - [GitHub Issues](https://github.com/Al3xand3r1987/ha-ostrom-advanced/issues)
 - [Home Assistant Community](https://community.home-assistant.io/)
-

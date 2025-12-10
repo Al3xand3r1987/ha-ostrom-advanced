@@ -1,48 +1,48 @@
 # Ostrom Advanced
 
-A comprehensive Home Assistant integration for Ostrom dynamic electricity tariffs in Germany. Get real-time spot prices, detailed statistics, and smart time-based sensors for automating your energy consumption.
+Eine umfassende Home Assistant Integration für Ostrom dynamische Stromtarife in Deutschland. Erhalten Sie Echtzeit-Strompreise, detaillierte Statistiken und intelligente zeitbasierte Sensoren für die Automatisierung Ihres Energieverbrauchs.
 
-## Features
+## Funktionen
 
-- **Real-time Spot Prices**: Current all-in electricity prices with detailed hourly data
-- **Comprehensive Statistics**: Min, max, and average prices for today and tomorrow
-- **Smart Time Sensors**: 
-  - Cheapest hour start time (today & tomorrow)
-  - Cheapest 3-hour block start time (sliding window algorithm)
-  - Most expensive hour start time (today & tomorrow)
-- **Visual Icons**: All sensors include intuitive Material Design Icons
-- **Consumption Tracking**: Daily energy consumption and cost calculation (requires Contract ID)
-- **Timestamp Support**: Time-based sensors use proper device class for ApexCharts and automation
-- **Robust Error Handling**: Gracefully handles missing data (e.g., tomorrow prices not yet available)
+- **Echtzeit-Strompreise**: Aktuelle All-in-Strompreise mit detaillierten stündlichen Daten
+- **Umfassende Statistiken**: Min-, Max- und Durchschnittspreise für heute und morgen
+- **Intelligente Zeit-Sensoren**: 
+  - Startzeit der günstigsten Stunde (heute & morgen)
+  - Startzeit des günstigsten 3-Stunden-Blocks (gleitendes Fenster-Algorithmus)
+  - Startzeit der teuersten Stunde (heute & morgen)
+- **Visuelle Icons**: Alle Sensoren enthalten intuitive Material Design Icons
+- **Verbrauchserfassung**: Täglicher Energieverbrauch und Kostenberechnung (erfordert Vertrags-ID)
+- **Zeitstempel-Unterstützung**: Zeitbasierte Sensoren verwenden die korrekte Device-Class für ApexCharts und Automatisierungen
+- **Robuste Fehlerbehandlung**: Elegante Behandlung fehlender Daten (z.B. morgige Preise noch nicht verfügbar)
 
-## Quick Start
+## Schnellstart
 
-1. Get your API credentials from the [Ostrom Developer Portal](https://developer.ostrom-api.io/)
-2. Add the integration in Home Assistant
-3. Enter your Client ID, Client Secret, Zip Code, and optionally your Contract ID
-4. Start automating based on electricity prices!
+1. Holen Sie sich Ihre API-Anmeldedaten aus dem [Ostrom Developer Portal](https://developer.ostrom-api.io/)
+2. Fügen Sie die Integration in Home Assistant hinzu
+3. Geben Sie Ihre Client ID, Client Secret, Postleitzahl und optional Ihre Vertrags-ID ein
+4. Beginnen Sie mit der Automatisierung basierend auf Strompreisen!
 
-## Available Sensors
+## Verfügbare Sensoren
 
-### Price Statistics (Today & Tomorrow)
-- Current price, minimum, maximum, and average prices
-- All with intuitive icons (⚡ 📉 📈 📊)
+### Preisstatistiken (Heute & Morgen)
+- Aktueller Preis, Minimal-, Maximal- und Durchschnittspreise
+- Alle mit intuitiven Icons (⚡ 📉 📈 📊)
 
-### Time-Based Sensors (Timestamp Device Class)
-- **Cheapest Hour Start**: Best time to run energy-intensive devices
-- **Cheapest 3h Block Start**: Optimal 3-hour window using sliding window algorithm
-- **Most Expensive Hour Start**: Time to avoid high consumption
+### Zeitbasierte Sensoren (Timestamp Device Class)
+- **Startzeit Günstigste Stunde**: Beste Zeit zum Betrieb energieintensiver Geräte
+- **Startzeit Günstigster 3h-Block**: Optimales 3-Stunden-Fenster mit gleitendem Fenster-Algorithmus
+- **Startzeit Teuerste Stunde**: Zeit, um hohen Verbrauch zu vermeiden
 
-### Consumption & Costs (Requires Contract ID)
-- Daily energy consumption tracking
-- Automatic cost calculation based on actual usage
+### Verbrauch & Kosten (Erfordert Vertrags-ID)
+- Tägliche Energieverbrauchserfassung
+- Automatische Kostenberechnung basierend auf tatsächlichem Verbrauch
 
-## Example Automations
+## Automatisierungsbeispiele
 
-### EV Charging
+### E-Auto-Ladung
 ```yaml
 automation:
-  - alias: "Charge EV at cheapest 3h block"
+  - alias: "E-Auto im günstigsten 3h-Block laden"
     trigger:
       - platform: time
         at: sensor.ostrom_price_today_cheapest_3h_block_start
@@ -52,10 +52,10 @@ automation:
           entity_id: switch.ev_charger
 ```
 
-### Heat Pump
+### Wärmepumpe
 ```yaml
 automation:
-  - alias: "Pre-heat during cheapest hours"
+  - alias: "Vorheizen während günstiger Stunden"
     trigger:
       - platform: time
         at: sensor.ostrom_price_today_cheapest_3h_block_start
@@ -67,10 +67,10 @@ automation:
           temperature: 22
 ```
 
-### Battery Management
+### Batterieverwaltung
 ```yaml
 automation:
-  - alias: "Charge battery at cheapest hour"
+  - alias: "Batterie zur günstigsten Stunde laden"
     trigger:
       - platform: time
         at: sensor.ostrom_price_today_cheapest_hour_start
@@ -80,12 +80,11 @@ automation:
           entity_id: switch.battery_charger
 ```
 
-## Technical Details
+## Technische Details
 
-- Uses official Ostrom API with OAuth2 authentication
-- Generic calculation functions ensure consistent results
-- Tomorrow sensors show as `unavailable` until day-ahead prices are published (typically after 13:00 CET)
-- Contract ID is optional - price sensors work without it
+- Verwendet die offizielle Ostrom API mit OAuth2-Authentifizierung
+- Generische Berechnungsfunktionen gewährleisten konsistente Ergebnisse
+- Sensoren für morgen werden als `unavailable` angezeigt, bis Day-Ahead-Preise veröffentlicht werden (typischerweise nach 13:00 MEZ)
+- Vertrags-ID ist optional - Preissensoren funktionieren ohne sie
 
-For full documentation and more automation examples, see the [README](https://github.com/Al3xand3r1987/ha-ostrom-advanced).
-
+Für vollständige Dokumentation und weitere Automatisierungsbeispiele siehe die [README](https://github.com/Al3xand3r1987/ha-ostrom-advanced).
