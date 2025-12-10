@@ -65,12 +65,13 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
             if not errors:
                 # Use zip_code as unique_id if contract_id is not provided
                 # Ensure unique_id is never empty
-                contract_id = user_input.get(CONF_CONTRACT_ID, "").strip()
+                contract_id = user_input.get(CONF_CONTRACT_ID, "").strip() if user_input.get(CONF_CONTRACT_ID) else ""
                 zip_code = user_input.get(CONF_ZIP_CODE, "").strip()
                 
                 if not zip_code:
                     errors[CONF_ZIP_CODE] = "required"
                 else:
+                    # Use contract_id if provided and not empty, otherwise use zip_code
                     unique_id = contract_id if contract_id else f"ostrom_{zip_code}"
                     await self.async_set_unique_id(unique_id)
                     self._abort_if_unique_id_configured()
@@ -94,11 +95,16 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     title = f"Ostrom {user_input[CONF_ZIP_CODE]}"
 
                 # Separate data and options
+                # Handle contract_id: if empty string, store as empty, don't include if truly not provided
+                contract_id_value = user_input.get(CONF_CONTRACT_ID, "")
+                if contract_id_value:
+                    contract_id_value = contract_id_value.strip()
+                
                 data = {
                     CONF_ENVIRONMENT: user_input[CONF_ENVIRONMENT],
                     CONF_CLIENT_ID: user_input[CONF_CLIENT_ID],
                     CONF_CLIENT_SECRET: user_input[CONF_CLIENT_SECRET],
-                    CONF_CONTRACT_ID: user_input.get(CONF_CONTRACT_ID, ""),
+                    CONF_CONTRACT_ID: contract_id_value,
                     CONF_ZIP_CODE: user_input[CONF_ZIP_CODE],
                 }
 
