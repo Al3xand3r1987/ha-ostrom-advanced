@@ -28,6 +28,16 @@ from .const import (
 
 class OstromApiError(HomeAssistantError):
     """Exception for Ostrom API errors."""
+    
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        """Initialize the error.
+        
+        Args:
+            message: Error message
+            status_code: Optional HTTP status code
+        """
+        super().__init__(message)
+        self.status_code = status_code
 
 
 class OstromAuthError(ConfigEntryAuthFailed):
@@ -263,7 +273,7 @@ class OstromApiClient:
                 if response.status == 404:
                     error_text = await response.text()
                     LOGGER.error("Resource not found: %s", error_text)
-                    raise OstromApiError(f"Resource not found: {error_text}")
+                    raise OstromApiError(f"Resource not found: {error_text}", status_code=404)
 
                 if response.status == 429:
                     LOGGER.error("Rate limit exceeded")
@@ -378,7 +388,12 @@ class OstromApiClient:
             resolution: HOUR, DAY, or MONTH
 
         Returns:
-            List of consumption data dictionaries
+            List of consumption data dictionaries. Returns empty list if data is not available (404).
+
+        Note:
+            If the API returns 404 (not found), this method returns an empty list
+            instead of raising an error, as this may simply indicate that no data
+            is available for the requested time period.
         """
         path = ENDPOINT_ENERGY_CONSUMPTION.format(contract_id=self._contract_id)
 
@@ -388,7 +403,20 @@ class OstromApiClient:
             "resolution": resolution,
         }
 
-        result = await self._async_request("GET", path, params=params)
+        try:
+            result = await self._async_request("GET", path, params=params)
+        except OstromApiError as err:
+            # Check if this is a 404 error (data not available)
+            if err.status_code == 404:
+                LOGGER.warning(
+                    "No consumption data available for period %s to %s: %s",
+                    start,
+                    end,
+                    err,
+                )
+                return []
+            # Re-raise other API errors
+            raise
 
         data = result.get("data")
         if data is None:

@@ -207,6 +207,14 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             yesterday_data: list[dict[str, Any]] = []
             today_data: list[dict[str, Any]] = []
 
+            if not raw_data:
+                LOGGER.info(
+                    "No consumption data available for period %s to %s. "
+                    "This may be normal if the smart meter is not yet active or data is not yet available.",
+                    start_utc,
+                    end_utc,
+                )
+
             for entry in raw_data:
                 # Parse the date from API response
                 slot_start_str = entry.get("date", "")
