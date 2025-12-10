@@ -2,12 +2,9 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import voluptuous as vol
-
-if TYPE_CHECKING:
-    pass
 
 # Initialize logger early to help with debugging
 _LOGGER = logging.getLogger(__name__)
