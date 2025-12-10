@@ -241,14 +241,14 @@ class OstromApiClient:
                     await self.async_authenticate()
                     # Retry the request once
                     headers["Authorization"] = f"Bearer {self._access_token}"
-                        async with self._session.request(
-                            method,
-                            url,
-                            headers=headers,
-                            params=params,
-                            json=json_data,
-                            timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
-                        ) as retry_response:
+                    async with self._session.request(
+                        method,
+                        url,
+                        headers=headers,
+                        params=params,
+                        json=json_data,
+                        timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
+                    ) as retry_response:
                         if retry_response.status == 401:
                             raise OstromAuthError("Authentication failed after refresh")
                         retry_response.raise_for_status()
