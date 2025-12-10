@@ -22,6 +22,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     ATTRIBUTION,
     CONF_CONTRACT_ID,
+    CONF_ZIP_CODE,
     DEVELOPER_PORTAL_URL,
     DOMAIN,
     LOGGER,
