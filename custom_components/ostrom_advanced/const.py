@@ -23,6 +23,7 @@ CONF_CONSUMPTION_INTERVAL_MINUTES: Final = "consumption_interval_minutes"
 # Default values
 DEFAULT_POLL_INTERVAL_MINUTES: Final = 15
 DEFAULT_CONSUMPTION_INTERVAL_MINUTES: Final = 60
+DEFAULT_TIMEOUT: Final = 30  # seconds for HTTP requests
 
 # Environment options
 ENV_SANDBOX: Final = "sandbox"

@@ -1,11 +1,14 @@
 """Ostrom API Client for the Ostrom Advanced integration."""
 from __future__ import annotations
 
+import asyncio
 import base64
 from datetime import datetime, timedelta
 from typing import Any
+from urllib.parse import urlencode
 
 import aiohttp
+from aiohttp import ClientConnectorError, ClientResponseError, ClientTimeout, FormData
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
@@ -13,6 +16,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from .const import (
     API_BASE_URLS,
     AUTH_URLS,
+    DEFAULT_TIMEOUT,
     ENDPOINT_ENERGY_CONSUMPTION,
     ENDPOINT_OAUTH_TOKEN,
     ENDPOINT_SPOT_PRICES,
@@ -89,7 +93,7 @@ class OstromApiClient:
         - Form data: grant_type=client_credentials
         - Response: access_token, expires_in, token_type
         """
-        url = f"{self._auth_url}{ENDPOINT_OAUTH_TOKEN}"
+        url = f"{self._auth_url.rstrip('/')}{ENDPOINT_OAUTH_TOKEN}"
 
         # Create Basic Auth header
         credentials = f"{self._client_id}:{self._client_secret}"
@@ -101,13 +105,23 @@ class OstromApiClient:
             "Accept": "application/json",
         }
 
-        data = {"grant_type": OAUTH_GRANT_TYPE}
+        # Use URL-encoded form data to match API expectations
+        form_data = FormData()
+        form_data.add_field("grant_type", OAUTH_GRANT_TYPE)
 
         LOGGER.debug("Requesting OAuth2 token from %s", url)
+        LOGGER.debug(
+            "OAuth2 request headers (sanitized): %s",
+            {k: v for k, v in headers.items() if k != "Authorization"},
+        )
+        LOGGER.debug("OAuth2 request body: grant_type=%s", OAUTH_GRANT_TYPE)
 
         try:
             async with self._session.post(
-                url, headers=headers, data=data
+                url,
+                headers=headers,
+                data=form_data,
+                timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
             ) as response:
                 if response.status == 401:
                     LOGGER.error("Authentication failed: Invalid credentials")
@@ -148,6 +162,17 @@ class OstromApiClient:
                     expires_in,
                 )
 
+        except ClientConnectorError as err:
+            LOGGER.error("Network connection error during authentication: %s", err)
+            raise OstromApiError(f"Network error: {err}") from err
+        except asyncio.TimeoutError as err:
+            LOGGER.error("Authentication request timeout: %s", err)
+            raise OstromApiError("Authentication request timeout") from err
+        except ClientResponseError as err:
+            LOGGER.error(
+                "HTTP error during authentication: %s - %s", err.status, err.message
+            )
+            raise OstromApiError(f"HTTP error {err.status}: {err.message}") from err
         except aiohttp.ClientError as err:
             LOGGER.error("Connection error during authentication: %s", err)
             raise OstromApiError(f"Connection error: {err}") from err
@@ -187,7 +212,7 @@ class OstromApiClient:
         """
         await self._async_ensure_token()
 
-        url = f"{self._base_url}{path}"
+        url = f"{self._base_url.rstrip('/')}{path}"
 
         headers = {
             "Authorization": f"Bearer {self._access_token}",
@@ -195,10 +220,19 @@ class OstromApiClient:
         }
 
         LOGGER.debug("Making %s request to %s with params %s", method, url, params)
+        LOGGER.debug(
+            "Request headers (sanitized): %s",
+            {k: v for k, v in headers.items() if k != "Authorization"},
+        )
 
         try:
             async with self._session.request(
-                method, url, headers=headers, params=params, json=json_data
+                method,
+                url,
+                headers=headers,
+                params=params,
+                json=json_data,
+                timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
             ) as response:
                 if response.status == 401:
                     # Token might be expired, try to refresh
@@ -207,9 +241,14 @@ class OstromApiClient:
                     await self.async_authenticate()
                     # Retry the request once
                     headers["Authorization"] = f"Bearer {self._access_token}"
-                    async with self._session.request(
-                        method, url, headers=headers, params=params, json=json_data
-                    ) as retry_response:
+                        async with self._session.request(
+                            method,
+                            url,
+                            headers=headers,
+                            params=params,
+                            json=json_data,
+                            timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
+                        ) as retry_response:
                         if retry_response.status == 401:
                             raise OstromAuthError("Authentication failed after refresh")
                         retry_response.raise_for_status()
@@ -240,6 +279,15 @@ class OstromApiClient:
 
                 return await response.json()
 
+        except ClientConnectorError as err:
+            LOGGER.error("Network connection error: %s", err)
+            raise OstromApiError(f"Network error: {err}") from err
+        except asyncio.TimeoutError as err:
+            LOGGER.error("Request timeout: %s", err)
+            raise OstromApiError("Request timeout") from err
+        except ClientResponseError as err:
+            LOGGER.error("HTTP error: %s - %s", err.status, err.message)
+            raise OstromApiError(f"HTTP error {err.status}: {err.message}") from err
         except aiohttp.ClientError as err:
             LOGGER.error("Connection error: %s", err)
             raise OstromApiError(f"Connection error: {err}") from err
@@ -283,7 +331,13 @@ class OstromApiClient:
 
         result = await self._async_request("GET", ENDPOINT_SPOT_PRICES, params=params)
 
-        data = result.get("data", [])
+        data = result.get("data")
+        if data is None:
+            LOGGER.error("Spot prices response missing 'data' field")
+            raise OstromApiError("Invalid response structure: missing data")
+        if not isinstance(data, list):
+            LOGGER.error("Spot prices response 'data' is not a list: %s", type(data))
+            raise OstromApiError("Invalid response structure: data is not a list")
 
         # Add calculated total_price for each entry
         # total_price = (grossKwhPrice + grossKwhTaxAndLevies) / 100  -> EUR/kWh
@@ -295,11 +349,7 @@ class OstromApiClient:
 
             # Also store net values in EUR/kWh for convenience
             entry["net_price"] = entry.get("netKwhPrice", 0) / 100
-            entry["taxes_price"] = (
-                entry.get("netKwhTaxAndLevies", 0)
-                + entry.get("grossKwhTaxAndLevies", 0)
-                - entry.get("netKwhTaxAndLevies", 0)
-            ) / 100
+            entry["taxes_price"] = entry.get("grossKwhTaxAndLevies", 0) / 100
 
         LOGGER.debug("Retrieved %d spot price entries", len(data))
 
@@ -339,7 +389,13 @@ class OstromApiClient:
 
         result = await self._async_request("GET", path, params=params)
 
-        data = result.get("data", [])
+        data = result.get("data")
+        if data is None:
+            LOGGER.error("Consumption response missing 'data' field")
+            raise OstromApiError("Invalid response structure: missing data")
+        if not isinstance(data, list):
+            LOGGER.error("Consumption response 'data' is not a list: %s", type(data))
+            raise OstromApiError("Invalid response structure: data is not a list")
 
         LOGGER.debug("Retrieved %d consumption entries", len(data))
 
