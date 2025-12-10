@@ -13,6 +13,7 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
+    OptionsFlow,
 )
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -39,6 +40,12 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Ostrom Advanced."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> "OstromAdvancedOptionsFlow":
+        """Get the options flow for this handler."""
+        return OstromAdvancedOptionsFlow(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -170,4 +177,61 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
 
         # This will authenticate and make a test API call
         await client.async_test_connection()
+
+
+class OstromAdvancedOptionsFlow(OptionsFlow):
+    """Handle options for Ostrom Advanced."""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle options flow.
+
+        Allows users to modify polling intervals.
+        """
+        if user_input is not None:
+            # Wenn Häkchen entfernt wurde (Feld nicht vorhanden oder None), verwende Default-Werte
+            if (
+                CONF_POLL_INTERVAL_MINUTES not in user_input
+                or user_input.get(CONF_POLL_INTERVAL_MINUTES) is None
+            ):
+                user_input[CONF_POLL_INTERVAL_MINUTES] = DEFAULT_POLL_INTERVAL_MINUTES
+
+            if (
+                CONF_CONSUMPTION_INTERVAL_MINUTES not in user_input
+                or user_input.get(CONF_CONSUMPTION_INTERVAL_MINUTES) is None
+            ):
+                user_input[CONF_CONSUMPTION_INTERVAL_MINUTES] = (
+                    DEFAULT_CONSUMPTION_INTERVAL_MINUTES
+                )
+
+            return self.async_create_entry(title="", data=user_input)
+
+        # Get current values
+        current_poll = self.config_entry.options.get(
+            CONF_POLL_INTERVAL_MINUTES, DEFAULT_POLL_INTERVAL_MINUTES
+        )
+        current_consumption = self.config_entry.options.get(
+            CONF_CONSUMPTION_INTERVAL_MINUTES, DEFAULT_CONSUMPTION_INTERVAL_MINUTES
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_POLL_INTERVAL_MINUTES,
+                        default=current_poll,
+                    ): vol.All(vol.Coerce(int), vol.Range(min=5, max=120)),
+                    vol.Optional(
+                        CONF_CONSUMPTION_INTERVAL_MINUTES,
+                        default=current_consumption,
+                    ): vol.All(vol.Coerce(int), vol.Range(min=15, max=1440)),
+                }
+            ),
+        )
 
