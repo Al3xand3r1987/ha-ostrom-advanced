@@ -18,7 +18,7 @@
           "client_id": "OAuth2 Client ID aus dem Ostrom Developer Portal",
           "client_secret": "OAuth2 Client Secret aus dem Ostrom Developer Portal",
           "zip_code": "Deutsche Postleitzahl deines Standorts (z.B. 10115)",
-          "contract_id": "Deine Ostrom Vertragsnummer (optional, nur für Verbrauchstracking benötigt)"
+          "contract_id": "Deine Ostrom Vertragsnummer (optional, nur für Verbrauchstracking benötigt)",
           "poll_interval_minutes": "Wie oft Preisdaten abgefragt werden (5-120 Minuten)",
           "consumption_interval_minutes": "Wie oft Verbrauchsdaten abgefragt werden (15-1440 Minuten)"
         }
