@@ -7,6 +7,30 @@
 
 Eine benutzerdefinierte Home Assistant Integration für [Ostrom](https://www.ostrom.de/) dynamische Stromtarife in Deutschland. Diese Integration bietet Echtzeit-Strompreise, Verbrauchsdaten und berechnete Kosten für die Automatisierung Ihres Energieverbrauchs.
 
+### Unterstützung / Buy Me a Coffee ☕
+
+Dieses Projekt entsteht in meiner Freizeit.  
+Wenn dir die Ostrom Advanced Integration hilft und du mich unterstützen möchtest, kannst du mir hier freiwillig einen „Coffee" spendieren:
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/alexanderb8k)
+
+Unterstützung ist komplett optional, die Integration bleibt natürlich kostenlos und open source.
+
+---
+### Unterstützung & Ostrom Bonus (optional)
+
+> 💡 **Hinweis:** Dieses Projekt ist ein privates Open-Source-Projekt und steht in keiner offiziellen Beziehung zur Ostrom GmbH. Wenn dir die Integration hilft und du Ostrom-Neukund:in werden möchtest, kannst du das Ostrom-Empfehlungsprogramm nutzen und dabei auch mich unterstützen.
+
+- Ostrom bietet aktuell ein Empfehlungsprogramm mit Bonus für Neukund:innen  
+  (z. B. Rechnungs­gutschrift oder Guthaben für den Ostrom Store – Details stehen auf der Ostrom-Webseite).
+- Alle Konditionen, Bonusbeträge und Auszahlungen werden ausschließlich von Ostrom geregelt.
+- Die Integration funktioniert vollständig, auch wenn du kein Empfehlungsprogramm nutzt.
+
+👉 Wenn du mich unterstützen möchtest, kannst du dich gern bei mir melden (z. B. über GitHub Issues).  
+Ich teile dir dann einen persönlichen Empfehlungscode mit, sofern er verfügbar und gültig ist.  
+Ich prüfe den Code nicht vor jeder Nutzung, daher kann es vorkommen, dass er künftig nicht mehr akzeptiert wird.
+---
+
 ## Funktionen
 
 - **Echtzeit-Strompreise**: Aktuelle All-in-Strompreise (inklusive Steuern und Abgaben)
