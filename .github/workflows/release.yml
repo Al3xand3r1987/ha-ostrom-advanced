@@ -17,12 +17,70 @@ jobs:
         with:
           fetch-depth: 0  # Vollständige Git-Historie für Release Notes
 
-      - name: Release Drafter
-        uses: release-drafter/release-drafter@v6
+      - name: Get previous tag
+        id: previous_tag
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # Fallback: Erster Commit, wenn kein vorheriger Tag existiert
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREVIOUS_TAG"
+
+      - name: Generate release notes from commits
+        id: release_notes
+        run: |
+          CURRENT_TAG="${{ github.ref_name }}"
+          PREVIOUS_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
+          
+          echo "Generating release notes from $PREVIOUS_TAG to $CURRENT_TAG"
+          
+          # Kategorisiere Commits nach Conventional Commits
+          FEATURES=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(feat|feature):" | sed 's/^-\s*\(feat\|feature\):/-/' || echo "")
+          FIXES=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(fix|bug):" | sed 's/^-\s*\(fix\|bug\):/-/' || echo "")
+          DOCS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*docs:" | sed 's/^-\s*docs:/-/' || echo "")
+          CHORES=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(chore|refactor):" | sed 's/^-\s*\(chore\|refactor\):/-/' || echo "")
+          OTHER=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges | grep -vE "^-\s*(feat|feature|fix|bug|docs|chore|refactor):" || echo "")
+          
+          # Baue Release Notes zusammen
+          {
+            echo 'notes<<EOF'
+            if [ -n "$FEATURES" ]; then
+              echo "## 🚀 New Features"
+              echo "$FEATURES"
+              echo ""
+            fi
+            if [ -n "$FIXES" ]; then
+              echo "## 🐛 Bug Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+            if [ -n "$DOCS" ]; then
+              echo "## 📝 Documentation"
+              echo "$DOCS"
+              echo ""
+            fi
+            if [ -n "$CHORES" ]; then
+              echo "## 🔧 Maintenance"
+              echo "$CHORES"
+              echo ""
+            fi
+            if [ -n "$OTHER" ]; then
+              echo "## 📦 Other Changes"
+              echo "$OTHER"
+            fi
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ostrom Advanced ${{ github.ref_name }}
+          body: |
+            ${{ steps.release_notes.outputs.notes }}
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          publish: true  # Release automatisch veröffentlichen
-          tag: ${{ github.ref_name }}  # Tag-Name (z.B. v0.2.0)
-          name: Ostrom Advanced ${{ github.ref_name }}  # Release-Name
-
