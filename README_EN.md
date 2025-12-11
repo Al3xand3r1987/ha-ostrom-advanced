@@ -131,8 +131,9 @@ The integration provides comprehensive sensors for price monitoring, consumption
 |--------|-------------|--------|------|
 | `binary_sensor.ostrom_cheapest_3h_block_today_active` | Cheapest 3h block today active | On/Off | 🔄 |
 | `binary_sensor.ostrom_cheapest_3h_block_tomorrow_active` | Cheapest 3h block tomorrow active | On/Off | 🔄 |
+| `binary_sensor.ostrom_cheapest_4h_block_today_active` | Cheapest 4h block today active | On/Off | 🔄 |
 
-**Note**: The binary sensors show "On" when the current time is within the cheapest 3-hour block, otherwise "Off". They include attributes with the block's start and end time.
+**Note**: The binary sensors show "On" when the current time is within the cheapest 3-hour or 4-hour block, otherwise "Off". They include attributes with the block's start and end time.
 
 ### Raw Price Sensor Attributes
 

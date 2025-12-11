@@ -37,6 +37,7 @@ Eine umfassende Home Assistant Integration für Ostrom dynamische Stromtarife in
 ### Binärsensoren
 - **Günstigster 3h-Block Heute**: Zeigt "Ein" wenn der Block aktiv ist, sonst "Aus"
 - **Günstigster 3h-Block Morgen**: Zeigt "Ein" wenn der Block aktiv ist, sonst "Aus"
+- **Günstigster 4h-Block Heute**: Zeigt "Ein" wenn der Block aktiv ist, sonst "Aus"
 
 ### Verbrauch & Kosten (Erfordert Vertrags-ID)
 - Tägliche Energieverbrauchserfassung

@@ -118,6 +118,9 @@
       },
       "cheapest_3h_block_tomorrow_active": {
         "name": "Günstigster 3h-Block Morgen"
+      },
+      "cheapest_4h_block_today_active": {
+        "name": "Günstigster 4h-Block Heute"
       }
     }
   }

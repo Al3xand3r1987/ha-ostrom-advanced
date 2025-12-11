@@ -46,6 +46,25 @@ def _get_cheapest_3h_block(slots: list[dict[str, Any]]) -> datetime | None:
     return best_start
 
 
+def _get_cheapest_4h_block(slots: list[dict[str, Any]]) -> datetime | None:
+    """Get start time of cheapest 4-hour block from slots."""
+    if len(slots) < 4:
+        return None
+
+    # Find the 4-hour block with lowest average price
+    min_avg = float("inf")
+    best_start = None
+
+    for i in range(len(slots) - 3):
+        block = slots[i : i + 4]
+        avg_price = sum(s.get("total_price", 0) for s in block) / 4
+        if avg_price < min_avg:
+            min_avg = avg_price
+            best_start = block[0].get("start")
+
+    return best_start
+
+
 def _is_cheapest_3h_block_active(
     slots: list[dict[str, Any]], now: datetime
 ) -> tuple[bool, datetime | None, datetime | None]:
@@ -71,6 +90,31 @@ def _is_cheapest_3h_block_active(
     return (is_active, block_start, block_end)
 
 
+def _is_cheapest_4h_block_active(
+    slots: list[dict[str, Any]], now: datetime
+) -> tuple[bool, datetime | None, datetime | None]:
+    """Check if current time is within the cheapest 4-hour block.
+
+    Args:
+        slots: List of price slots for today or tomorrow
+        now: Current datetime
+
+    Returns:
+        Tuple of (is_active, block_start, block_end)
+    """
+    block_start = _get_cheapest_4h_block(slots)
+    if not block_start:
+        return (False, None, None)
+
+    # Calculate end time (start + 4 hours)
+    block_end = block_start + timedelta(hours=4)
+
+    # Check if current time is within the block
+    is_active = block_start <= now < block_end
+
+    return (is_active, block_start, block_end)
+
+
 def _is_today_cheapest_3h_block_active(data: dict[str, Any]) -> tuple[bool, dict[str, Any] | None]:
     """Check if today's cheapest 3-hour block is currently active.
 
@@ -80,6 +124,26 @@ def _is_today_cheapest_3h_block_active(data: dict[str, Any]) -> tuple[bool, dict
     now = dt_util.now()
     today_slots = data.get("today_slots", [])
     is_active, block_start, block_end = _is_cheapest_3h_block_active(today_slots, now)
+
+    attrs = None
+    if block_start:
+        attrs = {
+            "block_start": block_start.isoformat(),
+            "block_end": block_end.isoformat() if block_end else None,
+        }
+
+    return (is_active, attrs)
+
+
+def _is_today_cheapest_4h_block_active(data: dict[str, Any]) -> tuple[bool, dict[str, Any] | None]:
+    """Check if today's cheapest 4-hour block is currently active.
+
+    Returns:
+        Tuple of (is_active, attributes_dict)
+    """
+    now = dt_util.now()
+    today_slots = data.get("today_slots", [])
+    is_active, block_start, block_end = _is_cheapest_4h_block_active(today_slots, now)
 
     attrs = None
     if block_start:
@@ -141,6 +205,11 @@ BINARY_SENSORS: tuple[BinarySensorEntityDescription, ...] = (
     BinarySensorEntityDescription(
         key="cheapest_3h_block_tomorrow_active",
         translation_key="cheapest_3h_block_tomorrow_active",
+        device_class=BinarySensorDeviceClass.POWER,
+    ),
+    BinarySensorEntityDescription(
+        key="cheapest_4h_block_today_active",
+        translation_key="cheapest_4h_block_today_active",
         device_class=BinarySensorDeviceClass.POWER,
     ),
 )
@@ -220,6 +289,9 @@ class OstromCheapest3hBlockBinarySensor(
         elif self.entity_description.key == "cheapest_3h_block_tomorrow_active":
             is_active, _ = _is_tomorrow_cheapest_3h_block_active(self.coordinator.data)
             return is_active
+        elif self.entity_description.key == "cheapest_4h_block_today_active":
+            is_active, _ = _is_today_cheapest_4h_block_active(self.coordinator.data)
+            return is_active
 
         return None
 
@@ -241,6 +313,9 @@ class OstromCheapest3hBlockBinarySensor(
             return attrs
         elif self.entity_description.key == "cheapest_3h_block_tomorrow_active":
             _, attrs = _is_tomorrow_cheapest_3h_block_active(self.coordinator.data)
+            return attrs
+        elif self.entity_description.key == "cheapest_4h_block_today_active":
+            _, attrs = _is_today_cheapest_4h_block_active(self.coordinator.data)
             return attrs
 
         return None

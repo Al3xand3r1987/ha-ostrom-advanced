@@ -131,8 +131,9 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 |---------|--------------|--------|------|
 | `binary_sensor.ostrom_cheapest_3h_block_today_active` | Günstigster 3h-Block heute aktiv | Ein/Aus | 🔄 |
 | `binary_sensor.ostrom_cheapest_3h_block_tomorrow_active` | Günstigster 3h-Block morgen aktiv | Ein/Aus | 🔄 |
+| `binary_sensor.ostrom_cheapest_4h_block_today_active` | Günstigster 4h-Block heute aktiv | Ein/Aus | 🔄 |
 
-**Hinweis**: Die Binärsensoren zeigen "Ein" (ON), wenn die aktuelle Zeit innerhalb des günstigsten 3-Stunden-Blocks liegt, sonst "Aus" (OFF). Sie enthalten Attribute mit Start- und Endzeit des Blocks.
+**Hinweis**: Die Binärsensoren zeigen "Ein" (ON), wenn die aktuelle Zeit innerhalb des günstigsten 3-Stunden- bzw. 4-Stunden-Blocks liegt, sonst "Aus" (OFF). Sie enthalten Attribute mit Start- und Endzeit des Blocks.
 
 ### Raw-Preis-Sensor Attribute
 
