@@ -378,14 +378,12 @@ Die Integration verwendet generische Hilfsfunktionen zur Berechnung von Statisti
 #### 3-Stunden-Block-Berechnung
 
 **Praktischer Nutzen des 3-Stunden-Blocks**  
-Viele Verbraucher brauchen keinen einzelnen Billig-Peak, sondern einen stabilen Zeitraum, in dem Geräte durchlaufen können. Typische Beispiele sind Wärmepumpen, Pufferspeicher, Waschmaschine, Trockner oder Spülmaschine.  
+Bei Wärmepumpen ist ein zusammenhängender Zeitraum mit stabil niedrigen Strompreisen wichtiger als einzelne kurze Preistiefs. Häufiges Ein und Aus führt zu unerwünschter Kompressor Taktung und erhöht den Verschleiß.  
 
-Kurzzeitiges An und Aus führt bei vielen Geräten zu unerwünschtem Takten, höherem Verschleiß und teilweise Fehlermeldungen. Der günstigste 3-Stunden-Block liefert deshalb ein zusammenhängendes Zeitfenster mit niedrigen Preisen, in dem
+Der günstigste 3-Stunden-Block liefert deshalb ein durchgehendes Zeitfenster mit niedrigen Preisen, in dem
 
-- Wärmepumpen gezielt vorheizen oder den Pufferspeicher laden
-- Haushaltsgeräte einmal gestartet und im günstigsten Block komplett durchlaufen
-
-So entsteht ein klar definierter Zeitraum, in dem Automatisierungen einfach „Block ein" und „Block aus" nutzen können, statt jede Stunde einzeln zu steuern.
+- die Wärmepumpe gezielt durchlaufen kann, zum Beispiel zum Aufheizen oder zum Laden eines Speichers  
+- andere Haushaltsgeräte gezielt innerhalb dieses Blocks gestartet werden können
 
 Der günstigste 3-Stunden-Block verwendet einen **gleitendes Fenster**-Algorithmus:
 1. Alle möglichen 3-Stunden-Fenster werden ausgewertet
