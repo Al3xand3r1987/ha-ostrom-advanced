@@ -105,5 +105,9 @@ automation:
 - Generische Berechnungsfunktionen gewährleisten konsistente Ergebnisse
 - Sensoren für morgen werden als `unavailable` angezeigt, bis Day-Ahead-Preise veröffentlicht werden (typischerweise nach 13:00 MEZ)
 - Vertrags-ID ist optional - Preissensoren funktionieren ohne sie
+- **Konfigurierbare Intervalle**: Preis- und Verbrauchs-Aktualisierungsintervalle können individuell angepasst werden
+- **Synchronisierte Updates**: Update-Offset ermöglicht konstante Update-Zeiten ohne Drift
+- **Optionen später änderbar**: Konfiguration kann jederzeit über Einstellungen → Geräte & Dienste → Optionen geändert werden, ohne Neuinstallation
+- **Verbrauchsdaten**: Verbrauchsdaten sind optional und erfordern stündliche Messwerte von Ostrom (typischerweise Smart Meter mit Gateway), sonst bleiben die Sensoren `unknown`
 
 Für vollständige Dokumentation und weitere Automatisierungsbeispiele siehe die [README](https://github.com/Al3xand3r1987/ha-ostrom-advanced).
