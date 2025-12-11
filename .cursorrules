@@ -43,6 +43,8 @@ Always use Conventional Commit prefixes for all commits in this repository:
 
 ## Release Workflow
 
+**Detaillierte Dokumentation**: Siehe `.cursor/RELEASE_WORKFLOW.md` für eine vollständige Anleitung zum Release-Workflow mit dem Cursor AI Agent.
+
 Before creating a release:
 
 1. **Update version in manifest.json**: Change the `"version"` field in `custom_components/ostrom_advanced/manifest.json` from `X.Y.Z` to the new version
@@ -51,6 +53,8 @@ Before creating a release:
 4. **Push tag to GitHub**: Push the tag to the remote repository (e.g., `git push origin v0.2.0`)
 
 **Note**: GitHub Actions and release tooling will handle the rest (creating GitHub releases, publishing to HACS, etc.). Do not re-implement release logic inside `.cursorrules`.
+
+**Wichtig**: Der Cursor AI Agent erstellt nur dann ein Release, wenn explizit "Release" im Befehl erwähnt wird. Normale Commits (ohne "Release") werden nur gesammelt, ohne dass ein Release erstellt wird.
 
 ## AI Behavior in This Repository
 

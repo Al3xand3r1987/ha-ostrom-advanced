@@ -479,10 +479,6 @@ Verbrauchssensoren werden angelegt, wenn eine Vertrags-ID konfiguriert ist. Sie 
 
 **Hinweis**: Wenn keine der Voraussetzungen erfüllt ist, bleiben die Sensoren auf `unknown`/`unavailable`. Das ist erwartetes Verhalten. Sobald Ostrom Verbrauchsdaten liefert, werden die Werte automatisch bei den nächsten Updates sichtbar.
 
-## Release-Workflow
-
-Für Entwickler: Informationen zum Release-Workflow, Commit-Konventionen und wie Releases erstellt werden, finden Sie in [RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md).
-
 ## Mitwirken
 
 Beiträge sind willkommen! Bitte:

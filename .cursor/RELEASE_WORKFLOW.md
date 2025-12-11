@@ -1,6 +1,8 @@
-# Release Workflow - Ostrom Advanced
+# Release Workflow - Ostrom Advanced (Cursor AI Agent)
 
-Diese Dokumentation erklärt, wie Releases für Ostrom Advanced erstellt werden und wann der Cursor AI Agent aktiv wird.
+Diese Dokumentation erklärt, wie Releases für Ostrom Advanced mit dem **Cursor AI Agent** erstellt werden. Diese Anleitung ist speziell für die Verwendung mit dem Cursor AI Agent gedacht.
+
+**Hinweis für manuelle Releases:** Falls du Releases ohne den Cursor AI Agent erstellen möchtest, siehe die Entwickler-Dokumentation im `.dev/` Verzeichnis (falls vorhanden).
 
 ## Übersicht
 
@@ -190,6 +192,8 @@ $body = @{ tag_name = "v0.4.0"; name = "Ostrom Advanced v0.4.0"; draft = $false;
 Invoke-RestMethod -Uri "https://api.github.com/repos/Al3xand3r1987/ha-ostrom-advanced/releases" -Method Post -Headers $headers -Body $body -ContentType "application/json"
 ```
 
+**Hinweis:** Der Cursor AI Agent kann das GitHub Release automatisch erstellen, wenn ein GitHub Token konfiguriert ist.
+
 ## Commit-Message Konventionen
 
 **Wichtig**: Verwende immer Conventional Commits, damit die Release Notes korrekt kategorisiert werden:
@@ -313,4 +317,10 @@ Tag 4: "Erstelle ein Release für Version 0.4.0"
 - Prüfe die GitHub Actions Logs: https://github.com/Al3xand3r1987/ha-ostrom-advanced/actions
 - Stelle sicher, dass der Tag existiert und gepusht wurde
 - Stelle sicher, dass es Commits zwischen den Tags gibt
+
+## Weitere Informationen
+
+- **Cursor AI Agent**: Diese Dokumentation ist speziell für die Verwendung mit dem Cursor AI Agent
+- **Manuelle Releases**: Für manuelle Release-Prozesse siehe die Entwickler-Dokumentation (falls vorhanden)
+- **Aktuelle Version**: Prüfe die aktuelle Version in `custom_components/ostrom_advanced/manifest.json`
 
