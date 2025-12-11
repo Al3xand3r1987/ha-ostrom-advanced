@@ -169,6 +169,43 @@ def _get_tomorrow_cheapest_3h_block(data: dict[str, Any]) -> datetime | None:
     return _get_cheapest_3h_block(data.get("tomorrow_slots", []))
 
 
+def _get_price_now_attributes(data: dict[str, Any]) -> dict[str, Any]:
+    """Get attributes for the price_now sensor with total_price data for time series."""
+    attrs: dict[str, Any] = {}
+    
+    # Serialize today's total_price data for time series
+    today_prices = []
+    for slot in data.get("today_slots", []):
+        start = slot.get("start")
+        if start:
+            today_prices.append({
+                "timestamp": start.isoformat(),
+                "total_price": round(slot.get("total_price", 0), 5),
+            })
+    
+    if today_prices:
+        attrs["today_total_prices"] = today_prices
+    
+    # Serialize tomorrow's total_price data for time series (if available)
+    tomorrow_prices = []
+    for slot in data.get("tomorrow_slots", []):
+        start = slot.get("start")
+        if start:
+            tomorrow_prices.append({
+                "timestamp": start.isoformat(),
+                "total_price": round(slot.get("total_price", 0), 5),
+            })
+    
+    if tomorrow_prices:
+        attrs["tomorrow_total_prices"] = tomorrow_prices
+    
+    # Add last update timestamp
+    if data.get("last_update"):
+        attrs["last_update"] = data.get("last_update").isoformat()
+    
+    return attrs
+
+
 def _get_raw_price_attributes(data: dict[str, Any]) -> dict[str, Any]:
     """Get attributes for the raw price sensor."""
     current_slot = data.get("current_slot")
@@ -229,6 +266,7 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=5,
         value_fn=_get_current_price,
+        extra_state_attributes_fn=_get_price_now_attributes,
         icon="mdi:flash",
     ),
     OstromSensorEntityDescription(

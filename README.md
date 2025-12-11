@@ -77,7 +77,7 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 | Entität | Beschreibung | Einheit | Icon |
 |---------|--------------|---------|------|
 | `sensor.ostrom_spot_prices_raw` | Aktueller All-in-Preis mit detaillierten Attributen (enthält alle stündlichen Slots) | €/kWh | ⚡ |
-| `sensor.ostrom_price_now` | Aktueller stündlicher All-in-Preis | €/kWh | ⚡ |
+| `sensor.ostrom_price_now` | Aktueller stündlicher All-in-Preis mit Zeitreihen-Attributen für Charts (z.B. Apex Charts) | €/kWh | ⚡ |
 
 #### Preisstatistiken für Heute
 | Entität | Beschreibung | Einheit | Icon |
@@ -148,6 +148,20 @@ Jeder Slot enthält:
 - `net_price`: Nettopreis ohne MwSt. (€/kWh)
 - `taxes_price`: Steuern und Abgaben (€/kWh)
 - `total_price`: Gesamt All-in-Preis (€/kWh)
+
+### Aktueller Preis-Sensor Attribute (für Zeitreihen)
+
+Die Entität `sensor.ostrom_price_now` enthält speziell für Zeitreihen-Darstellungen optimierte Attribute:
+
+- `today_total_prices`: Liste der Endpreise (total_price) für heute mit Timestamps
+- `tomorrow_total_prices`: Liste der Endpreise (total_price) für morgen mit Timestamps (wenn verfügbar)
+- `last_update`: Zeitstempel der letzten Datenaktualisierung
+
+Jeder Eintrag in den Preislisten enthält:
+- `timestamp`: Zeitstempel im ISO-Format (z.B. "2024-01-15T10:00:00+01:00")
+- `total_price`: Gesamt All-in-Preis (€/kWh)
+
+Diese Attribute sind ideal für die Verwendung mit Chart-Bibliotheken wie **Apex Charts**, um Preisdaten für die Zukunft (heute und morgen) visuell darzustellen. Die Daten sind bereits im richtigen Format für Zeitreihen-Diagramme aufbereitet.
 
 ## Automatisierungsbeispiele
 

@@ -77,7 +77,7 @@ The integration provides comprehensive sensors for price monitoring, consumption
 | Entity | Description | Unit | Icon |
 |--------|-------------|------|------|
 | `sensor.ostrom_spot_prices_raw` | Current all-in price with detailed attributes (includes all hourly slots) | €/kWh | ⚡ |
-| `sensor.ostrom_price_now` | Current hourly all-in price | €/kWh | ⚡ |
+| `sensor.ostrom_price_now` | Current hourly all-in price with time series attributes for charts (e.g., Apex Charts) | €/kWh | ⚡ |
 
 #### Today's Price Statistics
 | Entity | Description | Unit | Icon |
@@ -148,6 +148,20 @@ Each slot contains:
 - `net_price`: Net price without VAT (€/kWh)
 - `taxes_price`: Taxes and levies (€/kWh)
 - `total_price`: Total all-in price (€/kWh)
+
+### Current Price Sensor Attributes (for Time Series)
+
+The `sensor.ostrom_price_now` entity includes attributes optimized for time series visualizations:
+
+- `today_total_prices`: List of total prices (total_price) for today with timestamps
+- `tomorrow_total_prices`: List of total prices (total_price) for tomorrow with timestamps (if available)
+- `last_update`: Last data update timestamp
+
+Each entry in the price lists contains:
+- `timestamp`: Timestamp in ISO format (e.g., "2024-01-15T10:00:00+01:00")
+- `total_price`: Total all-in price (€/kWh)
+
+These attributes are ideal for use with chart libraries like **Apex Charts** to visually display price data for the future (today and tomorrow). The data is already formatted correctly for time series charts.
 
 ## Automation Examples
 
