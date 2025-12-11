@@ -1,10 +1,11 @@
 """Data coordinators for the Ostrom Advanced integration."""
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timedelta
 from typing import Any
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
@@ -12,6 +13,7 @@ from .api import OstromApiClient, OstromApiError, OstromAuthError
 from .const import (
     DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
     DEFAULT_POLL_INTERVAL_MINUTES,
+    DEFAULT_UPDATE_OFFSET_SECONDS,
     DOMAIN,
     LOGGER,
     RESOLUTION_HOUR,
@@ -32,6 +34,7 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         hass: HomeAssistant,
         client: OstromApiClient,
         poll_interval_minutes: int = DEFAULT_POLL_INTERVAL_MINUTES,
+        update_offset_seconds: int = DEFAULT_UPDATE_OFFSET_SECONDS,
     ) -> None:
         """Initialize the price coordinator.
 
@@ -39,14 +42,98 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             hass: Home Assistant instance
             client: Ostrom API client
             poll_interval_minutes: Polling interval in minutes
+            update_offset_seconds: Seconds after full interval to trigger update
         """
         super().__init__(
             hass,
             LOGGER,
             name=f"{DOMAIN}_price",
-            update_interval=timedelta(minutes=poll_interval_minutes),
+            update_interval=None,  # We handle scheduling manually
         )
         self._client = client
+        self._poll_interval_minutes = poll_interval_minutes
+        self._update_offset_seconds = update_offset_seconds
+        self._update_timer: asyncio.TimerHandle | None = None
+
+    def _calculate_next_update_time(
+        self, interval_minutes: int, offset_seconds: int
+    ) -> datetime:
+        """Calculate the next update time based on interval and offset.
+
+        Example: With 15-minute interval and 15-second offset:
+        - Currently 10:07:30 → Next update: 10:15:15
+        - Currently 10:15:20 → Next update: 10:30:15
+        - Currently 10:00:00 → Next update: 10:00:15
+        - Currently 10:00:20 → Next update: 10:15:15
+
+        Args:
+            interval_minutes: Update interval in minutes
+            offset_seconds: Seconds after full interval to trigger update
+
+        Returns:
+            Next update datetime
+        """
+        now = dt_util.now()
+        # Calculate minutes past the hour
+        minutes_past_hour = now.minute
+
+        # Find which interval we're in
+        interval_count = minutes_past_hour // interval_minutes
+        interval_start_minute = interval_count * interval_minutes
+        interval_start_time = now.replace(
+            minute=interval_start_minute, second=offset_seconds, microsecond=0
+        )
+
+        # If we're before the offset time of the current interval, use current interval
+        if now < interval_start_time:
+            next_time = interval_start_time
+        else:
+            # Otherwise, use next interval
+            next_minute = interval_start_minute + interval_minutes
+            if next_minute >= 60:
+                next_time = now.replace(
+                    hour=now.hour + 1,
+                    minute=0,
+                    second=offset_seconds,
+                    microsecond=0,
+                )
+            else:
+                next_time = now.replace(
+                    minute=next_minute, second=offset_seconds, microsecond=0
+                )
+
+        return next_time
+
+    @callback
+    def _schedule_next_update(self) -> None:
+        """Schedule the next update based on interval and offset."""
+        # Cancel existing timer if any
+        if self._update_timer:
+            self._update_timer.cancel()
+
+        # Calculate next update time
+        next_update = self._calculate_next_update_time(
+            self._poll_interval_minutes, self._update_offset_seconds
+        )
+        now = dt_util.now()
+        delay_seconds = (next_update - now).total_seconds()
+
+        # If delay is negative or very small, schedule for next interval
+        if delay_seconds < 1:
+            # Add one interval to get the next one
+            next_update = next_update + timedelta(minutes=self._poll_interval_minutes)
+            delay_seconds = (next_update - now).total_seconds()
+
+        LOGGER.debug(
+            "Scheduling next price update at %s (in %.1f seconds)",
+            next_update,
+            delay_seconds,
+        )
+
+        # Schedule the update
+        self._update_timer = self.hass.loop.call_later(
+            delay_seconds, lambda: self.hass.async_create_task(self.async_request_refresh())
+        )
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch price data from the API.
@@ -128,21 +215,32 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 len(tomorrow_slots),
             )
 
-            return {
+            result = {
                 "today_slots": today_slots,
                 "tomorrow_slots": tomorrow_slots,
                 "current_slot": current_slot,
                 "last_update": now,
             }
 
+            # Schedule next update
+            self._schedule_next_update()
+
+            return result
+
         except OstromAuthError as err:
             LOGGER.error("Authentication error fetching prices: %s", err)
+            # Schedule next update even on error
+            self._schedule_next_update()
             raise UpdateFailed(f"Authentication error: {err}") from err
         except OstromApiError as err:
             LOGGER.error("API error fetching prices: %s", err)
+            # Schedule next update even on error
+            self._schedule_next_update()
             raise UpdateFailed(f"API error: {err}") from err
         except Exception as err:
             LOGGER.error("Unexpected error fetching prices: %s", err)
+            # Schedule next update even on error
+            self._schedule_next_update()
             raise UpdateFailed(f"Unexpected error: {err}") from err
 
 
@@ -159,6 +257,7 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         hass: HomeAssistant,
         client: OstromApiClient,
         poll_interval_minutes: int = DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
+        update_offset_seconds: int = DEFAULT_UPDATE_OFFSET_SECONDS,
     ) -> None:
         """Initialize the consumption coordinator.
 
@@ -166,14 +265,98 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             hass: Home Assistant instance
             client: Ostrom API client
             poll_interval_minutes: Polling interval in minutes
+            update_offset_seconds: Seconds after full interval to trigger update
         """
         super().__init__(
             hass,
             LOGGER,
             name=f"{DOMAIN}_consumption",
-            update_interval=timedelta(minutes=poll_interval_minutes),
+            update_interval=None,  # We handle scheduling manually
         )
         self._client = client
+        self._poll_interval_minutes = poll_interval_minutes
+        self._update_offset_seconds = update_offset_seconds
+        self._update_timer: asyncio.TimerHandle | None = None
+
+    def _calculate_next_update_time(
+        self, interval_minutes: int, offset_seconds: int
+    ) -> datetime:
+        """Calculate the next update time based on interval and offset.
+
+        Example: With 15-minute interval and 15-second offset:
+        - Currently 10:07:30 → Next update: 10:15:15
+        - Currently 10:15:20 → Next update: 10:30:15
+        - Currently 10:00:00 → Next update: 10:00:15
+        - Currently 10:00:20 → Next update: 10:15:15
+
+        Args:
+            interval_minutes: Update interval in minutes
+            offset_seconds: Seconds after full interval to trigger update
+
+        Returns:
+            Next update datetime
+        """
+        now = dt_util.now()
+        # Calculate minutes past the hour
+        minutes_past_hour = now.minute
+
+        # Find which interval we're in
+        interval_count = minutes_past_hour // interval_minutes
+        interval_start_minute = interval_count * interval_minutes
+        interval_start_time = now.replace(
+            minute=interval_start_minute, second=offset_seconds, microsecond=0
+        )
+
+        # If we're before the offset time of the current interval, use current interval
+        if now < interval_start_time:
+            next_time = interval_start_time
+        else:
+            # Otherwise, use next interval
+            next_minute = interval_start_minute + interval_minutes
+            if next_minute >= 60:
+                next_time = now.replace(
+                    hour=now.hour + 1,
+                    minute=0,
+                    second=offset_seconds,
+                    microsecond=0,
+                )
+            else:
+                next_time = now.replace(
+                    minute=next_minute, second=offset_seconds, microsecond=0
+                )
+
+        return next_time
+
+    @callback
+    def _schedule_next_update(self) -> None:
+        """Schedule the next update based on interval and offset."""
+        # Cancel existing timer if any
+        if self._update_timer:
+            self._update_timer.cancel()
+
+        # Calculate next update time
+        next_update = self._calculate_next_update_time(
+            self._poll_interval_minutes, self._update_offset_seconds
+        )
+        now = dt_util.now()
+        delay_seconds = (next_update - now).total_seconds()
+
+        # If delay is negative or very small, schedule for next interval
+        if delay_seconds < 1:
+            # Add one interval to get the next one
+            next_update = next_update + timedelta(minutes=self._poll_interval_minutes)
+            delay_seconds = (next_update - now).total_seconds()
+
+        LOGGER.debug(
+            "Scheduling next consumption update at %s (in %.1f seconds)",
+            next_update,
+            delay_seconds,
+        )
+
+        # Schedule the update
+        self._update_timer = self.hass.loop.call_later(
+            delay_seconds, lambda: self.hass.async_create_task(self.async_request_refresh())
+        )
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch consumption data from the API.
@@ -251,19 +434,30 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 len(today_data),
             )
 
-            return {
+            result = {
                 "yesterday": yesterday_data,
                 "today": today_data,
                 "last_update": now,
             }
 
+            # Schedule next update
+            self._schedule_next_update()
+
+            return result
+
         except OstromAuthError as err:
             LOGGER.error("Authentication error fetching consumption: %s", err)
+            # Schedule next update even on error
+            self._schedule_next_update()
             raise UpdateFailed(f"Authentication error: {err}") from err
         except OstromApiError as err:
             LOGGER.error("API error fetching consumption: %s", err)
+            # Schedule next update even on error
+            self._schedule_next_update()
             raise UpdateFailed(f"API error: {err}") from err
         except Exception as err:
             LOGGER.error("Unexpected error fetching consumption: %s", err)
+            # Schedule next update even on error
+            self._schedule_next_update()
             raise UpdateFailed(f"Unexpected error: {err}") from err
 

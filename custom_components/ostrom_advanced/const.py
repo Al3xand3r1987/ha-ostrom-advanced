@@ -19,10 +19,12 @@ CONF_CONTRACT_ID: Final = "contract_id"
 CONF_ZIP_CODE: Final = "zip_code"
 CONF_POLL_INTERVAL_MINUTES: Final = "poll_interval_minutes"
 CONF_CONSUMPTION_INTERVAL_MINUTES: Final = "consumption_interval_minutes"
+CONF_UPDATE_OFFSET_SECONDS: Final = "update_offset_seconds"
 
 # Default values
 DEFAULT_POLL_INTERVAL_MINUTES: Final = 15
 DEFAULT_CONSUMPTION_INTERVAL_MINUTES: Final = 60
+DEFAULT_UPDATE_OFFSET_SECONDS: Final = 15
 DEFAULT_TIMEOUT: Final = 30  # seconds for HTTP requests
 
 # Environment options

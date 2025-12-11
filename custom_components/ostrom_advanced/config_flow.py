@@ -26,9 +26,11 @@ from .const import (
     CONF_CONTRACT_ID,
     CONF_ENVIRONMENT,
     CONF_POLL_INTERVAL_MINUTES,
+    CONF_UPDATE_OFFSET_SECONDS,
     CONF_ZIP_CODE,
     DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
     DEFAULT_POLL_INTERVAL_MINUTES,
+    DEFAULT_UPDATE_OFFSET_SECONDS,
     DOMAIN,
     ENV_PRODUCTION,
     ENV_SANDBOX,
@@ -113,6 +115,10 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                                 CONF_CONSUMPTION_INTERVAL_MINUTES,
                                 DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
                             ),
+                            CONF_UPDATE_OFFSET_SECONDS: user_input.get(
+                                CONF_UPDATE_OFFSET_SECONDS,
+                                DEFAULT_UPDATE_OFFSET_SECONDS,
+                            ),
                         }
 
                         return self.async_create_entry(title=title, data=data, options=options)
@@ -137,6 +143,10 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_CONSUMPTION_INTERVAL_MINUTES,
                         default=DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
                     ): vol.All(vol.Coerce(int), vol.Range(min=15, max=1440)),
+                    vol.Optional(
+                        CONF_UPDATE_OFFSET_SECONDS,
+                        default=DEFAULT_UPDATE_OFFSET_SECONDS,
+                    ): vol.All(vol.Coerce(int), vol.Range(min=5, max=60)),
                 }
             ),
             errors=errors,
@@ -207,6 +217,13 @@ class OptionsFlowHandler(OptionsFlowWithReload):
                         DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
                     ),
                 ): vol.All(vol.Coerce(int), vol.Range(min=15, max=1440)),
+                vol.Optional(
+                    CONF_UPDATE_OFFSET_SECONDS,
+                    default=self.config_entry.options.get(
+                        CONF_UPDATE_OFFSET_SECONDS,
+                        DEFAULT_UPDATE_OFFSET_SECONDS,
+                    ),
+                ): vol.All(vol.Coerce(int), vol.Range(min=5, max=60)),
             }
         )
 
