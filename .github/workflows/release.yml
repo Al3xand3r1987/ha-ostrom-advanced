@@ -75,7 +75,20 @@ jobs:
             echo EOF
           } >> $GITHUB_OUTPUT
 
-      - name: Update Release
+      - name: Get existing release body
+        id: existing_body
+        run: |
+          EXISTING_BODY="${{ github.event.release.body }}"
+          if [ -n "$EXISTING_BODY" ] && [ "$EXISTING_BODY" != "null" ]; then
+            echo "has_existing_body=true" >> $GITHUB_OUTPUT
+            echo "Existing release notes found, keeping them"
+          else
+            echo "has_existing_body=false" >> $GITHUB_OUTPUT
+            echo "No existing release notes, will use generated ones"
+          fi
+
+      - name: Update Release (only if no existing notes)
+        if: steps.existing_body.outputs.has_existing_body == 'false'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.release.tag_name }}
@@ -86,3 +99,9 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Notes already exist
+        if: steps.existing_body.outputs.has_existing_body == 'true'
+        run: |
+          echo "Release notes were manually added, keeping them unchanged"
+          echo "Generated notes are available in the workflow logs for reference"
