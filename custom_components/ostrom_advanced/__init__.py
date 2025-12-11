@@ -13,9 +13,11 @@ from .const import (
     CONF_CONTRACT_ID,
     CONF_ENVIRONMENT,
     CONF_POLL_INTERVAL_MINUTES,
+    CONF_UPDATE_OFFSET_SECONDS,
     CONF_ZIP_CODE,
     DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
     DEFAULT_POLL_INTERVAL_MINUTES,
+    DEFAULT_UPDATE_OFFSET_SECONDS,
     DOMAIN,
     LOGGER,
     PLATFORMS,
@@ -49,6 +51,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     consumption_interval = entry.options.get(
         CONF_CONSUMPTION_INTERVAL_MINUTES, DEFAULT_CONSUMPTION_INTERVAL_MINUTES
     )
+    update_offset_seconds = entry.options.get(
+        CONF_UPDATE_OFFSET_SECONDS, DEFAULT_UPDATE_OFFSET_SECONDS
+    )
 
     # Use existing aiohttp session from Home Assistant
     session = async_get_clientsession(hass)
@@ -69,6 +74,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass=hass,
         client=client,
         poll_interval_minutes=poll_interval,
+        update_offset_seconds=update_offset_seconds,
     )
 
     # Consumption coordinator only if contract_id is provided
@@ -78,6 +84,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             hass=hass,
             client=client,
             poll_interval_minutes=consumption_interval,
+            update_offset_seconds=update_offset_seconds,
         )
 
     # Perform initial data fetch
