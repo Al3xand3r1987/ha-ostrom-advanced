@@ -39,6 +39,45 @@ git push
 
 **Der Agent wird NICHT automatisch aktiv**, wenn du nur committest. Du musst ihn **explizit beauftragen**, ein Release zu erstellen.
 
+### Was muss ich dem Agent sagen, damit nur Commits gemacht werden?
+
+Wenn du nur Änderungen committen möchtest, **ohne** ein Release zu erstellen, verwende diese Formulierungen:
+
+**Beispiele für nur Commits (kein Release):**
+- "Ändere X in Datei Y"
+- "Füge Feature Z hinzu"
+- "Korrigiere Bug in..."
+- "Aktuelliere die Dokumentation"
+- "Commit diese Änderungen"
+- "Push die Änderungen"
+- "Füge einen neuen Sensor hinzu"
+- "Korrigiere den Fehler in sensor.py"
+
+**Was passiert:**
+- ✅ Agent macht die Änderungen
+- ✅ Erstellt einen Commit (z.B. `feat: ...`, `fix: ...`, `docs: ...`)
+- ✅ Pusht zu GitHub
+- ❌ **Kein Release wird erstellt**
+- ✅ Commits werden gesammelt
+
+**Beispiel-Dialog:**
+```
+Du: "Füge einen neuen Sensor hinzu"
+Agent: ✅ Macht Änderungen, committed, pusht
+→ Kein Release, nur Commit
+```
+
+**Weitere Beispiele:**
+```
+Du: "Korrigiere den Bug in der Preisberechnung"
+Agent: ✅ Macht Änderungen, committed mit "fix: ...", pusht
+→ Kein Release, nur Commit
+
+Du: "Aktuelliere die README mit neuen Informationen"
+Agent: ✅ Macht Änderungen, committed mit "docs: ...", pusht
+→ Kein Release, nur Commit
+```
+
 ## Release-Workflow (Cursor AI Agent wird aktiv)
 
 ### Wann solltest du ein Release erstellen?
@@ -49,12 +88,23 @@ git push
 
 ### Wie beauftragst du den Cursor AI Agent?
 
-**Sage dem Agent explizit:**
-> "Erstelle ein Release für Version X.Y.Z"
-> 
-> oder
-> 
-> "Mache ein Release"
+**Wichtig**: Du musst explizit "Release" erwähnen, damit ein Release erstellt wird!
+
+**Beispiele für Release-Erstellung:**
+- "Erstelle ein Release für Version 0.4.0"
+- "Mache ein Release"
+- "Erstelle Release v0.4.0"
+- "Release Version 0.4.0 erstellen"
+- "Erstelle ein neues Release"
+- "Bringe ein Release raus"
+- "Erstelle Release für Version 0.4.0"
+
+**Was passiert:**
+- ✅ Agent aktualisiert `manifest.json` mit neuer Version
+- ✅ Erstellt Commit `chore: release vX.Y.Z`
+- ✅ Erstellt Git-Tag `vX.Y.Z`
+- ✅ Pusht Tag zu GitHub
+- ✅ Erstellt GitHub Release (mit deinem Token)
 
 **Der Agent wird dann automatisch:**
 
@@ -169,29 +219,79 @@ HACS erkennt neue Releases automatisch über:
 - Die Version in `manifest.json` muss **exakt** mit dem Git-Tag übereinstimmen (ohne `v`)
 - Beispiel: Tag `v0.4.0` → manifest.json `"version": "0.4.0"`
 
-## Zusammenfassung
+## Zusammenfassung: Wann wird der Agent aktiv?
 
-### Normaler Workflow (Commits sammeln)
+### ❌ Kein Release (nur Commits)
+
+**Formulierungen, die nur Commits erzeugen:**
+- "Ändere X"
+- "Füge Y hinzu"
+- "Korrigiere Z"
+- "Commit die Änderungen"
+- "Push zu GitHub"
+- "Füge einen neuen Sensor hinzu"
+- "Korrigiere den Bug"
+
+**Was passiert:**
 ```bash
-# Du machst Änderungen und committest
+# Agent macht Änderungen
 git add .
-git commit -m "feat: neue Funktion"
+git commit -m "feat: neue Funktion"  # oder fix:, docs:, etc.
 git push
 # → Kein Release, nur Commits sammeln
 ```
 
-### Release-Workflow (Agent wird aktiv)
+### ✅ Release wird erstellt
+
+**Formulierungen, die ein Release erstellen:**
+- "Erstelle ein Release"
+- "Mache ein Release"
+- "Release Version X.Y.Z"
+- "Erstelle Release vX.Y.Z"
+- "Erstelle ein Release für Version 0.4.0"
+
+**Was passiert:**
 ```
 Du: "Erstelle ein Release für Version 0.4.0"
 Agent: ✅ Macht alles automatisch
 → Release wird erstellt, HACS erkennt es
 ```
 
-### Wann wird der Agent aktiv?
+### Übersichtstabelle
 
-- ✅ **Nur wenn du explizit sagst**: "Erstelle ein Release" oder "Mache ein Release"
-- ❌ **NICHT automatisch** bei normalen Commits
-- ❌ **NICHT automatisch** beim Pushen
+| Was du sagst | Was passiert |
+|-------------|--------------|
+| "Füge Feature X hinzu" | ✅ Commit wird erstellt, **kein Release** |
+| "Korrigiere Bug Y" | ✅ Commit wird erstellt, **kein Release** |
+| "Aktuelliere Dokumentation" | ✅ Commit wird erstellt, **kein Release** |
+| "Erstelle ein Release für Version 0.4.0" | ✅ **Release wird erstellt** |
+| "Mache ein Release" | ✅ **Release wird erstellt** (Agent fragt nach Version) |
+
+### Beispiel-Szenario über mehrere Tage
+
+```
+Tag 1: "Füge neuen Sensor hinzu" 
+→ ✅ Commit "feat: add new sensor", kein Release
+
+Tag 2: "Korrigiere Bug in Preisberechnung"
+→ ✅ Commit "fix: correct price calculation", kein Release
+
+Tag 3: "Aktuelliere README"
+→ ✅ Commit "docs: update README", kein Release
+
+Tag 4: "Erstelle ein Release für Version 0.4.0"
+→ ✅ Release wird erstellt
+→ ✅ Alle 3 Commits werden in Release Notes zusammengefasst:
+   - 🚀 New Features: add new sensor
+   - 🐛 Bug Fixes: correct price calculation
+   - 📝 Documentation: update README
+```
+
+### Wichtige Unterscheidung
+
+**Tipp**: Wenn du unsicher bist, ob ein Release erstellt wird:
+- **Ohne "Release" im Befehl** → nur Commit
+- **Mit "Release" im Befehl** → Release wird erstellt
 
 ## Troubleshooting
 
