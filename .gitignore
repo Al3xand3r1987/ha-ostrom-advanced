@@ -81,3 +81,6 @@ home-assistant_v2.db-wal
 secrets.yaml
 .storage/
 
+# Release Notes (wird bei jedem Release neu generiert)
+RELEASE_NOTES.md
+

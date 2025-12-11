@@ -1,0 +1,85 @@
+# Ostrom Advanced - Cursor AI Rules
+
+## Project Context
+
+This is a Home Assistant HACS integration called "Ostrom Advanced" for dynamic electricity tariffs in Germany. The custom component lives under `custom_components/ostrom_advanced/`. The integration exposes sensors for dynamic electricity prices, consumption data, and cost calculations, enabling users to automate their energy consumption based on real-time pricing.
+
+Key files:
+- `custom_components/ostrom_advanced/manifest.json` - Contains integration metadata and version
+- `custom_components/ostrom_advanced/` - Main integration code (sensors, API, coordinator, etc.)
+- `README.md` - User documentation
+- `info.md` - HACS integration info
+- `hacs.json` - HACS configuration
+
+## Versioning Rules
+
+- **Semantic Versioning**: Use `X.Y.Z` format (e.g., `0.1.0`, `1.2.3`)
+- **Git Tags**: Must be formatted as `vX.Y.Z` (e.g., `v0.1.0`, `v1.2.3`)
+- **Manifest Version**: The `custom_components/ostrom_advanced/manifest.json` file MUST always contain a `"version": "X.Y.Z"` field that matches the git tag (without the leading `v`)
+- **Consistency**: Never change the tag format or the manifest path. The version in `manifest.json` must always match the latest git tag (without the `v` prefix)
+- **HACS Requirement**: The manifest file must exist and have a valid `version` field for HACS to work properly
+
+## Commit Style (Conventional Commits)
+
+Always use Conventional Commit prefixes for all commits in this repository:
+
+- `feat: ...` or `feature: ...` → New features or functionality
+- `fix: ...` or `bug: ...` → Bug fixes
+- `docs: ...` → Documentation changes (README, comments, etc.)
+- `chore: ...` → Maintenance tasks, dependency updates, version bumps
+- `refactor: ...` → Code refactoring without changing functionality
+
+**Guidelines:**
+- Keep commit messages short and focused on the actual change
+- Use present tense ("Add feature" not "Added feature")
+- Be specific about what changed
+
+**Examples:**
+- `feat: add cheapest 4h block binary sensor`
+- `fix: handle missing tomorrow prices gracefully`
+- `docs: update README with new sensor descriptions`
+- `chore: release v0.2.0`
+- `refactor: extract price calculation to helper function`
+
+## Release Workflow
+
+Before creating a release:
+
+1. **Update version in manifest.json**: Change the `"version"` field in `custom_components/ostrom_advanced/manifest.json` from `X.Y.Z` to the new version
+2. **Commit the version bump**: Commit with message like `chore: release vX.Y.Z`
+3. **Create git tag**: Create a git tag with format `vX.Y.Z` (e.g., `git tag v0.2.0`)
+4. **Push tag to GitHub**: Push the tag to the remote repository (e.g., `git push origin v0.2.0`)
+
+**Note**: GitHub Actions and release tooling will handle the rest (creating GitHub releases, publishing to HACS, etc.). Do not re-implement release logic inside `.cursorrules`.
+
+## AI Behavior in This Repository
+
+### General Guidelines
+
+- **Small, focused changes**: Prefer small, focused edits over large refactorings
+- **Preserve coding style**: Keep the existing coding style and patterns when editing files
+- **Clear explanations**: When asked for help, explain changes briefly and clearly, then show the concrete code
+
+### Versioning and Release Tasks
+
+When changing anything related to versioning or releases, always:
+
+1. **Update manifest.json**: If the version changes, update `custom_components/ostrom_advanced/manifest.json`
+2. **Verify consistency**: Check that tag naming (`vX.Y.Z`) and version schemes (`X.Y.Z` in manifest) stay consistent
+3. **Respect HACS requirements**: Ensure the manifest file exists and has a valid `version` field
+4. **Remind about workflow**: If creating a release, remind about the full workflow (update manifest → commit → tag → push)
+
+### Code Changes
+
+- **Python style**: Follow existing Python patterns in the codebase (async/await, type hints where used, etc.)
+- **Home Assistant patterns**: Follow Home Assistant integration patterns (coordinators, config flows, entities, etc.)
+- **Error handling**: Maintain robust error handling for API calls and missing data
+- **Documentation**: Update relevant documentation (README.md, info.md) when adding features or changing behavior
+
+### File Structure Awareness
+
+- Integration code: `custom_components/ostrom_advanced/`
+- Documentation: `README.md`, `info.md`
+- Configuration: `hacs.json`, `custom_components/ostrom_advanced/manifest.json`
+- Translations: `custom_components/ostrom_advanced/translations/`
+
