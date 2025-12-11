@@ -23,6 +23,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           publish: true  # Release automatisch veröffentlichen
-          tag: ${{ github.ref }}  # Verwendet den gepushten Tag (z.B. refs/tags/v0.1.0)
-          version: ${{ github.ref_name }}  # Version ohne 'refs/tags/' Präfix (z.B. v0.1.0)
+          tag: ${{ github.ref_name }}  # Tag-Name (z.B. v0.2.0)
+          name: Ostrom Advanced ${{ github.ref_name }}  # Release-Name
 
