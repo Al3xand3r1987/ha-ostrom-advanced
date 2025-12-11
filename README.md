@@ -155,9 +155,8 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 |---------|--------------|--------|------|
 | `binary_sensor.ostrom_cheapest_3h_block_today_active` | Günstigster 3h-Block heute aktiv | Ein/Aus | 🔄 |
 | `binary_sensor.ostrom_cheapest_3h_block_tomorrow_active` | Günstigster 3h-Block morgen aktiv | Ein/Aus | 🔄 |
-| `binary_sensor.ostrom_cheapest_4h_block_today_active` | Günstigster 4h-Block heute aktiv | Ein/Aus | 🔄 |
 
-**Hinweis**: Die Binärsensoren zeigen "Ein" (ON), wenn die aktuelle Zeit innerhalb des günstigsten 3-Stunden- bzw. 4-Stunden-Blocks liegt, sonst "Aus" (OFF). Sie enthalten Attribute mit Start- und Endzeit des Blocks.
+**Hinweis**: Die Binärsensoren zeigen "Ein" (ON), wenn die aktuelle Zeit innerhalb des günstigsten 3-Stunden-Blocks liegt, sonst "Aus" (OFF). Sie enthalten Attribute mit Start- und Endzeit des Blocks.
 
 ### Raw-Preis-Sensor Attribute
 
@@ -377,6 +376,16 @@ Die Integration verwendet generische Hilfsfunktionen zur Berechnung von Statisti
 - **Effizienter Code** ohne Duplikation
 
 #### 3-Stunden-Block-Berechnung
+
+**Praktischer Nutzen des 3-Stunden-Blocks**  
+Viele Verbraucher brauchen keinen einzelnen Billig-Peak, sondern einen stabilen Zeitraum, in dem Geräte durchlaufen können. Typische Beispiele sind Wärmepumpen, Pufferspeicher, Waschmaschine, Trockner oder Spülmaschine.  
+
+Kurzzeitiges An und Aus führt bei vielen Geräten zu unerwünschtem Takten, höherem Verschleiß und teilweise Fehlermeldungen. Der günstigste 3-Stunden-Block liefert deshalb ein zusammenhängendes Zeitfenster mit niedrigen Preisen, in dem
+
+- Wärmepumpen gezielt vorheizen oder den Pufferspeicher laden
+- Haushaltsgeräte einmal gestartet und im günstigsten Block komplett durchlaufen
+
+So entsteht ein klar definierter Zeitraum, in dem Automatisierungen einfach „Block ein" und „Block aus" nutzen können, statt jede Stunde einzeln zu steuern.
 
 Der günstigste 3-Stunden-Block verwendet einen **gleitendes Fenster**-Algorithmus:
 1. Alle möglichen 3-Stunden-Fenster werden ausgewertet

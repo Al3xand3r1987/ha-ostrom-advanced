@@ -31,13 +31,12 @@ Eine umfassende Home Assistant Integration für Ostrom dynamische Stromtarife in
 
 ### Zeitbasierte Sensoren (Timestamp Device Class)
 - **Startzeit Günstigste Stunde**: Beste Zeit zum Betrieb energieintensiver Geräte
-- **Startzeit Günstigster 3h-Block**: Optimales 3-Stunden-Fenster mit gleitendem Fenster-Algorithmus
+- **Startzeit Günstigster 3h-Block**: Optimales 3-Stunden-Fenster mit gleitendem Fenster-Algorithmus. Der günstigste 3-Stunden-Block ist vor allem für Geräte gedacht, die nicht ständig an und ausgeschaltet werden sollen, zum Beispiel Wärmepumpen, Pufferspeicher, Waschmaschine, Trockner oder Spülmaschine. Ziel ist ein zusammenhängender günstiger Zeitraum statt einzelner, verstreuter Billigstunden.
 - **Startzeit Teuerste Stunde**: Zeit, um hohen Verbrauch zu vermeiden
 
 ### Binärsensoren
 - **Günstigster 3h-Block Heute**: Zeigt "Ein" wenn der Block aktiv ist, sonst "Aus"
 - **Günstigster 3h-Block Morgen**: Zeigt "Ein" wenn der Block aktiv ist, sonst "Aus"
-- **Günstigster 4h-Block Heute**: Zeigt "Ein" wenn der Block aktiv ist, sonst "Aus"
 
 ### Verbrauch & Kosten (Erfordert Vertrags-ID)
 - Tägliche Energieverbrauchserfassung
