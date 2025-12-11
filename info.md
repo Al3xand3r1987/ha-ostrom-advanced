@@ -5,7 +5,7 @@ Eine umfassende Home Assistant Integration für Ostrom dynamische Stromtarife in
 ## Funktionen
 
 - **Echtzeit-Strompreise**: Aktuelle All-in-Strompreise mit detaillierten stündlichen Daten
-- **Umfassende Statistiken**: Min-, Max- und Durchschnittspreise für heute und morgen
+- **Umfassende Statistiken**: Min-, Max-, Durchschnitts- und Medianpreise für heute und morgen
 - **Intelligente Zeit-Sensoren**: 
   - Startzeit der günstigsten Stunde (heute & morgen)
   - Startzeit des günstigsten 3-Stunden-Blocks (gleitendes Fenster-Algorithmus)
@@ -26,7 +26,7 @@ Eine umfassende Home Assistant Integration für Ostrom dynamische Stromtarife in
 ## Verfügbare Sensoren
 
 ### Preisstatistiken (Heute & Morgen)
-- Aktueller Preis, Minimal-, Maximal- und Durchschnittspreise
+- Aktueller Preis, Minimal-, Maximal-, Durchschnitts- und Medianpreise
 - Alle mit intuitiven Icons (⚡ 📉 📈 📊)
 
 ### Zeitbasierte Sensoren (Timestamp Device Class)

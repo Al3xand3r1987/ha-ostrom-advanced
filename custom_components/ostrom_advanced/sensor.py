@@ -72,6 +72,29 @@ def _get_avg_price(slots: list[dict[str, Any]]) -> float | None:
     return round(sum(prices) / len(prices), 5) if prices else None
 
 
+def _get_median_price(slots: list[dict[str, Any]]) -> float | None:
+    """Get median price from slots (generic for today/tomorrow)."""
+    if not slots:
+        return None
+    prices = [s.get("total_price", 0) for s in slots]
+    if not prices:
+        return None
+    
+    # Sort prices
+    sorted_prices = sorted(prices)
+    length = len(sorted_prices)
+    
+    # Calculate median
+    if length % 2 == 1:
+        # Odd number of elements: return middle element
+        median = sorted_prices[length // 2]
+    else:
+        # Even number of elements: return average of two middle elements
+        median = (sorted_prices[length // 2 - 1] + sorted_prices[length // 2]) / 2
+    
+    return round(median, 5)
+
+
 def _get_cheapest_hour(slots: list[dict[str, Any]]) -> datetime | None:
     """Get start time of cheapest hour from slots (generic for today/tomorrow)."""
     if not slots:
@@ -123,6 +146,11 @@ def _get_today_avg_price(data: dict[str, Any]) -> float | None:
     return _get_avg_price(data.get("today_slots", []))
 
 
+def _get_today_median_price(data: dict[str, Any]) -> float | None:
+    """Get median price for today."""
+    return _get_median_price(data.get("today_slots", []))
+
+
 def _get_today_cheapest_hour(data: dict[str, Any]) -> datetime | None:
     """Get start time of cheapest hour today."""
     return _get_cheapest_hour(data.get("today_slots", []))
@@ -152,6 +180,11 @@ def _get_tomorrow_max_price(data: dict[str, Any]) -> float | None:
 def _get_tomorrow_avg_price(data: dict[str, Any]) -> float | None:
     """Get average price for tomorrow."""
     return _get_avg_price(data.get("tomorrow_slots", []))
+
+
+def _get_tomorrow_median_price(data: dict[str, Any]) -> float | None:
+    """Get median price for tomorrow."""
+    return _get_median_price(data.get("tomorrow_slots", []))
 
 
 def _get_tomorrow_cheapest_hour(data: dict[str, Any]) -> datetime | None:
@@ -294,6 +327,14 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         icon="mdi:chart-bell-curve-cumulative",
     ),
     OstromSensorEntityDescription(
+        key="price_today_median",
+        translation_key="price_today_median",
+        native_unit_of_measurement="€/kWh",
+        suggested_display_precision=5,
+        value_fn=_get_today_median_price,
+        icon="mdi:chart-bell-curve",
+    ),
+    OstromSensorEntityDescription(
         key="price_today_cheapest_hour_start",
         translation_key="price_today_cheapest_hour_start",
         device_class=SensorDeviceClass.TIMESTAMP,
@@ -337,6 +378,14 @@ PRICE_SENSORS: tuple[OstromSensorEntityDescription, ...] = (
         suggested_display_precision=5,
         value_fn=_get_tomorrow_avg_price,
         icon="mdi:chart-bell-curve-cumulative",
+    ),
+    OstromSensorEntityDescription(
+        key="price_tomorrow_median",
+        translation_key="price_tomorrow_median",
+        native_unit_of_measurement="€/kWh",
+        suggested_display_precision=5,
+        value_fn=_get_tomorrow_median_price,
+        icon="mdi:chart-bell-curve",
     ),
     OstromSensorEntityDescription(
         key="price_tomorrow_cheapest_hour_start",

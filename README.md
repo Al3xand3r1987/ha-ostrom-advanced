@@ -85,6 +85,7 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 | `sensor.ostrom_price_today_min` | Minimalpreis heute | €/kWh | 📉 |
 | `sensor.ostrom_price_today_max` | Maximalpreis heute | €/kWh | 📈 |
 | `sensor.ostrom_price_today_avg` | Durchschnittspreis heute | €/kWh | 📊 |
+| `sensor.ostrom_price_today_median` | Medianpreis heute | €/kWh | 📊 |
 
 #### Zeitbasierte Sensoren für Heute
 | Entität | Beschreibung | Typ | Icon |
@@ -99,6 +100,7 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 | `sensor.ostrom_price_tomorrow_min` | Minimalpreis morgen | €/kWh | 📉 |
 | `sensor.ostrom_price_tomorrow_max` | Maximalpreis morgen | €/kWh | 📈 |
 | `sensor.ostrom_price_tomorrow_avg` | Durchschnittspreis morgen | €/kWh | 📊 |
+| `sensor.ostrom_price_tomorrow_median` | Medianpreis morgen | €/kWh | 📊 |
 
 #### Zeitbasierte Sensoren für Morgen
 | Entität | Beschreibung | Typ | Icon |

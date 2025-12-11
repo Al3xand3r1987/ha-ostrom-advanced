@@ -66,6 +66,9 @@
       "price_today_avg": {
         "name": "Today Avg Price"
       },
+      "price_today_median": {
+        "name": "Median price today"
+      },
       "price_today_cheapest_hour_start": {
         "name": "Today Cheapest Hour"
       },
@@ -83,6 +86,9 @@
       },
       "price_tomorrow_avg": {
         "name": "Tomorrow Avg Price"
+      },
+      "price_tomorrow_median": {
+        "name": "Median price tomorrow"
       },
       "price_tomorrow_cheapest_hour_start": {
         "name": "Tomorrow Cheapest Hour"
