@@ -84,3 +84,6 @@ secrets.yaml
 # Release Notes (wird bei jedem Release neu generiert)
 RELEASE_NOTES.md
 
+# Entwickler-Dokumentation und -Tools (nur lokal, nicht im Repository)
+.dev/
+
