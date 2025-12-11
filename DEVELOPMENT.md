@@ -4,6 +4,8 @@ Diese Datei enthält interne Informationen für Entwickler und Maintainer der Os
 
 ## Releasing a new version
 
+**📖 Für eine detaillierte Schritt-für-Schritt Anleitung siehe: [RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md)**
+
 Um eine neue Version zu veröffentlichen, folgen Sie diesen Schritten:
 
 ### 1. Entwicklung und Commits
@@ -112,6 +114,12 @@ Das Skript empfiehlt automatisch die passende Version basierend auf Semantic Ver
 - **PATCH** (0.2.3): Bugfixes oder Maintenance (Dokumentation, Refactoring)
 
 Sie müssen die Version nicht mehr selbst entscheiden - das Skript macht das für Sie!
+
+## Vollständige Anleitung
+
+Für eine detaillierte Schritt-für-Schritt Anleitung mit Checkliste und Fehlerbehebung siehe:
+- **[RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md)** - Komplette Release-Anleitung
+- **[HACS_RELEASE.md](HACS_RELEASE.md)** - HACS-spezifische Informationen
 
 ### Vorteile dieses Workflows
 
