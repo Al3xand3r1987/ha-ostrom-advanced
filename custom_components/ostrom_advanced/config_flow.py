@@ -13,7 +13,9 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
+    OptionsFlowWithReload,
 )
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import OstromApiClient, OstromApiError, OstromAuthError
@@ -171,4 +173,48 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
 
         # This will authenticate and make a test API call
         await client.async_test_connection()
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlowHandler:
+        """Create the options flow."""
+        return OptionsFlowHandler(config_entry)
+
+
+class OptionsFlowHandler(OptionsFlowWithReload):
+    """Handle options flow for Ostrom Advanced."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        # Schema für die konfigurierbaren Optionen
+        options_schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_POLL_INTERVAL_MINUTES,
+                    default=self.config_entry.options.get(
+                        CONF_POLL_INTERVAL_MINUTES, DEFAULT_POLL_INTERVAL_MINUTES
+                    ),
+                ): vol.All(vol.Coerce(int), vol.Range(min=5, max=120)),
+                vol.Optional(
+                    CONF_CONSUMPTION_INTERVAL_MINUTES,
+                    default=self.config_entry.options.get(
+                        CONF_CONSUMPTION_INTERVAL_MINUTES,
+                        DEFAULT_CONSUMPTION_INTERVAL_MINUTES,
+                    ),
+                ): vol.All(vol.Coerce(int), vol.Range(min=15, max=1440)),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=self.add_suggested_values_to_schema(
+                options_schema,
+                self.config_entry.options,
+            ),
+        )
 

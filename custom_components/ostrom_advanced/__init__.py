@@ -117,23 +117,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Forward setup to sensor platform
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Register update listener for options changes
-    entry.async_on_unload(entry.add_update_listener(async_update_options))
-
     LOGGER.info("Ostrom Advanced integration setup complete for contract %s", contract_id)
 
     return True
-
-
-async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Handle options update.
-
-    Args:
-        hass: Home Assistant instance
-        entry: Config entry
-    """
-    LOGGER.debug("Options updated, reloading integration")
-    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
