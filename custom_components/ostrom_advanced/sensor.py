@@ -232,11 +232,120 @@ def _get_price_now_attributes(data: dict[str, Any]) -> dict[str, Any]:
     if tomorrow_prices:
         attrs["tomorrow_total_prices"] = tomorrow_prices
     
+    # Build timeline data for price-timeline-card compatibility
+    attrs["data"] = build_timeline_data(today_prices, tomorrow_prices)
+    
     # Add last update timestamp
     if data.get("last_update"):
         attrs["last_update"] = data.get("last_update").isoformat()
     
     return attrs
+
+
+def build_timeline_data(
+    today_list: list[dict[str, Any]] | None,
+    tomorrow_list: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    """Build timeline data array for price-timeline-card compatibility.
+    
+    Converts price data from various formats into a unified timeline format:
+    [{"start_time": "ISO-timestamp", "price_per_kwh": float}, ...]
+    
+    Args:
+        today_list: List of price entries for today. Can be:
+            - Format 1: [{"timestamp": "ISO-string", "total_price": float}, ...]
+            - Format 2: [{"start": "ISO-string" or datetime, "total_price": float}, ...]
+        tomorrow_list: Same format as today_list, but for tomorrow (optional).
+    
+    Returns:
+        Sorted list of timeline entries with start_time and price_per_kwh.
+    """
+    timeline: list[dict[str, Any]] = []
+    
+    # Process today's data
+    if today_list:
+        for item in today_list:
+            try:
+                # Handle format 1: {timestamp, total_price}
+                if "timestamp" in item:
+                    start_time = item.get("timestamp")
+                    price = item.get("total_price")
+                # Handle format 2: {start, total_price}
+                elif "start" in item:
+                    start = item.get("start")
+                    if start is None:
+                        continue
+                    # Convert datetime to ISO string if needed
+                    if isinstance(start, datetime):
+                        start_time = start.isoformat()
+                    else:
+                        start_time = str(start)
+                    price = item.get("total_price")
+                else:
+                    continue
+                
+                # Validate required fields
+                if start_time is None or price is None:
+                    continue
+                
+                # Convert price to float
+                try:
+                    price_per_kwh = float(price)
+                except (ValueError, TypeError):
+                    continue
+                
+                timeline.append({
+                    "start_time": str(start_time),
+                    "price_per_kwh": round(price_per_kwh, 5),
+                })
+            except (KeyError, TypeError, AttributeError):
+                # Skip invalid entries
+                continue
+    
+    # Process tomorrow's data (if available)
+    if tomorrow_list:
+        for item in tomorrow_list:
+            try:
+                # Handle format 1: {timestamp, total_price}
+                if "timestamp" in item:
+                    start_time = item.get("timestamp")
+                    price = item.get("total_price")
+                # Handle format 2: {start, total_price}
+                elif "start" in item:
+                    start = item.get("start")
+                    if start is None:
+                        continue
+                    # Convert datetime to ISO string if needed
+                    if isinstance(start, datetime):
+                        start_time = start.isoformat()
+                    else:
+                        start_time = str(start)
+                    price = item.get("total_price")
+                else:
+                    continue
+                
+                # Validate required fields
+                if start_time is None or price is None:
+                    continue
+                
+                # Convert price to float
+                try:
+                    price_per_kwh = float(price)
+                except (ValueError, TypeError):
+                    continue
+                
+                timeline.append({
+                    "start_time": str(start_time),
+                    "price_per_kwh": round(price_per_kwh, 5),
+                })
+            except (KeyError, TypeError, AttributeError):
+                # Skip invalid entries
+                continue
+    
+    # Sort by start_time
+    timeline.sort(key=lambda x: x.get("start_time", ""))
+    
+    return timeline
 
 
 def _get_raw_price_attributes(data: dict[str, Any]) -> dict[str, Any]:
@@ -277,6 +386,28 @@ def _get_raw_price_attributes(data: dict[str, Any]) -> dict[str, Any]:
         attrs["current_slot_end"] = (
             current_slot.get("end").isoformat() if current_slot.get("end") else None
         )
+    
+    # Build timeline data for price-timeline-card compatibility
+    # Map slots to {start, total_price} format for build_timeline_data
+    today_timeline_input = []
+    for slot in data.get("today_slots", []):
+        start = slot.get("start")
+        if start:
+            today_timeline_input.append({
+                "start": start.isoformat() if isinstance(start, datetime) else start,
+                "total_price": slot.get("total_price", 0),
+            })
+    
+    tomorrow_timeline_input = []
+    for slot in data.get("tomorrow_slots", []):
+        start = slot.get("start")
+        if start:
+            tomorrow_timeline_input.append({
+                "start": start.isoformat() if isinstance(start, datetime) else start,
+                "total_price": slot.get("total_price", 0),
+            })
+    
+    attrs["data"] = build_timeline_data(today_timeline_input, tomorrow_timeline_input)
 
     return attrs
 

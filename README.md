@@ -289,6 +289,29 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 
 **Verwendung**: Diese Attribute sind ideal für Chart-Bibliotheken wie **Apex Charts**, um Preisdaten für die Zukunft (heute und morgen) visuell darzustellen. Die Daten sind bereits im richtigen Format für Zeitreihen-Diagramme aufbereitet.
 
+#### Kompatibilität mit price-timeline-card
+
+Beide Preis-Sensoren (`sensor.ostrom_advanced_{contract_id}_price_now` und `sensor.ostrom_advanced_{contract_id}_spot_prices_raw`) enthalten ein zusätzliches Attribut `data` im Format für die [price-timeline-card](https://github.com/flixlix/price-timeline-card).
+
+**Attribut `data`:**
+- Format: Array von Objekten mit `start_time` (ISO-Timestamp) und `price_per_kwh` (float)
+- Enthält kombinierte Preisdaten für heute und morgen, sortiert nach Zeit
+- Beispiel:
+```json
+[
+  {"start_time": "2025-12-12T00:00:00+01:00", "price_per_kwh": 0.245},
+  {"start_time": "2025-12-12T01:00:00+01:00", "price_per_kwh": 0.231}
+]
+```
+
+**Verwendung mit price-timeline-card:**
+```yaml
+type: custom:price-timeline-card
+price: sensor.ostrom_advanced_xxxx_price_now
+```
+
+**Hinweis**: Der Sensor `spot_prices_raw` enthält ebenfalls das `data` Attribut und kann alternativ für Charts verwendet werden.
+
 ## Praxis-Beispiele
 
 ### Wärmepumpe im günstigsten 3-Stunden-Block

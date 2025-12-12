@@ -166,6 +166,29 @@ Each entry in the price lists contains:
 
 These attributes are ideal for use with chart libraries like **Apex Charts** to visually display price data for the future (today and tomorrow). The data is already formatted correctly for time series charts.
 
+### Compatibility with price-timeline-card
+
+Both price sensors (`sensor.ostrom_advanced_{contract_id}_price_now` and `sensor.ostrom_advanced_{contract_id}_spot_prices_raw`) include an additional `data` attribute in the format required by the [price-timeline-card](https://github.com/flixlix/price-timeline-card).
+
+**Attribute `data`:**
+- Format: Array of objects with `start_time` (ISO timestamp) and `price_per_kwh` (float)
+- Contains combined price data for today and tomorrow, sorted by time
+- Example:
+```json
+[
+  {"start_time": "2025-12-12T00:00:00+01:00", "price_per_kwh": 0.245},
+  {"start_time": "2025-12-12T01:00:00+01:00", "price_per_kwh": 0.231}
+]
+```
+
+**Usage with price-timeline-card:**
+```yaml
+type: custom:price-timeline-card
+price: sensor.ostrom_advanced_xxxx_price_now
+```
+
+**Note**: The `spot_prices_raw` sensor also includes the `data` attribute and can be used as an alternative for charts.
+
 ## Automation Examples
 
 ### Start EV Charging at Cheapest Time
