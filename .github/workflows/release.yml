@@ -138,3 +138,86 @@ jobs:
         run: |
           echo "Release notes were manually added, keeping them unchanged"
           echo "Generated notes are available in the workflow logs for reference"
+
+      - name: Update RELEASE_NOTES.md file
+        run: |
+          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          PREVIOUS_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
+          VERSION="${CURRENT_TAG#v}"  # Entferne 'v' Präfix
+          
+          echo "📝 Updating RELEASE_NOTES.md for version $VERSION"
+          
+          # Sammle Commits erneut (Variablen aus vorherigem Step sind nicht verfügbar)
+          FEATURES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(feat|feature):" | sed 's/^-\s*\(feat\|feature\):/-/' || echo "")
+          FIXES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(fix|bug):" | sed 's/^-\s*\(fix\|bug\):/-/' || echo "")
+          CHORES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(chore|refactor):" | sed 's/^-\s*\(chore\|refactor\):/-/' || echo "")
+          DOCS=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*docs:" | sed 's/^-\s*docs:/-/' || echo "")
+          OTHER=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -vE "^-\s*(feat|feature|fix|bug|docs|chore|refactor):" || echo "")
+          
+          # Erstelle neuen Release Notes Eintrag
+          {
+            echo "# Ostrom Advanced v$VERSION"
+            echo ""
+            if [ -n "$FEATURES" ]; then
+              echo "## New Features"
+              echo "$FEATURES"
+              echo ""
+            fi
+            if [ -n "$FIXES" ]; then
+              echo "## Bug Fixes"
+              echo "$FIXES"
+              echo ""
+            else
+              echo "## Bug Fixes"
+              echo "- Keine Bug-Fixes"
+              echo ""
+            fi
+            if [ -n "$CHORES" ]; then
+              echo "## Maintenance"
+              echo "$CHORES"
+              echo ""
+            else
+              echo "## Maintenance"
+              echo "- Keine Wartungsarbeiten"
+              echo ""
+            fi
+            if [ -n "$DOCS" ]; then
+              echo "## Documentation"
+              echo "$DOCS"
+              echo ""
+            fi
+            if [ -n "$OTHER" ]; then
+              echo "## Other Changes"
+              echo "$OTHER"
+              echo ""
+            else
+              echo "## Other Changes"
+              echo "- Keine weiteren Änderungen"
+              echo ""
+            fi
+            echo "---"
+            echo ""
+          } > /tmp/new_release_notes.txt
+          
+          # Füge neuen Eintrag am Anfang der Datei ein
+          if [ -f RELEASE_NOTES.md ]; then
+            cat /tmp/new_release_notes.txt RELEASE_NOTES.md > /tmp/updated_release_notes.md
+            mv /tmp/updated_release_notes.md RELEASE_NOTES.md
+          else
+            mv /tmp/new_release_notes.txt RELEASE_NOTES.md
+          fi
+          
+          echo "✅ RELEASE_NOTES.md updated"
+
+      - name: Commit and push RELEASE_NOTES.md
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add RELEASE_NOTES.md
+          if ! git diff --staged --quiet; then
+            git commit -m "docs: update RELEASE_NOTES.md for ${{ github.event.release.tag_name }}"
+            git push
+            echo "✅ RELEASE_NOTES.md committed and pushed"
+          else
+            echo "ℹ️ No changes to RELEASE_NOTES.md"
+          fi
