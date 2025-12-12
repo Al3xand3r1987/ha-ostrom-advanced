@@ -372,26 +372,45 @@ automation:
 
 ### Dashboard Charts mit Apex Charts
 
-Der `sensor.ostrom_price_now` Sensor enthält das Attribut `apex_data`, das direkt für ApexCharts Zeitreihen verwendet werden kann. Dieses Attribut ist bereits im richtigen Format (Array von Paaren) und erfordert keine weitere Transformation:
+Der `sensor.ostrom_contract_*_price_now` Sensor enthält das Attribut `apex_data`, das direkt für ApexCharts Zeitreihen verwendet werden kann. Dieses Attribut ist bereits im richtigen Format (Array von Paaren) und erfordert keine weitere Transformation - perfekt für Anfänger!
+
+**Einfaches Beispiel - Komplett konfiguriert:**
 
 ```yaml
 type: custom:apexcharts-card
-entity: sensor.ostrom_price_now
-data_generator: |
-  return [
-    {
-      name: "Strompreis",
-      data: entity.attributes.apex_data || []
-    }
-  ]
+header:
+  show: true
+  title: Ostrom Preis (heute + morgen)
+graph_span: 48h
+span:
+  end: day
+now:
+  show: true
+  label: Jetzt
+series:
+  - entity: sensor.ostrom_contract_9039_aktueller_preis
+    name: Preis
+    unit: €/kWh
+    type: line
+    data_generator: |
+      return entity.attributes.apex_data || [];
 ```
 
-**Vorteil**: Das `apex_data` Attribut enthält bereits alle Daten (heute und morgen) in einem sortierten Array, sodass keine manuelle Kombination oder Transformation mehr nötig ist. Perfekt für Anfänger, die schnell eine Zeitreihe zeichnen möchten.
+**Vorteile des `apex_data` Attributs:**
+- ✅ Keine manuelle Transformation nötig - direkt verwendbar
+- ✅ Enthält bereits alle Daten (heute und morgen) in einem sortierten Array
+- ✅ Automatisch dedupliziert (keine doppelten Timestamps)
+- ✅ Perfekt für Anfänger - einfach kopieren und einfügen
 
-**Alternative**: Falls Sie heute und morgen getrennt darstellen möchten, können Sie weiterhin `today_total_prices` und `tomorrow_total_prices` verwenden:
+**Hinweis**: Ersetzen Sie `sensor.ostrom_contract_9039_aktueller_preis` durch Ihre tatsächliche Entity-ID (z.B. `sensor.ostrom_contract_XXXX_price_now`).
+
+**Alternative - Heute und Morgen getrennt darstellen:**
+
+Falls Sie heute und morgen als separate Serien darstellen möchten:
+
 ```yaml
 type: custom:apexcharts-card
-entity: sensor.ostrom_price_now
+entity: sensor.ostrom_contract_XXXX_price_now
 data_generator: |
   return [
     {
