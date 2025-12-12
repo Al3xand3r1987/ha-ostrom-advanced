@@ -233,7 +233,14 @@ def _get_price_now_attributes(data: dict[str, Any]) -> dict[str, Any]:
         attrs["tomorrow_total_prices"] = tomorrow_prices
     
     # Build timeline data for price-timeline-card compatibility
-    attrs["data"] = build_timeline_data(today_prices, tomorrow_prices)
+    # Always ensure data is present (even if empty list)
+    timeline_data = build_timeline_data(today_prices, tomorrow_prices)
+    attrs["data"] = timeline_data
+    
+    # Build ApexCharts format: array of pairs [timestamp, price]
+    # This format is directly usable in ApexCharts time series
+    apex_data = [[item["start_time"], item["price_per_kwh"]] for item in timeline_data]
+    attrs["apex_data"] = apex_data
     
     # Add last update timestamp
     if data.get("last_update"):
@@ -343,6 +350,18 @@ def build_timeline_data(
                 continue
     
     # Sort by start_time
+    timeline.sort(key=lambda x: x.get("start_time", ""))
+    
+    # Deduplicate: if duplicate timestamps occur, keep the last entry
+    # This handles cases where today and tomorrow might overlap
+    seen: dict[str, dict[str, Any]] = {}
+    for item in timeline:
+        start_time = item.get("start_time")
+        if start_time:
+            seen[start_time] = item  # Last entry with same timestamp wins
+    
+    # Convert back to list and sort again to ensure order
+    timeline = list(seen.values())
     timeline.sort(key=lambda x: x.get("start_time", ""))
     
     return timeline

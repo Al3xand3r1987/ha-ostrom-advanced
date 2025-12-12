@@ -312,6 +312,25 @@ price: sensor.ostrom_advanced_xxxx_price_now
 
 **Hinweis**: Der Sensor `spot_prices_raw` enthält ebenfalls das `data` Attribut und kann alternativ für Charts verwendet werden.
 
+#### Kompatibilität mit ApexCharts
+
+Der `sensor.ostrom_contract_*_price_now` Sensor enthält zusätzlich das Attribut `apex_data` im Format für **ApexCharts**, das direkt als Zeitreihe verwendet werden kann.
+
+**Attribut `apex_data`:**
+- Format: Array von Paaren `[[timestamp, price], ...]` - direkt nutzbar für ApexCharts Zeitreihen
+- Enthält kombinierte Preisdaten für heute und morgen, sortiert nach Zeit
+- Beispiel:
+```json
+[
+  ["2025-12-12T00:00:00+01:00", 0.245],
+  ["2025-12-12T01:00:00+01:00", 0.231]
+]
+```
+
+**Empfehlung:**
+- `data` Attribut: Verwendung mit **price-timeline-card** (Objekt-Format)
+- `apex_data` Attribut: Verwendung mit **ApexCharts** (Array-Paar-Format)
+
 ## Praxis-Beispiele
 
 ### Wärmepumpe im günstigsten 3-Stunden-Block
@@ -353,8 +372,23 @@ automation:
 
 ### Dashboard Charts mit Apex Charts
 
-Der `sensor.ostrom_price_now` Sensor enthält bereits optimierte Zeitreihen-Daten in den Attributen `today_total_prices` und `tomorrow_total_prices`. Diese können direkt in Apex Charts verwendet werden:
+Der `sensor.ostrom_price_now` Sensor enthält das Attribut `apex_data`, das direkt für ApexCharts Zeitreihen verwendet werden kann. Dieses Attribut ist bereits im richtigen Format (Array von Paaren) und erfordert keine weitere Transformation:
 
+```yaml
+type: custom:apexcharts-card
+entity: sensor.ostrom_price_now
+data_generator: |
+  return [
+    {
+      name: "Strompreis",
+      data: entity.attributes.apex_data || []
+    }
+  ]
+```
+
+**Vorteil**: Das `apex_data` Attribut enthält bereits alle Daten (heute und morgen) in einem sortierten Array, sodass keine manuelle Kombination oder Transformation mehr nötig ist. Perfekt für Anfänger, die schnell eine Zeitreihe zeichnen möchten.
+
+**Alternative**: Falls Sie heute und morgen getrennt darstellen möchten, können Sie weiterhin `today_total_prices` und `tomorrow_total_prices` verwenden:
 ```yaml
 type: custom:apexcharts-card
 entity: sensor.ostrom_price_now

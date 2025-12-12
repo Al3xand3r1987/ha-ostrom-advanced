@@ -1,4 +1,27 @@
-﻿# Ostrom Advanced v0.4.0
+﻿# Ostrom Advanced v0.4.1
+
+## New Features
+- add `apex_data` attribute to price sensor for direct ApexCharts compatibility (Array-Paar Format)
+- enhance `data` attribute with deduplication logic (keeps last entry for duplicate timestamps)
+- ensure both `data` and `apex_data` attributes are always present (even if empty)
+
+## Bug Fixes
+- Keine Bug-Fixes
+
+## Maintenance
+- Keine Wartungsarbeiten
+
+## Documentation
+- add ApexCharts compatibility section to README
+- update ApexCharts example to use new `apex_data` attribute
+- clarify recommended usage: `data` for price-timeline-card, `apex_data` for ApexCharts
+
+## Other Changes
+- Keine weiteren Änderungen
+
+---
+
+# Ostrom Advanced v0.4.0
 
 ## New Features
 - add attributes.data for price-timeline-card compatibility (a6159b3)
