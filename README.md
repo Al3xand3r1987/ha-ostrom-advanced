@@ -289,36 +289,14 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 
 **Verwendung**: Diese Attribute sind ideal für Chart-Bibliotheken wie **Apex Charts**, um Preisdaten für die Zukunft (heute und morgen) visuell darzustellen. Die Daten sind bereits im richtigen Format für Zeitreihen-Diagramme aufbereitet.
 
-#### Kompatibilität mit price-timeline-card
-
-Beide Preis-Sensoren (`sensor.ostrom_advanced_{contract_id}_price_now` und `sensor.ostrom_advanced_{contract_id}_spot_prices_raw`) enthalten ein zusätzliches Attribut `data` im Format für die [price-timeline-card](https://github.com/flixlix/price-timeline-card).
-
-**Attribut `data`:**
-- Format: Array von Objekten mit `start_time` (ISO-Timestamp) und `price_per_kwh` (float)
-- Enthält kombinierte Preisdaten für heute und morgen, sortiert nach Zeit
-- Beispiel:
-```json
-[
-  {"start_time": "2025-12-12T00:00:00+01:00", "price_per_kwh": 0.245},
-  {"start_time": "2025-12-12T01:00:00+01:00", "price_per_kwh": 0.231}
-]
-```
-
-**Verwendung mit price-timeline-card:**
-```yaml
-type: custom:price-timeline-card
-price: sensor.ostrom_advanced_xxxx_price_now
-```
-
-**Hinweis**: Der Sensor `spot_prices_raw` enthält ebenfalls das `data` Attribut und kann alternativ für Charts verwendet werden.
-
 #### Kompatibilität mit ApexCharts
 
-Der `sensor.ostrom_contract_*_price_now` Sensor enthält zusätzlich das Attribut `apex_data` im Format für **ApexCharts**, das direkt als Zeitreihe verwendet werden kann.
+Der `sensor.ostrom_contract_*_price_now` Sensor enthält das Attribut `apex_data` im Format für **ApexCharts**, das direkt als Zeitreihe verwendet werden kann - perfekt für Anfänger!
 
 **Attribut `apex_data`:**
 - Format: Array von Paaren `[[timestamp, price], ...]` - direkt nutzbar für ApexCharts Zeitreihen
 - Enthält kombinierte Preisdaten für heute und morgen, sortiert nach Zeit
+- Automatisch dedupliziert (keine doppelten Timestamps)
 - Beispiel:
 ```json
 [
@@ -326,10 +304,6 @@ Der `sensor.ostrom_contract_*_price_now` Sensor enthält zusätzlich das Attribu
   ["2025-12-12T01:00:00+01:00", 0.231]
 ]
 ```
-
-**Empfehlung:**
-- `data` Attribut: Verwendung mit **price-timeline-card** (Objekt-Format)
-- `apex_data` Attribut: Verwendung mit **ApexCharts** (Array-Paar-Format)
 
 ## Praxis-Beispiele
 
