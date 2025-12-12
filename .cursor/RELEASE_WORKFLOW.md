@@ -39,7 +39,15 @@ git push
 
 ### Wann wird der Cursor AI Agent aktiv?
 
-**Der Agent wird NICHT automatisch aktiv**, wenn du nur committest. Du musst ihn **explizit beauftragen**, ein Release zu erstellen.
+**WICHTIG: Der Agent fragt automatisch nach jedem Commit**, ob ein Release erstellt werden soll!
+
+Nach jedem Commit (ohne Release) wird der Agent dich fragen:
+> "Soll ich ein offizielles Release für Home Assistant erstellen, damit HACS-Nutzer das Update erhalten können?"
+
+**Du kannst dann antworten:**
+- "Ja, erstelle ein Release" → Agent erstellt vollständiges Release
+- "Nein, nur Commit" → Nur Commit, kein Release
+- "Später" → Nur Commit, kein Release (kannst später manuell Release erstellen)
 
 ### Was muss ich dem Agent sagen, damit nur Commits gemacht werden?
 
@@ -59,34 +67,62 @@ Wenn du nur Änderungen committen möchtest, **ohne** ein Release zu erstellen, 
 - ✅ Agent macht die Änderungen
 - ✅ Erstellt einen Commit (z.B. `feat: ...`, `fix: ...`, `docs: ...`)
 - ✅ Pusht zu GitHub
-- ❌ **Kein Release wird erstellt**
+- ❓ **Agent fragt: "Soll ich ein offizielles Release für Home Assistant erstellen?"**
 - ✅ Commits werden gesammelt
+
+**Nach dem Commit fragt der Agent automatisch:**
+> "Die Änderungen wurden committed und zu GitHub gepusht. Soll ich ein offizielles Release für Home Assistant erstellen, damit HACS-Nutzer das Update erhalten können? (Antworte mit 'Ja', 'Nein' oder 'Später')"
 
 **Beispiel-Dialog:**
 ```
 Du: "Füge einen neuen Sensor hinzu"
 Agent: ✅ Macht Änderungen, committed, pusht
-→ Kein Release, nur Commit
+Agent: ❓ "Die Änderungen wurden committed und zu GitHub gepusht. 
+          Soll ich ein offizielles Release für Home Assistant erstellen?"
+Du: "Nein, nur Commit"
+→ Kein Release, nur Commit gesammelt
 ```
 
 **Weitere Beispiele:**
 ```
 Du: "Korrigiere den Bug in der Preisberechnung"
 Agent: ✅ Macht Änderungen, committed mit "fix: ...", pusht
-→ Kein Release, nur Commit
+Agent: ❓ "Soll ich ein offizielles Release erstellen?"
+Du: "Ja, erstelle ein Release"
+→ ✅ Release wird erstellt (Version wird automatisch erhöht)
 
 Du: "Aktuelliere die README mit neuen Informationen"
 Agent: ✅ Macht Änderungen, committed mit "docs: ...", pusht
-→ Kein Release, nur Commit
+Agent: ❓ "Soll ich ein offizielles Release erstellen?"
+Du: "Nein"
+→ Kein Release, nur Commit gesammelt
 ```
 
 ## Release-Workflow (Cursor AI Agent wird aktiv)
 
+### Automatische Release-Abfrage
+
+**Der Agent fragt automatisch nach jedem Commit**, ob ein Release erstellt werden soll. Dies stellt sicher, dass Releases nicht vergessen werden.
+
+**Workflow:**
+1. Du sagst: "Füge Feature X hinzu"
+2. Agent macht Änderungen, committed, pusht
+3. **Agent fragt automatisch:** "Soll ich ein offizielles Release für Home Assistant erstellen?"
+4. Du antwortest: "Ja" → Release wird erstellt
+5. Oder: "Nein" → Nur Commit, kein Release
+
 ### Wann solltest du ein Release erstellen?
 
-- Wenn du eine neue Version veröffentlichen möchtest
-- Wenn HACS-Nutzer das Update erhalten sollen
-- Wenn du mehrere Commits zu einem Release zusammenfassen möchtest
+- ✅ **Ja, erstelle Release**, wenn:
+  - Du eine neue Version veröffentlichen möchtest
+  - HACS-Nutzer das Update erhalten sollen
+  - Du mehrere Commits zu einem Release zusammenfassen möchtest
+  - Das Feature/Bugfix fertig ist und getestet wurde
+
+- ❌ **Nein, nur Commit**, wenn:
+  - Du noch weitere Änderungen planst
+  - Das Feature noch nicht fertig ist
+  - Du mehrere Commits sammeln möchtest, bevor du ein Release machst
 
 ### Wie beauftragst du den Cursor AI Agent?
 
@@ -110,20 +146,38 @@ Agent: ✅ Macht Änderungen, committed mit "docs: ...", pusht
 
 **Der Agent wird dann automatisch:**
 
-1. ✅ Version in `manifest.json` aktualisieren
+1. ✅ Version in `manifest.json` erhöhen (Minor-Version, z.B. 0.3.1 → 0.4.0)
 2. ✅ Commit mit `chore: release vX.Y.Z` erstellen
 3. ✅ Git-Tag `vX.Y.Z` erstellen
 4. ✅ Tag zu GitHub pushen
-5. ✅ GitHub Release erstellen (mit deinem Token)
+5. ✅ GitHub Release erstellen (über API, falls Token vorhanden, sonst Anleitung)
 
-### Beispiel: Release erstellen
+**Wichtig:** Falls kein GitHub Token konfiguriert ist, gibt der Agent eine Anleitung, wie das Release manuell erstellt werden kann.
 
-**Du sagst:**
-> "Erstelle ein Release für Version 0.4.0"
+### Beispiel: Release erstellen (automatische Abfrage)
 
-**Der Agent macht:**
+**Szenario 1: Agent fragt automatisch**
+```
+Du: "Füge price-timeline-card Support hinzu"
+Agent: ✅ Macht Änderungen, committed, pusht
+Agent: ❓ "Die Änderungen wurden committed und zu GitHub gepusht. 
+          Soll ich ein offizielles Release für Home Assistant erstellen?"
+Du: "Ja, erstelle ein Release"
+Agent: ✅ Version erhöhen (0.3.1 → 0.4.0)
+Agent: ✅ Commit "chore: release v0.4.0"
+Agent: ✅ Tag v0.4.0 erstellen und pushen
+Agent: ✅ GitHub Release erstellen (oder Anleitung geben)
+```
+
+**Szenario 2: Expliziter Release-Befehl**
+```
+Du: "Erstelle ein Release für Version 0.4.0"
+Agent: ✅ Macht alles automatisch (Version, Commit, Tag, Release)
+```
+
+**Was der Agent macht:**
 ```bash
-# 1. Version in manifest.json ändern
+# 1. Version in manifest.json erhöhen
 # 2. Commit erstellen
 git add custom_components/ostrom_advanced/manifest.json
 git commit -m "chore: release v0.4.0"
@@ -135,7 +189,7 @@ git tag v0.4.0
 git push origin main
 git push origin v0.4.0
 
-# 5. GitHub Release erstellen (mit deinem Token)
+# 5. GitHub Release erstellen (mit Token oder Anleitung)
 ```
 
 **Was passiert dann automatisch:**
@@ -263,28 +317,34 @@ Agent: ✅ Macht alles automatisch
 
 ### Übersichtstabelle
 
-| Was du sagst | Was passiert |
-|-------------|--------------|
-| "Füge Feature X hinzu" | ✅ Commit wird erstellt, **kein Release** |
-| "Korrigiere Bug Y" | ✅ Commit wird erstellt, **kein Release** |
-| "Aktuelliere Dokumentation" | ✅ Commit wird erstellt, **kein Release** |
-| "Erstelle ein Release für Version 0.4.0" | ✅ **Release wird erstellt** |
-| "Mache ein Release" | ✅ **Release wird erstellt** (Agent fragt nach Version) |
+| Was du sagst | Was passiert | Release-Abfrage |
+|-------------|--------------|----------------|
+| "Füge Feature X hinzu" | ✅ Commit wird erstellt | ❓ Agent fragt: "Soll ich Release erstellen?" |
+| "Korrigiere Bug Y" | ✅ Commit wird erstellt | ❓ Agent fragt: "Soll ich Release erstellen?" |
+| "Aktuelliere Dokumentation" | ✅ Commit wird erstellt | ❓ Agent fragt: "Soll ich Release erstellen?" |
+| "Erstelle ein Release für Version 0.4.0" | ✅ **Release wird sofort erstellt** | ✅ Keine Abfrage nötig |
+| "Mache ein Release" | ✅ **Release wird erstellt** | ✅ Agent fragt nach Version |
 
 ### Beispiel-Szenario über mehrere Tage
 
 ```
 Tag 1: "Füge neuen Sensor hinzu" 
-→ ✅ Commit "feat: add new sensor", kein Release
+→ ✅ Commit "feat: add new sensor"
+→ ❓ Agent fragt: "Soll ich Release erstellen?"
+→ Du: "Nein, noch nicht"
+→ ✅ Nur Commit, kein Release
 
 Tag 2: "Korrigiere Bug in Preisberechnung"
-→ ✅ Commit "fix: correct price calculation", kein Release
+→ ✅ Commit "fix: correct price calculation"
+→ ❓ Agent fragt: "Soll ich Release erstellen?"
+→ Du: "Nein, noch nicht"
+→ ✅ Nur Commit, kein Release
 
 Tag 3: "Aktuelliere README"
-→ ✅ Commit "docs: update README", kein Release
-
-Tag 4: "Erstelle ein Release für Version 0.4.0"
-→ ✅ Release wird erstellt
+→ ✅ Commit "docs: update README"
+→ ❓ Agent fragt: "Soll ich Release erstellen?"
+→ Du: "Ja, erstelle ein Release"
+→ ✅ Release wird erstellt (Version 0.4.0)
 → ✅ Alle 3 Commits werden in Release Notes zusammengefasst:
    - 🚀 New Features: add new sensor
    - 🐛 Bug Fixes: correct price calculation
@@ -293,9 +353,16 @@ Tag 4: "Erstelle ein Release für Version 0.4.0"
 
 ### Wichtige Unterscheidung
 
-**Tipp**: Wenn du unsicher bist, ob ein Release erstellt wird:
-- **Ohne "Release" im Befehl** → nur Commit
-- **Mit "Release" im Befehl** → Release wird erstellt
+**Automatische Abfrage:**
+- **Nach jedem Commit** fragt der Agent automatisch, ob ein Release erstellt werden soll
+- **Du musst nichts vergessen** - der Agent erinnert dich immer daran
+- **Du entscheidest** bei jedem Commit, ob ein Release erstellt werden soll
+
+**Explizite Release-Befehle:**
+- **Mit "Release" im Befehl** → Release wird sofort erstellt (keine Abfrage)
+- **Ohne "Release" im Befehl** → Commit wird erstellt, dann fragt der Agent
+
+**Tipp**: Lass den Agent einfach fragen - er erinnert dich automatisch daran, Releases nicht zu vergessen!
 
 ## Troubleshooting
 
