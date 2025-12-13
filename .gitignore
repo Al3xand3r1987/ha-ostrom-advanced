@@ -87,3 +87,6 @@ secrets.yaml
 # Entwickler-Dokumentation und -Tools (nur lokal, nicht im Repository)
 .dev/
 
+# Cursor AI - Entwickler-Tools (nur lokal, nicht im Repository)
+.cursor/
+

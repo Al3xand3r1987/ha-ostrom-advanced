@@ -1,3 +1,15 @@
+# ⚠️ DEPRECATED - Diese Datei wurde durch .cursor/rules/*.mdc Dateien ersetzt
+# Die Regeln wurden in folgende Dateien aufgeteilt:
+# - .cursor/rules/global.mdc (Projekt-Kontext, Sprache, allgemeine Guidelines)
+# - .cursor/rules/git.mdc (Conventional Commits)
+# - .cursor/rules/versioning.mdc (Semantic Versioning, Git Tags, Manifest)
+# - .cursor/rules/release.mdc (Release Workflow)
+# - .cursor/rules/python.mdc (Python-spezifische Patterns)
+# - .cursor/rules/homeassistant.mdc (Home Assistant Patterns)
+#
+# Diese Datei wird als Backup behalten, ist aber nicht mehr aktiv.
+# ============================================================================
+
 # Ostrom Advanced - Cursor AI Rules
 
 ## Project Context
