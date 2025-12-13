@@ -74,35 +74,49 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             Next update datetime
         """
         now = dt_util.now()
-        # Calculate minutes past the hour
-        minutes_past_hour = now.minute
+        try:
+            # Calculate minutes past the hour
+            minutes_past_hour = now.minute
 
-        # Find which interval we're in
-        interval_count = minutes_past_hour // interval_minutes
-        interval_start_minute = interval_count * interval_minutes
-        interval_start_time = now.replace(
-            minute=interval_start_minute, second=offset_seconds, microsecond=0
-        )
+            # Find which interval we're in
+            interval_count = minutes_past_hour // interval_minutes
+            interval_start_minute = interval_count * interval_minutes
+            interval_start_time = now.replace(
+                minute=interval_start_minute, second=offset_seconds, microsecond=0
+            )
 
-        # If we're before the offset time of the current interval, use current interval
-        if now < interval_start_time:
-            next_time = interval_start_time
-        else:
-            # Otherwise, use next interval
-            next_minute = interval_start_minute + interval_minutes
-            if next_minute >= 60:
-                next_time = now.replace(
-                    hour=now.hour + 1,
-                    minute=0,
-                    second=offset_seconds,
-                    microsecond=0,
-                )
+            # If we're before the offset time of the current interval, use current interval
+            if now < interval_start_time:
+                next_time = interval_start_time
             else:
-                next_time = now.replace(
-                    minute=next_minute, second=offset_seconds, microsecond=0
-                )
+                # Otherwise, use next interval
+                next_minute = interval_start_minute + interval_minutes
+                if next_minute >= 60:
+                    next_time = now.replace(
+                        hour=now.hour + 1,
+                        minute=0,
+                        second=offset_seconds,
+                        microsecond=0,
+                    )
+                else:
+                    next_time = now.replace(
+                        minute=next_minute, second=offset_seconds, microsecond=0
+                    )
 
-        return next_time
+            # Validate that next_time is in the future (handles DST edge cases)
+            if next_time <= now:
+                # If calculated time is in the past, add one interval
+                next_time = next_time + timedelta(minutes=interval_minutes)
+
+            return next_time
+        except (ValueError, OverflowError) as err:
+            # Fallback for DST transitions or other time calculation errors
+            LOGGER.error(
+                "Time calculation error (DST transition?): %s, using fallback", err
+            )
+            # Simple fallback: schedule for next interval from now
+            fallback_time = now + timedelta(minutes=interval_minutes, seconds=offset_seconds)
+            return fallback_time
 
     @callback
     def _schedule_next_update(self) -> None:
@@ -130,9 +144,24 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             delay_seconds,
         )
 
+        # Safe callback wrapper that ensures timer is always rescheduled on errors
+        def _safe_schedule_callback():
+            """Safe callback wrapper that ensures timer is always rescheduled."""
+            try:
+                self.hass.async_create_task(self.async_request_refresh())
+            except Exception as err:
+                LOGGER.error(
+                    "Failed to schedule price update: %s, rescheduling with fallback", err
+                )
+                # Reschedule with fallback delay (next interval) to keep loop running
+                fallback_delay = self._poll_interval_minutes * 60
+                self._update_timer = self.hass.loop.call_later(
+                    fallback_delay, _safe_schedule_callback
+                )
+
         # Schedule the update
         self._update_timer = self.hass.loop.call_later(
-            delay_seconds, lambda: self.hass.async_create_task(self.async_request_refresh())
+            delay_seconds, _safe_schedule_callback
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -147,7 +176,8 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             local_tz = now.tzinfo
 
             # Calculate start (midnight today) and end (midnight day after tomorrow)
-            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            # Use dt_util.start_of_local_day() for DST-safe midnight calculation
+            today_start = dt_util.start_of_local_day()
             # Request 48+ hours to ensure we have tomorrow's data
             end_date = today_start + timedelta(days=2)
 
@@ -227,6 +257,11 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             return result
 
+        except asyncio.CancelledError:
+            LOGGER.debug("Price update cancelled, rescheduling...")
+            # Schedule next update even when cancelled
+            self._schedule_next_update()
+            raise
         except OstromAuthError as err:
             LOGGER.error("Authentication error fetching prices: %s", err)
             # Schedule next update even on error
@@ -297,35 +332,49 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             Next update datetime
         """
         now = dt_util.now()
-        # Calculate minutes past the hour
-        minutes_past_hour = now.minute
+        try:
+            # Calculate minutes past the hour
+            minutes_past_hour = now.minute
 
-        # Find which interval we're in
-        interval_count = minutes_past_hour // interval_minutes
-        interval_start_minute = interval_count * interval_minutes
-        interval_start_time = now.replace(
-            minute=interval_start_minute, second=offset_seconds, microsecond=0
-        )
+            # Find which interval we're in
+            interval_count = minutes_past_hour // interval_minutes
+            interval_start_minute = interval_count * interval_minutes
+            interval_start_time = now.replace(
+                minute=interval_start_minute, second=offset_seconds, microsecond=0
+            )
 
-        # If we're before the offset time of the current interval, use current interval
-        if now < interval_start_time:
-            next_time = interval_start_time
-        else:
-            # Otherwise, use next interval
-            next_minute = interval_start_minute + interval_minutes
-            if next_minute >= 60:
-                next_time = now.replace(
-                    hour=now.hour + 1,
-                    minute=0,
-                    second=offset_seconds,
-                    microsecond=0,
-                )
+            # If we're before the offset time of the current interval, use current interval
+            if now < interval_start_time:
+                next_time = interval_start_time
             else:
-                next_time = now.replace(
-                    minute=next_minute, second=offset_seconds, microsecond=0
-                )
+                # Otherwise, use next interval
+                next_minute = interval_start_minute + interval_minutes
+                if next_minute >= 60:
+                    next_time = now.replace(
+                        hour=now.hour + 1,
+                        minute=0,
+                        second=offset_seconds,
+                        microsecond=0,
+                    )
+                else:
+                    next_time = now.replace(
+                        minute=next_minute, second=offset_seconds, microsecond=0
+                    )
 
-        return next_time
+            # Validate that next_time is in the future (handles DST edge cases)
+            if next_time <= now:
+                # If calculated time is in the past, add one interval
+                next_time = next_time + timedelta(minutes=interval_minutes)
+
+            return next_time
+        except (ValueError, OverflowError) as err:
+            # Fallback for DST transitions or other time calculation errors
+            LOGGER.error(
+                "Time calculation error (DST transition?): %s, using fallback", err
+            )
+            # Simple fallback: schedule for next interval from now
+            fallback_time = now + timedelta(minutes=interval_minutes, seconds=offset_seconds)
+            return fallback_time
 
     @callback
     def _schedule_next_update(self) -> None:
@@ -353,9 +402,24 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             delay_seconds,
         )
 
+        # Safe callback wrapper that ensures timer is always rescheduled on errors
+        def _safe_schedule_callback():
+            """Safe callback wrapper that ensures timer is always rescheduled."""
+            try:
+                self.hass.async_create_task(self.async_request_refresh())
+            except Exception as err:
+                LOGGER.error(
+                    "Failed to schedule consumption update: %s, rescheduling with fallback", err
+                )
+                # Reschedule with fallback delay (next interval) to keep loop running
+                fallback_delay = self._poll_interval_minutes * 60
+                self._update_timer = self.hass.loop.call_later(
+                    fallback_delay, _safe_schedule_callback
+                )
+
         # Schedule the update
         self._update_timer = self.hass.loop.call_later(
-            delay_seconds, lambda: self.hass.async_create_task(self.async_request_refresh())
+            delay_seconds, _safe_schedule_callback
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -370,7 +434,8 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             local_tz = now.tzinfo
 
             # Calculate time windows
-            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            # Use dt_util.start_of_local_day() for DST-safe midnight calculation
+            today_start = dt_util.start_of_local_day()
             yesterday_start = today_start - timedelta(days=1)
             end_date = today_start + timedelta(days=1)
 
@@ -445,6 +510,11 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             return result
 
+        except asyncio.CancelledError:
+            LOGGER.debug("Consumption update cancelled, rescheduling...")
+            # Schedule next update even when cancelled
+            self._schedule_next_update()
+            raise
         except OstromAuthError as err:
             LOGGER.error("Authentication error fetching consumption: %s", err)
             # Schedule next update even on error

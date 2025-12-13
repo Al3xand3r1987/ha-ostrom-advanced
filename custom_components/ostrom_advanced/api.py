@@ -91,6 +91,8 @@ class OstromApiClient:
         # Token storage
         self._access_token: str | None = None
         self._token_expires_at: datetime | None = None
+        # Lock for token refresh to prevent race conditions
+        self._token_lock = asyncio.Lock()
 
     @property
     def contract_id(self) -> str:
@@ -204,8 +206,15 @@ class OstromApiClient:
 
     async def _async_ensure_token(self) -> None:
         """Ensure we have a valid access token."""
-        if not self._is_token_valid():
-            await self.async_authenticate()
+        # Check without lock first (fast path)
+        if self._is_token_valid():
+            return
+        
+        # Acquire lock for token refresh to prevent race conditions
+        async with self._token_lock:
+            # Check again after acquiring lock (another request might have refreshed it)
+            if not self._is_token_valid():
+                await self.async_authenticate()
 
     async def _async_request(
         self,
@@ -257,7 +266,11 @@ class OstromApiClient:
                     # Token might be expired, try to refresh
                     LOGGER.warning("Token expired, attempting to refresh")
                     self._access_token = None
-                    await self.async_authenticate()
+                    # Use lock to prevent race conditions during token refresh
+                    async with self._token_lock:
+                        # Check again after acquiring lock
+                        if not self._is_token_valid():
+                            await self.async_authenticate()
                     # Retry the request once
                     headers["Authorization"] = f"Bearer {self._access_token}"
                     async with self._session.request(

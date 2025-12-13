@@ -179,7 +179,8 @@ def _is_tomorrow_cheapest_3h_block_active(
     block_end = block_start + timedelta(hours=3)
 
     # Check if we're already in tomorrow (after midnight)
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    # Use dt_util.start_of_local_day() for DST-safe midnight calculation
+    today_start = dt_util.start_of_local_day()
     tomorrow_start = today_start + timedelta(days=1)
 
     # Only check if we're in tomorrow AND within the block
