@@ -1,13 +1,5 @@
-# Release Drafter Konfiguration für Ostrom Advanced
-# 
-# WICHTIG: Release Drafter arbeitet primär PR-basiert. 
-# Direkte Commits zu main ohne Pull Requests werden nicht automatisch in den Release Notes erfasst.
-# Empfehlung: Änderungen über Pull Requests einbringen für vollständige Release Notes.
-#
-# Für direkte Commits: Release Notes können manuell ergänzt werden.
-
 name-template: 'Ostrom Advanced v$RESOLVED_VERSION'
-tag-template: '$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
 
 categories:
   - title: '🚀 New Features'
@@ -45,6 +37,7 @@ version-resolver:
       - 'patch'
       - 'fix'
       - 'bugfix'
+  default: patch
 
 autolabeler:
   - label: 'skip-changelog'
@@ -52,4 +45,3 @@ autolabeler:
       - '*.md'
       - '.gitignore'
       - '.github/**'
-
