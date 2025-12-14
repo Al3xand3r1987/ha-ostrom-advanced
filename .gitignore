@@ -90,3 +90,6 @@ secrets.yaml
 # Cursor AI - Entwickler-Tools (nur lokal, nicht im Repository)
 .cursor/
 
+# Brands Repository (lokaler Fork für Logo-Upload, nicht auf GitHub)
+brands/
+

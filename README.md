@@ -244,6 +244,8 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 
 **Berechnung**: Kosten = Verbrauch (kWh) × Preis (€/kWh) für jede Stunde, summiert über den Tag.
 
+**Hinweis zu historischen Kosten**: Der Sensor `cost_yesterday_eur` verwendet die gestern-Daten aus dem 72-Stunden-Fenster der Integration. Die historischen Kostenberechnungen basieren auf den tatsächlichen Preisen von gestern, die bei jedem Update aus dem 72-Stunden-Fenster abgerufen werden. Dies gewährleistet präzise Kostenberechnungen für vergangene Zeiträume.
+
 </details>
 
 ### Attribute und Datenstrukturen
@@ -253,13 +255,14 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 **Zweck**: Enthält alle detaillierten Preisdaten mit Netto- und Steuerpreisen für erweiterte Analysen.
 
 **Attribute:**
+- `yesterday_slots`: Liste der stündlichen Preisslots für gestern (aus dem 72-Stunden-Fenster, verwendet für historische Kostenberechnungen)
 - `today_slots`: Liste der stündlichen Preisslots für heute
 - `tomorrow_slots`: Liste der stündlichen Preisslots für morgen (wenn verfügbar)
 - `current_slot_start`: Startzeit des aktuellen Preisslots (ISO-Format, z.B. `2024-01-15T14:00:00+01:00`)
 - `current_slot_end`: Endzeit des aktuellen Preisslots (ISO-Format)
 - `last_update`: Zeitstempel der letzten Datenaktualisierung (ISO-Format)
 
-**Slot-Struktur** (jeder Eintrag in `today_slots` und `tomorrow_slots`):
+**Slot-Struktur** (jeder Eintrag in `yesterday_slots`, `today_slots` und `tomorrow_slots`):
 ```json
 {
   "start": "2024-01-15T14:00:00+01:00",
@@ -275,11 +278,12 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 **Zweck**: Optimiert für Zeitreihen-Darstellungen in Charts (z.B. Apex Charts). Enthält nur die für Visualisierungen notwendigen Daten.
 
 **Attribute:**
+- `yesterday_total_prices`: Liste der Endpreise für gestern mit Timestamps (aus dem 72-Stunden-Fenster)
 - `today_total_prices`: Liste der Endpreise für heute mit Timestamps
 - `tomorrow_total_prices`: Liste der Endpreise für morgen mit Timestamps (wenn verfügbar)
 - `last_update`: Zeitstempel der letzten Datenaktualisierung (ISO-Format)
 
-**Preislisten-Struktur** (jeder Eintrag in `today_total_prices` und `tomorrow_total_prices`):
+**Preislisten-Struktur** (jeder Eintrag in `yesterday_total_prices`, `today_total_prices` und `tomorrow_total_prices`):
 ```json
 {
   "timestamp": "2024-01-15T14:00:00+01:00",
@@ -287,7 +291,7 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 }
 ```
 
-**Verwendung**: Diese Attribute sind ideal für Chart-Bibliotheken wie **Apex Charts**, um Preisdaten für die Zukunft (heute und morgen) visuell darzustellen. Die Daten sind bereits im richtigen Format für Zeitreihen-Diagramme aufbereitet.
+**Verwendung**: Diese Attribute sind ideal für Chart-Bibliotheken wie **Apex Charts**, um Preisdaten für die letzten 24 Stunden (gestern), heute und die nächsten 24 Stunden (morgen) visuell darzustellen. Die Daten sind bereits im richtigen Format für Zeitreihen-Diagramme aufbereitet.
 
 #### Kompatibilität mit ApexCharts
 
@@ -295,7 +299,7 @@ Der `sensor.ostrom_contract_*_price_now` Sensor enthält das Attribut `apex_data
 
 **Attribut `apex_data`:**
 - Format: Array von Paaren `[[timestamp, price], ...]` - direkt nutzbar für ApexCharts Zeitreihen
-- Enthält kombinierte Preisdaten für heute und morgen, sortiert nach Zeit
+- Enthält kombinierte Preisdaten für gestern, heute und morgen in chronologischer Reihenfolge, sortiert nach Zeit
 - Automatisch dedupliziert (keine doppelten Timestamps)
 - Beispiel:
 ```json
@@ -423,6 +427,16 @@ Die Integration verwendet Home Assistant's Coordinator-Pattern für Datenaktuali
 - **Verbrauchs-Coordinator**: Verwaltet Verbrauchs-Updates separat (nur wenn Vertrags-ID vorhanden)
 - **Synchronisierte Updates**: Updates erfolgen zu konstanten Zeiten basierend auf Intervall + Offset
 - **Automatische Neusynchronisation**: Bei Änderung der Konfiguration werden Timer automatisch neu berechnet
+
+### 72-Stunden-Datenfenster
+
+Die Integration holt ein **72-Stunden-Fenster** (gestern, heute, morgen) von der Ostrom API. Dies ermöglicht:
+
+- **Historische Kostenberechnungen**: Die gestern-Daten werden für die Berechnung von `cost_yesterday_eur` verwendet, basierend auf den tatsächlichen Preisen von gestern
+- **Vollständige Timeline-Daten**: Alle drei Zeiträume (gestern, heute, morgen) sind in den Sensor-Attributen verfügbar und werden in chronologischer Reihenfolge für Charts bereitgestellt
+- **Kontinuierliche Visualisierung**: Chart-Bibliotheken wie Apex Charts können nahtlos Preisdaten für die letzten 24 Stunden, heute und die nächsten 24 Stunden darstellen
+
+Die gestern-Daten werden automatisch bei jedem Update aktualisiert und stehen in den Attributen `yesterday_slots` (Raw-Sensor) und `yesterday_total_prices` (Price-Now-Sensor) zur Verfügung.
 
 ### Rate Limits und API-Nutzung
 

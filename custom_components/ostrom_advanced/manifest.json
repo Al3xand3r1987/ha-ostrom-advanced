@@ -1,7 +1,7 @@
 {
   "domain": "ostrom_advanced",
   "name": "Ostrom Advanced",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "documentation": "https://github.com/Al3xand3r1987/ha-ostrom-advanced",
   "issue_tracker": "https://github.com/Al3xand3r1987/ha-ostrom-advanced/issues",
   "codeowners": ["@Al3xand3r1987"],

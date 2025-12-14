@@ -28,12 +28,19 @@ jobs:
 
       - name: Setup GitHub CLI
         run: |
-          type -p curl >/dev/null || (apt update && apt install curl -y)
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-          && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-          && apt update \
-          && apt install gh -y
+          # Prüfe ob GitHub CLI bereits installiert ist
+          if command -v gh &> /dev/null; then
+            echo "✅ GitHub CLI already installed: $(gh --version | head -n 1)"
+          else
+            echo "📦 Installing GitHub CLI..."
+            type -p curl >/dev/null || (apt update && apt install curl -y)
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+            && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+            && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+            && apt update \
+            && apt install gh -y
+            echo "✅ GitHub CLI installed successfully"
+          fi
 
       - name: Get current tag
         id: current_tag
@@ -59,16 +66,21 @@ jobs:
           
           # Versuche vorherigen Tag zu finden
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${CURRENT_TAG}^ 2>/dev/null || echo "")
-          
+
           if [ -z "$PREVIOUS_TAG" ]; then
             # Fallback: Suche nach dem letzten Tag vor dem aktuellen
             PREVIOUS_TAG=$(git tag --sort=-v:refname | grep -v "^${CURRENT_TAG}$" | head -n 1 || echo "")
           fi
-          
+
           if [ -z "$PREVIOUS_TAG" ]; then
             # Letzter Fallback: Erster Commit
-            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
-            echo "⚠️ No previous tag found, using first commit: $PREVIOUS_TAG"
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD 2>/dev/null || echo "")
+            if [ -z "$PREVIOUS_TAG" ]; then
+              echo "⚠️ No previous tag or commit found, using empty range"
+              PREVIOUS_TAG="${CURRENT_TAG}^"
+            else
+              echo "⚠️ No previous tag found, using first commit: $PREVIOUS_TAG"
+            fi
           else
             echo "✅ Found previous tag: $PREVIOUS_TAG"
           fi
@@ -86,9 +98,9 @@ jobs:
           
           # Prüfe ob es Commits gibt
           COMMIT_COUNT=$(git rev-list --count ${PREVIOUS_TAG}..${CURRENT_TAG} 2>/dev/null || echo "0")
-          echo "Found $COMMIT_COUNT commits"
+          echo "Found $COMMIT_COUNT commits between $PREVIOUS_TAG and $CURRENT_TAG"
           
-          if [ "$COMMIT_COUNT" -eq "0" ]; then
+          if [ "$COMMIT_COUNT" -eq "0" ] || [ -z "$COMMIT_COUNT" ]; then
             echo "⚠️ No commits found between tags, creating empty release notes"
             echo 'notes<<EOF' > $GITHUB_OUTPUT
             echo "## 📦 Release $CURRENT_TAG" >> $GITHUB_OUTPUT
@@ -100,11 +112,12 @@ jobs:
           
           # Kategorisiere Commits nach Conventional Commits
           # Priorität: Features → Fixes → Maintenance → Docs
-          FEATURES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(feat|feature):" | sed 's/^-\s*\(feat\|feature\):/-/' || echo "")
-          FIXES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(fix|bug):" | sed 's/^-\s*\(fix\|bug\):/-/' || echo "")
-          CHORES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(chore|refactor):" | sed 's/^-\s*\(chore\|refactor\):/-/' || echo "")
-          DOCS=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*docs:" | sed 's/^-\s*docs:/-/' || echo "")
-          OTHER=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -vE "^-\s*(feat|feature|fix|bug|docs|chore|refactor):" || echo "")
+          # Verwende --no-merges um Merge-Commits auszuschließen
+          FEATURES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(feat|feature):" | sed 's/^-\s*\(feat\|feature\):/-/' || echo "")
+          FIXES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(fix|bug):" | sed 's/^-\s*\(fix\|bug\):/-/' || echo "")
+          CHORES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(chore|refactor):" | sed 's/^-\s*\(chore\|refactor\):/-/' || echo "")
+          DOCS=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*docs:" | sed 's/^-\s*docs:/-/' || echo "")
+          OTHER=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -vE "^-\s*(feat|feature|fix|bug|docs|chore|refactor):" || echo "")
           
           echo "📊 Categorized commits:"
           echo "  Features: $(echo "$FEATURES" | grep -c "^" || echo "0")"
@@ -201,11 +214,12 @@ jobs:
           echo "📝 Updating RELEASE_NOTES.md for version $VERSION"
           
           # Sammle Commits erneut (Variablen aus vorherigem Step sind nicht verfügbar)
-          FEATURES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(feat|feature):" | sed 's/^-\s*\(feat\|feature\):/-/' || echo "")
-          FIXES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(fix|bug):" | sed 's/^-\s*\(fix\|bug\):/-/' || echo "")
-          CHORES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*(chore|refactor):" | sed 's/^-\s*\(chore\|refactor\):/-/' || echo "")
-          DOCS=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -E "^-\s*docs:" | sed 's/^-\s*docs:/-/' || echo "")
-          OTHER=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges | grep -vE "^-\s*(feat|feature|fix|bug|docs|chore|refactor):" || echo "")
+          # Verwende --no-merges um Merge-Commits auszuschließen
+          FEATURES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(feat|feature):" | sed 's/^-\s*\(feat\|feature\):/-/' || echo "")
+          FIXES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(fix|bug):" | sed 's/^-\s*\(fix\|bug\):/-/' || echo "")
+          CHORES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(chore|refactor):" | sed 's/^-\s*\(chore\|refactor\):/-/' || echo "")
+          DOCS=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*docs:" | sed 's/^-\s*docs:/-/' || echo "")
+          OTHER=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -vE "^-\s*(feat|feature|fix|bug|docs|chore|refactor):" || echo "")
           
           # Erstelle neuen Release Notes Eintrag
           {
