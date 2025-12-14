@@ -119,28 +119,74 @@ def setup_repository():
     create_branch()
 
 
+def get_github_username():
+    """Extrahiert den GitHub-Username aus dem Remote-URL oder manifest.json."""
+    # Versuche aus Git Remote zu extrahieren
+    try:
+        result = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        # Extrahiere Username aus URL (z.B. https://github.com/USERNAME/repo.git)
+        import re
+        match = re.search(r'github\.com[/:]([^/]+)', result.stdout)
+        if match:
+            return match.group(1)
+    except:
+        pass
+    
+    # Fallback: Versuche aus manifest.json zu extrahieren
+    try:
+        import json
+        with open("custom_components/ostrom_advanced/manifest.json", "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+            if "documentation" in manifest:
+                url = manifest["documentation"]
+                import re
+                match = re.search(r'github\.com/([^/]+)', url)
+                if match:
+                    return match.group(1)
+    except:
+        pass
+    
+    # Letzter Fallback: Git config user.name (kann Leerzeichen enthalten)
+    try:
+        username = subprocess.check_output(
+            ["git", "config", "user.name"],
+            text=True
+        ).strip()
+        # Ersetze Leerzeichen durch Bindestrich für URL
+        return username.replace(" ", "-")
+    except:
+        return None
+
+
 def clone_repository():
     """Klont das Brands Repository."""
     print(f"[INFO] Klone Brands Repository...")
     
     # Prüfe ob Fork existiert
     try:
-        username = subprocess.check_output(
-            ["git", "config", "user.name"],
-            text=True
-        ).strip()
+        username = get_github_username()
         
-        fork_url = f"https://github.com/{username}/brands"
-        print(f"[INFO] Prüfe Fork: {fork_url}")
-        
-        # Prüfe ob Fork existiert (einfache HTTP-Check)
-        import urllib.request
-        try:
-            urllib.request.urlopen(f"https://github.com/{username}/brands", timeout=5)
-            print(f"[OK] Fork gefunden: {fork_url}")
-            repo_url = fork_url
-        except:
-            print(f"[WARN] Fork nicht gefunden, nutze Original: {BRANDS_REPO_URL}")
+        if username:
+            fork_url = f"https://github.com/{username}/brands"
+            print(f"[INFO] Prüfe Fork: {fork_url}")
+            
+            # Prüfe ob Fork existiert (einfache HTTP-Check)
+            import urllib.request
+            try:
+                urllib.request.urlopen(f"https://github.com/{username}/brands", timeout=5)
+                print(f"[OK] Fork gefunden: {fork_url}")
+                repo_url = fork_url
+            except:
+                print(f"[WARN] Fork nicht gefunden, nutze Original: {BRANDS_REPO_URL}")
+                repo_url = BRANDS_REPO_URL
+        else:
+            print(f"[WARN] Konnte GitHub-Username nicht ermitteln")
+            print(f"  -> Nutze Original: {BRANDS_REPO_URL}")
             repo_url = BRANDS_REPO_URL
     except Exception as e:
         print(f"[WARN] Konnte Fork nicht prüfen: {e}")
@@ -314,11 +360,11 @@ def generate_pr_url():
     print_step(5, "Pull Request URL generieren")
     
     try:
-        # GitHub Username aus Git-Config
-        username = subprocess.check_output(
-            ["git", "config", "user.name"],
-            text=True
-        ).strip()
+        # GitHub Username extrahieren
+        username = get_github_username()
+        
+        if not username:
+            raise Exception("GitHub-Username konnte nicht ermittelt werden")
         
         pr_url = f"https://github.com/home-assistant/brands/compare/main...{username}:brands:{BRANCH_NAME}?expand=1"
         
