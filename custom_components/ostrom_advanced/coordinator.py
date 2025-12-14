@@ -23,7 +23,8 @@ from .const import (
 class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Coordinator for fetching Ostrom spot price data.
 
-    Fetches a 48-hour window (today and tomorrow) and organizes data into:
+    Fetches a 72-hour window (yesterday, today, and tomorrow) and organizes data into:
+    - yesterday_slots: List of price slots for yesterday (for historical cost calculation)
     - today_slots: List of price slots for today
     - tomorrow_slots: List of price slots for tomorrow
     - current_slot: The slot covering the current time
@@ -168,21 +169,22 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch price data from the API.
 
         Returns:
-            Dictionary with today_slots, tomorrow_slots, and current_slot
+            Dictionary with yesterday_slots, today_slots, tomorrow_slots, and current_slot
         """
         try:
             # Get current time in local timezone
             now = dt_util.now()
             local_tz = now.tzinfo
 
-            # Calculate start (midnight today) and end (midnight day after tomorrow)
+            # Calculate start (midnight yesterday) and end (midnight day after tomorrow)
             # Use dt_util.start_of_local_day() for DST-safe midnight calculation
             today_start = dt_util.start_of_local_day()
-            # Request 48+ hours to ensure we have tomorrow's data
+            yesterday_start = today_start - timedelta(days=1)
+            # Request 72+ hours: yesterday, today, and tomorrow
             end_date = today_start + timedelta(days=2)
 
             # Convert to UTC for API call
-            start_utc = today_start.astimezone(dt_util.UTC).replace(tzinfo=None)
+            start_utc = yesterday_start.astimezone(dt_util.UTC).replace(tzinfo=None)
             end_utc = end_date.astimezone(dt_util.UTC).replace(tzinfo=None)
 
             LOGGER.debug(
@@ -192,6 +194,7 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raw_data = await self._client.async_get_spot_prices(start_utc, end_utc)
 
             # Process and organize the data
+            yesterday_slots: list[dict[str, Any]] = []
             today_slots: list[dict[str, Any]] = []
             tomorrow_slots: list[dict[str, Any]] = []
             current_slot: dict[str, Any] | None = None
@@ -225,10 +228,13 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "gross_tax_and_levies": entry.get("grossKwhTaxAndLevies", 0) / 100,
                 }
 
-                # Determine if this is today or tomorrow
-                if slot_start.date() == today_start.date():
+                # Determine which day this slot belongs to
+                slot_date = slot_start.date()
+                if slot_date == yesterday_start.date():
+                    yesterday_slots.append(slot)
+                elif slot_date == today_start.date():
                     today_slots.append(slot)
-                elif slot_start.date() == tomorrow_start.date():
+                elif slot_date == tomorrow_start.date():
                     tomorrow_slots.append(slot)
 
                 # Check if this is the current slot
@@ -236,16 +242,19 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     current_slot = slot
 
             # Sort slots by start time
+            yesterday_slots.sort(key=lambda x: x["start"])
             today_slots.sort(key=lambda x: x["start"])
             tomorrow_slots.sort(key=lambda x: x["start"])
 
             LOGGER.debug(
-                "Processed %d slots for today, %d slots for tomorrow",
+                "Processed %d slots for yesterday, %d slots for today, %d slots for tomorrow",
+                len(yesterday_slots),
                 len(today_slots),
                 len(tomorrow_slots),
             )
 
             result = {
+                "yesterday_slots": yesterday_slots,
                 "today_slots": today_slots,
                 "tomorrow_slots": tomorrow_slots,
                 "current_slot": current_slot,

@@ -27,7 +27,8 @@
     "error": {
       "invalid_auth": "Ungültige Zugangsdaten. Bitte überprüfe deine Client ID und dein Client Secret.",
       "cannot_connect": "Verbindung zur Ostrom API nicht möglich. Bitte überprüfe deine Internetverbindung.",
-      "unknown": "Ein unerwarteter Fehler ist aufgetreten. Bitte überprüfe die Logs für weitere Details."
+      "unknown": "Ein unerwarteter Fehler ist aufgetreten. Bitte überprüfe die Logs für weitere Details.",
+      "invalid_format": "Ungültiges Postleitzahl-Format. Bitte gib eine 5-stellige deutsche Postleitzahl ein (z.B. 10115)."
     },
     "abort": {
       "already_configured": "Dieser Vertrag ist bereits konfiguriert."

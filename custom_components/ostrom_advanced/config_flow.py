@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 import voluptuous as vol
@@ -60,6 +61,11 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_CLIENT_SECRET] = "required"
             if not user_input.get(CONF_ZIP_CODE):
                 errors[CONF_ZIP_CODE] = "required"
+            else:
+                # Validate German zip code format (5 digits)
+                zip_code = user_input.get(CONF_ZIP_CODE, "").strip()
+                if not re.match(r"^\d{5}$", zip_code):
+                    errors[CONF_ZIP_CODE] = "invalid_format"
 
             # Only proceed if no validation errors
             if not errors:
@@ -133,7 +139,13 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     ): vol.In({ENV_SANDBOX: "Sandbox", ENV_PRODUCTION: "Production"}),
                     vol.Required(CONF_CLIENT_ID): str,
                     vol.Required(CONF_CLIENT_SECRET): str,
-                    vol.Required(CONF_ZIP_CODE): str,
+                    vol.Required(
+                        CONF_ZIP_CODE
+                    ): vol.All(
+                        str,
+                        vol.Length(min=5, max=5),
+                        vol.Match(r"^\d{5}$", msg="Postleitzahl muss genau 5 Ziffern enthalten"),
+                    ),
                     vol.Optional(CONF_CONTRACT_ID, default=""): str,
                     vol.Optional(
                         CONF_POLL_INTERVAL_MINUTES,
