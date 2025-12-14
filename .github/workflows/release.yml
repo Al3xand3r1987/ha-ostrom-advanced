@@ -2,10 +2,20 @@ name: Release
 
 on:
   release:
-    types: [published]  # Triggert nur bei manuell erstellten Releases auf GitHub
+    types: [published]  # Triggert bei manuell erstellten Releases auf GitHub
+  push:
+    tags:
+      - 'v*'  # Triggert auch bei Tag-Push (z.B. v0.4.0)
+  workflow_dispatch:  # Ermöglicht manuelles Triggern über GitHub UI
+    inputs:
+      tag_name:
+        description: 'Tag name (z.B. v0.4.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write  # Erforderlich für das Aktualisieren von Releases
+  issues: read    # Für Release-Drafter (falls verwendet)
 
 jobs:
   update-release-notes:
@@ -16,10 +26,35 @@ jobs:
         with:
           fetch-depth: 0  # Vollständige Git-Historie für Release Notes
 
+      - name: Setup GitHub CLI
+        run: |
+          type -p curl >/dev/null || (apt update && apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+          && apt update \
+          && apt install gh -y
+
+      - name: Get current tag
+        id: current_tag
+        run: |
+          # Prüfe ob es ein Release-Event oder Tag-Push-Event ist
+          if [ -n "${{ github.event.release.tag_name }}" ]; then
+            CURRENT_TAG="${{ github.event.release.tag_name }}"
+          elif [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            # Bei workflow_dispatch: Tag-Name aus Input nehmen
+            CURRENT_TAG="${{ github.event.inputs.tag_name }}"
+          else
+            # Bei Tag-Push: Tag-Name aus Ref extrahieren
+            CURRENT_TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "Current tag: $CURRENT_TAG"
+          echo "tag_name=$CURRENT_TAG" >> $GITHUB_OUTPUT
+
       - name: Get previous tag
         id: previous_tag
         run: |
-          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
           echo "Current release tag: $CURRENT_TAG"
           
           # Versuche vorherigen Tag zu finden
@@ -44,7 +79,7 @@ jobs:
       - name: Generate release notes from commits
         id: release_notes
         run: |
-          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
           PREVIOUS_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
           
           echo "📝 Generating release notes from $PREVIOUS_TAG to $CURRENT_TAG"
@@ -110,22 +145,40 @@ jobs:
 
       - name: Get existing release body
         id: existing_body
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          EXISTING_BODY="${{ github.event.release.body }}"
-          if [ -n "$EXISTING_BODY" ] && [ "$EXISTING_BODY" != "null" ]; then
+          # Prüfe ob Release bereits existiert (bei Tag-Push)
+          CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
+          if [ -n "${{ github.event.release.body }}" ] && [ "${{ github.event.release.body }}" != "null" ]; then
+            EXISTING_BODY="${{ github.event.release.body }}"
             echo "has_existing_body=true" >> $GITHUB_OUTPUT
             echo "Existing release notes found, keeping them"
           else
-            echo "has_existing_body=false" >> $GITHUB_OUTPUT
-            echo "No existing release notes, will use generated ones"
+            # Prüfe ob Release bereits auf GitHub existiert
+            gh auth setup-git
+            RELEASE_EXISTS=$(gh release view "$CURRENT_TAG" --json body 2>/dev/null || echo "")
+            if [ -n "$RELEASE_EXISTS" ]; then
+              RELEASE_BODY=$(echo "$RELEASE_EXISTS" | jq -r '.body // ""')
+              if [ -n "$RELEASE_BODY" ] && [ "$RELEASE_BODY" != "null" ] && [ "$RELEASE_BODY" != "" ]; then
+                echo "has_existing_body=true" >> $GITHUB_OUTPUT
+                echo "Existing release found on GitHub, keeping existing notes"
+              else
+                echo "has_existing_body=false" >> $GITHUB_OUTPUT
+                echo "Release exists but has no notes, will generate new ones"
+              fi
+            else
+              echo "has_existing_body=false" >> $GITHUB_OUTPUT
+              echo "No existing release found, will create new release with generated notes"
+            fi
           fi
 
-      - name: Update Release (only if no existing notes)
+      - name: Create or Update Release (only if no existing notes)
         if: steps.existing_body.outputs.has_existing_body == 'false'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.event.release.tag_name }}
-          name: Ostrom Advanced ${{ github.event.release.tag_name }}
+          tag_name: ${{ steps.current_tag.outputs.tag_name }}
+          name: Ostrom Advanced ${{ steps.current_tag.outputs.tag_name }}
           body: |
             ${{ steps.release_notes.outputs.notes }}
           draft: false
@@ -141,7 +194,7 @@ jobs:
 
       - name: Update RELEASE_NOTES.md file
         run: |
-          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
           PREVIOUS_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
           VERSION="${CURRENT_TAG#v}"  # Entferne 'v' Präfix
           
@@ -211,13 +264,23 @@ jobs:
 
       - name: Commit and push RELEASE_NOTES.md
         run: |
+          CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          
+          # Prüfe ob wir auf main sind
+          if [ "$CURRENT_BRANCH" != "main" ]; then
+            echo "⚠️ Not on main branch ($CURRENT_BRANCH), skipping RELEASE_NOTES.md commit"
+            echo "RELEASE_NOTES.md will only be committed when workflow runs on main branch"
+            exit 0
+          fi
+          
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add RELEASE_NOTES.md
           if ! git diff --staged --quiet; then
-            git commit -m "docs: update RELEASE_NOTES.md for ${{ github.event.release.tag_name }}"
+            git commit -m "docs: update RELEASE_NOTES.md for $CURRENT_TAG"
             git push
-            echo "✅ RELEASE_NOTES.md committed and pushed"
+            echo "✅ RELEASE_NOTES.md committed and pushed to main"
           else
             echo "ℹ️ No changes to RELEASE_NOTES.md"
           fi
