@@ -27,7 +27,8 @@
     "error": {
       "invalid_auth": "Invalid credentials. Please check your Client ID and Client Secret.",
       "cannot_connect": "Cannot connect to Ostrom API. Please check your internet connection.",
-      "unknown": "An unexpected error occurred. Please check the logs for more details."
+      "unknown": "An unexpected error occurred. Please check the logs for more details.",
+      "invalid_format": "Invalid zip code format. Please enter a 5-digit German zip code (e.g., 10115)."
     },
     "abort": {
       "already_configured": "This contract is already configured."

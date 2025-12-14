@@ -362,7 +362,7 @@ now:
   show: true
   label: Jetzt
 series:
-  - entity: sensor.ostrom_contract_9039_aktueller_preis
+  - entity: sensor.ostrom_advanced_XXXX_price_now
     name: Preis
     unit: €/kWh
     type: line
@@ -376,7 +376,7 @@ series:
 - ✅ Automatisch dedupliziert (keine doppelten Timestamps)
 - ✅ Perfekt für Anfänger - einfach kopieren und einfügen
 
-**Hinweis**: Ersetzen Sie `sensor.ostrom_contract_9039_aktueller_preis` durch Ihre tatsächliche Entity-ID (z.B. `sensor.ostrom_contract_XXXX_price_now`).
+**Hinweis**: Ersetzen Sie `sensor.ostrom_advanced_XXXX_price_now` durch Ihre tatsächliche Entity-ID. Die Entity-ID hat das Format `sensor.ostrom_advanced_{Vertrags-ID oder PLZ}_{key}` (z.B. `sensor.ostrom_advanced_10115_price_now`).
 
 **Alternative - Heute und Morgen getrennt darstellen:**
 
@@ -384,7 +384,7 @@ Falls Sie heute und morgen als separate Serien darstellen möchten:
 
 ```yaml
 type: custom:apexcharts-card
-entity: sensor.ostrom_contract_XXXX_price_now
+entity: sensor.ostrom_advanced_XXXX_price_now
 data_generator: |
   return [
     {
