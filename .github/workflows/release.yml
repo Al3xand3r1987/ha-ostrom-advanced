@@ -13,6 +13,11 @@ on:
         required: true
         type: string
 
+# Verhindert parallele Ausführungen des Release-Workflows
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write  # Erforderlich für das Aktualisieren von Releases
   issues: read    # Für Release-Drafter (falls verwendet)
@@ -27,24 +32,27 @@ jobs:
           fetch-depth: 0  # Vollständige Git-Historie für Release Notes
 
       - name: Setup GitHub CLI
+        timeout-minutes: 5
         run: |
+          set -e
           # Prüfe ob GitHub CLI bereits installiert ist
           if command -v gh &> /dev/null; then
-            echo "✅ GitHub CLI already installed: $(gh --version | head -n 1)"
+            echo "GitHub CLI already installed: $(gh --version | head -n 1)"
           else
-            echo "📦 Installing GitHub CLI..."
+            echo "Installing GitHub CLI..."
             type -p curl >/dev/null || (apt update && apt install curl -y)
             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
             && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
             && apt update \
             && apt install gh -y
-            echo "✅ GitHub CLI installed successfully"
+            echo "GitHub CLI installed successfully"
           fi
 
       - name: Get current tag
         id: current_tag
         run: |
+          set -e
           # Prüfe ob es ein Release-Event oder Tag-Push-Event ist
           if [ -n "${{ github.event.release.tag_name }}" ]; then
             CURRENT_TAG="${{ github.event.release.tag_name }}"
@@ -58,9 +66,70 @@ jobs:
           echo "Current tag: $CURRENT_TAG"
           echo "tag_name=$CURRENT_TAG" >> $GITHUB_OUTPUT
 
+      - name: Validate tag format
+        id: validate_tag
+        run: |
+          set -e
+          TAG="${{ steps.current_tag.outputs.tag_name }}"
+          # Validiere Semantic Versioning Format: vX.Y.Z oder vX.Y.Z-prerelease
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+            echo "ERROR: Invalid tag format: $TAG"
+            echo "Expected format: vX.Y.Z or vX.Y.Z-prerelease"
+            exit 1
+          fi
+          echo "Tag format valid: $TAG"
+
+      - name: Validate version consistency
+        run: |
+          set -e
+          TAG="${{ steps.current_tag.outputs.tag_name }}"
+          VERSION="${TAG#v}"  # Remove 'v' prefix
+          MANIFEST_VERSION=$(jq -r '.version' custom_components/ostrom_advanced/manifest.json)
+          
+          if [ "$VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "ERROR: Version mismatch!"
+            echo "Tag version: $VERSION"
+            echo "Manifest version: $MANIFEST_VERSION"
+            exit 1
+          fi
+          echo "Version consistency verified: $VERSION"
+
+      - name: Validate HACS requirements
+        timeout-minutes: 2
+        run: |
+          set -e
+          echo "Validating HACS requirements..."
+          
+          # Prüfe ob hacs.json existiert
+          if [ ! -f "hacs.json" ]; then
+            echo "ERROR: hacs.json not found"
+            exit 1
+          fi
+          
+          # Prüfe ob manifest.json existiert und gültig ist
+          if [ ! -f "custom_components/ostrom_advanced/manifest.json" ]; then
+            echo "ERROR: manifest.json not found"
+            exit 1
+          fi
+          
+          # Prüfe ob manifest.json ein version Feld hat
+          if ! jq -e '.version' custom_components/ostrom_advanced/manifest.json > /dev/null 2>&1; then
+            echo "ERROR: manifest.json missing version field"
+            exit 1
+          fi
+          
+          # Prüfe ob README.md existiert
+          if [ ! -f "README.md" ]; then
+            echo "WARNING: README.md not found (optional but recommended)"
+          fi
+          
+          echo "HACS requirements validated successfully"
+
       - name: Get previous tag
         id: previous_tag
+        timeout-minutes: 2
         run: |
+          set -e
           CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
           echo "Current release tag: $CURRENT_TAG"
           
@@ -76,13 +145,13 @@ jobs:
             # Letzter Fallback: Erster Commit
             PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD 2>/dev/null || echo "")
             if [ -z "$PREVIOUS_TAG" ]; then
-              echo "⚠️ No previous tag or commit found, using empty range"
+              echo "WARNING: No previous tag or commit found, using empty range"
               PREVIOUS_TAG="${CURRENT_TAG}^"
             else
-              echo "⚠️ No previous tag found, using first commit: $PREVIOUS_TAG"
+              echo "WARNING: No previous tag found, using first commit: $PREVIOUS_TAG"
             fi
           else
-            echo "✅ Found previous tag: $PREVIOUS_TAG"
+            echo "Found previous tag: $PREVIOUS_TAG"
           fi
           
           echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
@@ -90,77 +159,195 @@ jobs:
 
       - name: Generate release notes from commits
         id: release_notes
+        timeout-minutes: 5
         run: |
+          set -e
           CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
           PREVIOUS_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
           
-          echo "📝 Generating release notes from $PREVIOUS_TAG to $CURRENT_TAG"
+          echo "Generating release notes from $PREVIOUS_TAG to $CURRENT_TAG"
           
           # Prüfe ob es Commits gibt
           COMMIT_COUNT=$(git rev-list --count ${PREVIOUS_TAG}..${CURRENT_TAG} 2>/dev/null || echo "0")
           echo "Found $COMMIT_COUNT commits between $PREVIOUS_TAG and $CURRENT_TAG"
           
           if [ "$COMMIT_COUNT" -eq "0" ] || [ -z "$COMMIT_COUNT" ]; then
-            echo "⚠️ No commits found between tags, creating empty release notes"
+            echo "WARNING: No commits found between tags, creating empty release notes"
             echo 'notes<<EOF' > $GITHUB_OUTPUT
-            echo "## 📦 Release $CURRENT_TAG" >> $GITHUB_OUTPUT
+            echo "# 🎉 Ostrom Advanced $CURRENT_TAG" >> $GITHUB_OUTPUT
             echo "" >> $GITHUB_OUTPUT
             echo "No commits found between $PREVIOUS_TAG and $CURRENT_TAG" >> $GITHUB_OUTPUT
             echo EOF >> $GITHUB_OUTPUT
             exit 0
           fi
           
+          # Extrahiere Breaking Changes aus Commit-Body (Conventional Commits Standard)
+          # Suche nach "BREAKING CHANGE:" im Commit-Body
+          BREAKING_DETAILS=""
+          BREAKING_COMMITS=""
+          
+          # Durchlaufe alle Commits und suche nach Breaking Changes
+          while IFS= read -r commit_hash; do
+            COMMIT_BODY=$(git log -1 --pretty=format:"%B" "$commit_hash" 2>/dev/null || echo "")
+            COMMIT_TITLE=$(git log -1 --pretty=format:"%s" "$commit_hash" 2>/dev/null || echo "")
+            
+            # Prüfe auf BREAKING CHANGE: im Body
+            if echo "$COMMIT_BODY" | grep -q "BREAKING CHANGE:"; then
+              BREAKING_TEXT=$(echo "$COMMIT_BODY" | sed -n '/BREAKING CHANGE:/,$p' | sed 's/BREAKING CHANGE://' | sed 's/^[[:space:]]*//' | head -n 50)
+              if [ -n "$BREAKING_TEXT" ]; then
+                BREAKING_DETAILS="${BREAKING_DETAILS}### ${COMMIT_TITLE}\n\n${BREAKING_TEXT}\n\n"
+              fi
+            fi
+            
+            # Prüfe auf "breaking" im Titel (case-insensitive)
+            if echo "$COMMIT_TITLE" | grep -qi "breaking"; then
+              if [ -z "$BREAKING_COMMITS" ]; then
+                BREAKING_COMMITS="- ${COMMIT_TITLE} (${commit_hash:0:7})"
+              else
+                BREAKING_COMMITS="${BREAKING_COMMITS}\n- ${COMMIT_TITLE} (${commit_hash:0:7})"
+              fi
+            fi
+          done < <(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"%H" --no-merges 2>/dev/null)
+          
           # Kategorisiere Commits nach Conventional Commits
-          # Priorität: Features → Fixes → Maintenance → Docs
           # Verwende --no-merges um Merge-Commits auszuschließen
-          FEATURES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(feat|feature):" | sed 's/^-\s*\(feat\|feature\):/-/' || echo "")
-          FIXES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(fix|bug):" | sed 's/^-\s*\(fix\|bug\):/-/' || echo "")
-          CHORES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(chore|refactor):" | sed 's/^-\s*\(chore\|refactor\):/-/' || echo "")
-          DOCS=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*docs:" | sed 's/^-\s*docs:/-/' || echo "")
+          ALL_FEATURES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(feat|feature):" || echo "")
+          
+          # Unterscheide zwischen Kunden-Features und technischen Features
+          # Kunden-Features: Features ohne Keywords wie "internal", "refactor", "technical", "api", "coordinator"
+          CUSTOMER_FEATURES=$(echo "$ALL_FEATURES" | grep -vE "(internal|refactor|technical|chore|api|coordinator)" | sed 's/^-\s*\(feat\|feature\):/- 🎯 /' || echo "")
+          
+          # Technische Features: Features mit diesen Keywords
+          TECHNICAL_FEATURES=$(echo "$ALL_FEATURES" | grep -E "(internal|refactor|technical|chore|api|coordinator)" | sed 's/^-\s*\(feat\|feature\):/- ⚙️ /' || echo "")
+          
+          # Falls keine Unterscheidung möglich, alle als Kunden-Features behandeln
+          if [ -z "$CUSTOMER_FEATURES" ] && [ -n "$ALL_FEATURES" ]; then
+            CUSTOMER_FEATURES=$(echo "$ALL_FEATURES" | sed 's/^-\s*\(feat\|feature\):/- 🎯 /' || echo "")
+          fi
+          
+          # Bug Fixes mit Emoji
+          FIXES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(fix|bug):" | sed 's/^-\s*\(fix\|bug\):/- 🐛 /' || echo "")
+          
+          # Maintenance/Chores mit Emoji
+          CHORES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(chore|refactor):" | sed 's/^-\s*\(chore\|refactor\):/- 🔧 /' || echo "")
+          
+          # Documentation mit Emoji
+          DOCS=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*docs:" | sed 's/^-\s*docs:/- 📝 /' || echo "")
+          
+          # Other Changes
           OTHER=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -vE "^-\s*(feat|feature|fix|bug|docs|chore|refactor):" || echo "")
           
-          echo "📊 Categorized commits:"
-          echo "  Features: $(echo "$FEATURES" | grep -c "^" || echo "0")"
+          # Speichere kategorisierte Commits für Wiederverwendung
+          echo "$CUSTOMER_FEATURES" > /tmp/customer_features.txt
+          echo "$TECHNICAL_FEATURES" > /tmp/technical_features.txt
+          echo "$FIXES" > /tmp/fixes.txt
+          echo "$CHORES" > /tmp/chores.txt
+          echo "$DOCS" > /tmp/docs.txt
+          echo "$OTHER" > /tmp/other.txt
+          echo -e "$BREAKING_DETAILS" > /tmp/breaking.txt
+          echo "$BREAKING_COMMITS" > /tmp/breaking_commits.txt
+          
+          echo "Categorized commits:"
+          echo "  Customer Features: $(echo "$CUSTOMER_FEATURES" | grep -c "^" || echo "0")"
+          echo "  Technical Features: $(echo "$TECHNICAL_FEATURES" | grep -c "^" || echo "0")"
           echo "  Fixes: $(echo "$FIXES" | grep -c "^" || echo "0")"
           echo "  Chores: $(echo "$CHORES" | grep -c "^" || echo "0")"
           echo "  Docs: $(echo "$DOCS" | grep -c "^" || echo "0")"
           echo "  Other: $(echo "$OTHER" | grep -c "^" || echo "0")"
+          echo "  Breaking Changes: $(if [ -n "$BREAKING_DETAILS" ] || [ -n "$BREAKING_COMMITS" ]; then echo "1"; else echo "0"; fi)"
           
-          # Baue Release Notes zusammen (Priorität: Features → Fixes → Maintenance → Docs)
+          # Baue Release Notes zusammen mit verbesserter Struktur
           {
             echo 'notes<<EOF'
-            if [ -n "$FEATURES" ]; then
-              echo "## 🚀 New Features"
-              echo "$FEATURES"
+            echo "# 🎉 Ostrom Advanced $CURRENT_TAG"
+            echo ""
+            
+            # Breaking Changes ganz oben (höchste Priorität)
+            if [ -n "$BREAKING_DETAILS" ] || [ -n "$BREAKING_COMMITS" ]; then
+              echo "## ⚠️ Breaking Changes"
+              echo ""
+              echo "**WICHTIG:** Diese Version enthält Breaking Changes, die möglicherweise Anpassungen in Ihrer Konfiguration erfordern."
+              echo ""
+              
+              if [ -n "$BREAKING_DETAILS" ]; then
+                echo -e "$BREAKING_DETAILS"
+              fi
+              
+              if [ -n "$BREAKING_COMMITS" ]; then
+                echo -e "$BREAKING_COMMITS"
+                echo ""
+              fi
+              
+              echo "---"
               echo ""
             fi
+            
+            # Kunden-Features (wichtig für Endbenutzer)
+            if [ -n "$CUSTOMER_FEATURES" ]; then
+              echo "## 🎯 Neue Features für Sie"
+              echo ""
+              echo "Diese Features sind direkt für Sie als Benutzer relevant und können sofort genutzt werden:"
+              echo ""
+              echo "$CUSTOMER_FEATURES"
+              echo ""
+            fi
+            
+            # Bug Fixes
             if [ -n "$FIXES" ]; then
-              echo "## 🐛 Bug Fixes"
+              echo "## 🐛 Bugfixes"
+              echo ""
               echo "$FIXES"
               echo ""
             fi
+            
+            # Technische Verbesserungen (für Entwickler/Interessierte)
+            if [ -n "$TECHNICAL_FEATURES" ]; then
+              echo "## ⚙️ Technische Verbesserungen"
+              echo ""
+              echo "Interne Verbesserungen und Optimierungen:"
+              echo ""
+              echo "$TECHNICAL_FEATURES"
+              echo ""
+            fi
+            
+            # Maintenance
             if [ -n "$CHORES" ]; then
-              echo "## 🔧 Maintenance"
+              echo "## 🔧 Wartung"
+              echo ""
               echo "$CHORES"
               echo ""
             fi
+            
+            # Documentation
             if [ -n "$DOCS" ]; then
-              echo "## 📝 Documentation"
+              echo "## 📝 Dokumentation"
+              echo ""
               echo "$DOCS"
               echo ""
             fi
+            
+            # Other Changes
             if [ -n "$OTHER" ]; then
-              echo "## 📦 Other Changes"
+              echo "## 📦 Weitere Änderungen"
+              echo ""
               echo "$OTHER"
+              echo ""
             fi
+            
+            echo ""
+            echo "---"
+            echo ""
+            echo "**Vollständige Änderungsliste:** [Commits zwischen $PREVIOUS_TAG und $CURRENT_TAG](https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...$CURRENT_TAG)"
             echo EOF
           } >> $GITHUB_OUTPUT
 
       - name: Get existing release body
         id: existing_body
+        timeout-minutes: 2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
           # Prüfe ob Release bereits existiert (bei Tag-Push)
           CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
           if [ -n "${{ github.event.release.body }}" ] && [ "${{ github.event.release.body }}" != "null" ]; then
@@ -169,7 +356,7 @@ jobs:
             echo "Existing release notes found, keeping them"
           else
             # Prüfe ob Release bereits auf GitHub existiert
-            gh auth setup-git
+            gh auth setup-git || true
             RELEASE_EXISTS=$(gh release view "$CURRENT_TAG" --json body 2>/dev/null || echo "")
             if [ -n "$RELEASE_EXISTS" ]; then
               RELEASE_BODY=$(echo "$RELEASE_EXISTS" | jq -r '.body // ""')
@@ -188,7 +375,8 @@ jobs:
 
       - name: Create or Update Release (only if no existing notes)
         if: steps.existing_body.outputs.has_existing_body == 'false'
-        uses: softprops/action-gh-release@v1
+        timeout-minutes: 3
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.current_tag.outputs.tag_name }}
           name: Ostrom Advanced ${{ steps.current_tag.outputs.tag_name }}
@@ -206,62 +394,111 @@ jobs:
           echo "Generated notes are available in the workflow logs for reference"
 
       - name: Update RELEASE_NOTES.md file
+        timeout-minutes: 3
         run: |
+          set -e
           CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
-          PREVIOUS_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
           VERSION="${CURRENT_TAG#v}"  # Entferne 'v' Präfix
           
-          echo "📝 Updating RELEASE_NOTES.md for version $VERSION"
+          echo "Updating RELEASE_NOTES.md for version $VERSION"
           
-          # Sammle Commits erneut (Variablen aus vorherigem Step sind nicht verfügbar)
-          # Verwende --no-merges um Merge-Commits auszuschließen
-          FEATURES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(feat|feature):" | sed 's/^-\s*\(feat\|feature\):/-/' || echo "")
-          FIXES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(fix|bug):" | sed 's/^-\s*\(fix\|bug\):/-/' || echo "")
-          CHORES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*(chore|refactor):" | sed 's/^-\s*\(chore\|refactor\):/-/' || echo "")
-          DOCS=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -E "^-\s*docs:" | sed 's/^-\s*docs:/-/' || echo "")
-          OTHER=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges 2>/dev/null | grep -vE "^-\s*(feat|feature|fix|bug|docs|chore|refactor):" || echo "")
+          # Verwende gespeicherte Commit-Kategorien aus vorherigem Step
+          CUSTOMER_FEATURES=$(cat /tmp/customer_features.txt 2>/dev/null || echo "")
+          TECHNICAL_FEATURES=$(cat /tmp/technical_features.txt 2>/dev/null || echo "")
+          FIXES=$(cat /tmp/fixes.txt 2>/dev/null || echo "")
+          CHORES=$(cat /tmp/chores.txt 2>/dev/null || echo "")
+          DOCS=$(cat /tmp/docs.txt 2>/dev/null || echo "")
+          OTHER=$(cat /tmp/other.txt 2>/dev/null || echo "")
+          BREAKING_DETAILS=$(cat /tmp/breaking.txt 2>/dev/null || echo "")
+          BREAKING_COMMITS=$(cat /tmp/breaking_commits.txt 2>/dev/null || echo "")
+          
+          # Prüfe auf Breaking Changes
+          HAS_BREAKING=false
+          if [ -n "$BREAKING_DETAILS" ] || [ -n "$BREAKING_COMMITS" ]; then
+            HAS_BREAKING=true
+          fi
           
           # Erstelle neuen Release Notes Eintrag
           {
-            echo "# Ostrom Advanced v$VERSION"
+            echo "# 🎉 Ostrom Advanced v$VERSION"
             echo ""
-            if [ -n "$FEATURES" ]; then
-              echo "## New Features"
-              echo "$FEATURES"
+            
+            # Breaking Changes ganz oben
+            if [ "$HAS_BREAKING" = "true" ]; then
+              echo "## ⚠️ Breaking Changes"
+              echo ""
+              echo "**WICHTIG:** Diese Version enthält Breaking Changes, die möglicherweise Anpassungen in Ihrer Konfiguration erfordern."
+              echo ""
+              
+              if [ -n "$BREAKING_DETAILS" ]; then
+                echo -e "$BREAKING_DETAILS"
+              fi
+              
+              if [ -n "$BREAKING_COMMITS" ]; then
+                echo -e "$BREAKING_COMMITS"
+                echo ""
+              fi
+              
+              echo "---"
               echo ""
             fi
+            
+            # Kunden-Features
+            if [ -n "$CUSTOMER_FEATURES" ]; then
+              echo "## 🎯 Neue Features für Sie"
+              echo ""
+              echo "$CUSTOMER_FEATURES"
+              echo ""
+            fi
+            
+            # Bug Fixes
             if [ -n "$FIXES" ]; then
-              echo "## Bug Fixes"
+              echo "## 🐛 Bugfixes"
+              echo ""
               echo "$FIXES"
               echo ""
             else
-              echo "## Bug Fixes"
-              echo "- Keine Bug-Fixes"
+              echo "## 🐛 Bugfixes"
+              echo "- Keine Bug-Fixes in dieser Version"
               echo ""
             fi
+            
+            # Technische Verbesserungen
+            if [ -n "$TECHNICAL_FEATURES" ]; then
+              echo "## ⚙️ Technische Verbesserungen"
+              echo ""
+              echo "$TECHNICAL_FEATURES"
+              echo ""
+            fi
+            
+            # Maintenance
             if [ -n "$CHORES" ]; then
-              echo "## Maintenance"
+              echo "## 🔧 Wartung"
+              echo ""
               echo "$CHORES"
               echo ""
             else
-              echo "## Maintenance"
-              echo "- Keine Wartungsarbeiten"
+              echo "## 🔧 Wartung"
+              echo "- Keine Wartungsarbeiten in dieser Version"
               echo ""
             fi
+            
+            # Documentation
             if [ -n "$DOCS" ]; then
-              echo "## Documentation"
+              echo "## 📝 Dokumentation"
+              echo ""
               echo "$DOCS"
               echo ""
             fi
+            
+            # Other Changes
             if [ -n "$OTHER" ]; then
-              echo "## Other Changes"
+              echo "## 📦 Weitere Änderungen"
+              echo ""
               echo "$OTHER"
               echo ""
-            else
-              echo "## Other Changes"
-              echo "- Keine weiteren Änderungen"
-              echo ""
             fi
+            
             echo "---"
             echo ""
           } > /tmp/new_release_notes.txt
@@ -274,27 +511,59 @@ jobs:
             mv /tmp/new_release_notes.txt RELEASE_NOTES.md
           fi
           
-          echo "✅ RELEASE_NOTES.md updated"
+          echo "RELEASE_NOTES.md updated"
 
       - name: Commit and push RELEASE_NOTES.md
+        timeout-minutes: 3
         run: |
+          set -e
           CURRENT_TAG="${{ steps.current_tag.outputs.tag_name }}"
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
           
           # Prüfe ob wir auf main sind
           if [ "$CURRENT_BRANCH" != "main" ]; then
-            echo "⚠️ Not on main branch ($CURRENT_BRANCH), skipping RELEASE_NOTES.md commit"
+            echo "WARNING: Not on main branch ($CURRENT_BRANCH), skipping RELEASE_NOTES.md commit"
             echo "RELEASE_NOTES.md will only be committed when workflow runs on main branch"
             exit 0
           fi
           
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add RELEASE_NOTES.md
-          if ! git diff --staged --quiet; then
-            git commit -m "docs: update RELEASE_NOTES.md for $CURRENT_TAG"
-            git push
-            echo "✅ RELEASE_NOTES.md committed and pushed to main"
-          else
-            echo "ℹ️ No changes to RELEASE_NOTES.md"
-          fi
+          # Retry-Logik für Git-Operationen (verhindert Race Conditions)
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            
+            # Pull latest changes vor Push (verhindert Konflikte)
+            git pull --rebase origin main || {
+              echo "WARNING: Failed to pull, continuing anyway"
+            }
+            
+            git add RELEASE_NOTES.md
+            if ! git diff --staged --quiet; then
+              git commit -m "docs: update RELEASE_NOTES.md for $CURRENT_TAG" || {
+                echo "WARNING: Commit failed, may be duplicate"
+                exit 0
+              }
+              
+              # Versuche Push mit Retry
+              if git push origin main; then
+                echo "RELEASE_NOTES.md committed and pushed to main"
+                exit 0
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  echo "Push failed, retrying in 2 seconds... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+                  sleep 2
+                  git pull --rebase origin main || true
+                else
+                  echo "ERROR: Failed to push after $MAX_RETRIES attempts"
+                  exit 1
+                fi
+              fi
+            else
+              echo "No changes to RELEASE_NOTES.md"
+              exit 0
+            fi
+          done
