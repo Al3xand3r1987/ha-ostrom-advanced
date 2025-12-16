@@ -21,7 +21,89 @@ from .const import (
 from .utils import calculate_next_update_time
 
 
-class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+class OstromBaseCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """Base coordinator with common scheduling logic."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        name: str,
+        poll_interval_minutes: int,
+        update_offset_seconds: int,
+    ) -> None:
+        """Initialize base coordinator.
+
+        Args:
+            hass: Home Assistant instance
+            name: Coordinator name
+            poll_interval_minutes: Polling interval in minutes
+            update_offset_seconds: Seconds after full interval to trigger update
+        """
+        super().__init__(
+            hass,
+            LOGGER,
+            name=name,
+            update_interval=None,  # We handle scheduling manually
+        )
+        self._poll_interval_minutes = poll_interval_minutes
+        self._update_offset_seconds = update_offset_seconds
+        self._update_timer: asyncio.TimerHandle | None = None
+
+    @callback
+    def _schedule_next_update(self, log_name: str = "update") -> None:
+        """Schedule the next update based on interval and offset.
+
+        Args:
+            log_name: Name for logging (e.g., "price" or "consumption")
+        """
+        # Cancel existing timer if any
+        if self._update_timer:
+            self._update_timer.cancel()
+
+        # Calculate next update time
+        next_update = calculate_next_update_time(
+            self._poll_interval_minutes, self._update_offset_seconds
+        )
+        now = dt_util.now()
+        delay_seconds = (next_update - now).total_seconds()
+
+        # If delay is negative or very small, schedule for next interval
+        if delay_seconds < 1:
+            # Add one interval to get the next one
+            next_update = next_update + timedelta(minutes=self._poll_interval_minutes)
+            delay_seconds = (next_update - now).total_seconds()
+
+        LOGGER.debug(
+            "Scheduling next %s update at %s (in %.1f seconds)",
+            log_name,
+            next_update,
+            delay_seconds,
+        )
+
+        # Safe callback wrapper that ensures timer is always rescheduled on errors
+        def _safe_schedule_callback():
+            """Safe callback wrapper that ensures timer is always rescheduled."""
+            try:
+                self.hass.async_create_task(self.async_request_refresh())
+            except Exception as err:
+                LOGGER.error(
+                    "Failed to schedule %s update: %s, rescheduling with fallback",
+                    log_name,
+                    err,
+                )
+                # Reschedule with fallback delay (next interval) to keep loop running
+                fallback_delay = self._poll_interval_minutes * 60
+                self._update_timer = self.hass.loop.call_later(
+                    fallback_delay, _safe_schedule_callback
+                )
+
+        # Schedule the update
+        self._update_timer = self.hass.loop.call_later(
+            delay_seconds, _safe_schedule_callback
+        )
+
+
+class OstromPriceCoordinator(OstromBaseCoordinator):
     """Coordinator for fetching Ostrom spot price data.
 
     Fetches a 72-hour window (yesterday, today, and tomorrow) and organizes data into:
@@ -48,60 +130,16 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """
         super().__init__(
             hass,
-            LOGGER,
-            name=f"{DOMAIN}_price",
-            update_interval=None,  # We handle scheduling manually
+            f"{DOMAIN}_price",
+            poll_interval_minutes,
+            update_offset_seconds,
         )
         self._client = client
-        self._poll_interval_minutes = poll_interval_minutes
-        self._update_offset_seconds = update_offset_seconds
-        self._update_timer: asyncio.TimerHandle | None = None
 
     @callback
     def _schedule_next_update(self) -> None:
         """Schedule the next update based on interval and offset."""
-        # Cancel existing timer if any
-        if self._update_timer:
-            self._update_timer.cancel()
-
-        # Calculate next update time
-        next_update = calculate_next_update_time(
-            self._poll_interval_minutes, self._update_offset_seconds
-        )
-        now = dt_util.now()
-        delay_seconds = (next_update - now).total_seconds()
-
-        # If delay is negative or very small, schedule for next interval
-        if delay_seconds < 1:
-            # Add one interval to get the next one
-            next_update = next_update + timedelta(minutes=self._poll_interval_minutes)
-            delay_seconds = (next_update - now).total_seconds()
-
-        LOGGER.debug(
-            "Scheduling next price update at %s (in %.1f seconds)",
-            next_update,
-            delay_seconds,
-        )
-
-        # Safe callback wrapper that ensures timer is always rescheduled on errors
-        def _safe_schedule_callback():
-            """Safe callback wrapper that ensures timer is always rescheduled."""
-            try:
-                self.hass.async_create_task(self.async_request_refresh())
-            except Exception as err:
-                LOGGER.error(
-                    "Failed to schedule price update: %s, rescheduling with fallback", err
-                )
-                # Reschedule with fallback delay (next interval) to keep loop running
-                fallback_delay = self._poll_interval_minutes * 60
-                self._update_timer = self.hass.loop.call_later(
-                    fallback_delay, _safe_schedule_callback
-                )
-
-        # Schedule the update
-        self._update_timer = self.hass.loop.call_later(
-            delay_seconds, _safe_schedule_callback
-        )
+        super()._schedule_next_update("price")
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch price data from the API.
@@ -226,7 +264,7 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Unexpected error: {err}") from err
 
 
-class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+class OstromConsumptionCoordinator(OstromBaseCoordinator):
     """Coordinator for fetching Ostrom energy consumption data.
 
     Fetches consumption for yesterday and today and organizes data into:
@@ -251,60 +289,16 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """
         super().__init__(
             hass,
-            LOGGER,
-            name=f"{DOMAIN}_consumption",
-            update_interval=None,  # We handle scheduling manually
+            f"{DOMAIN}_consumption",
+            poll_interval_minutes,
+            update_offset_seconds,
         )
         self._client = client
-        self._poll_interval_minutes = poll_interval_minutes
-        self._update_offset_seconds = update_offset_seconds
-        self._update_timer: asyncio.TimerHandle | None = None
 
     @callback
     def _schedule_next_update(self) -> None:
         """Schedule the next update based on interval and offset."""
-        # Cancel existing timer if any
-        if self._update_timer:
-            self._update_timer.cancel()
-
-        # Calculate next update time
-        next_update = calculate_next_update_time(
-            self._poll_interval_minutes, self._update_offset_seconds
-        )
-        now = dt_util.now()
-        delay_seconds = (next_update - now).total_seconds()
-
-        # If delay is negative or very small, schedule for next interval
-        if delay_seconds < 1:
-            # Add one interval to get the next one
-            next_update = next_update + timedelta(minutes=self._poll_interval_minutes)
-            delay_seconds = (next_update - now).total_seconds()
-
-        LOGGER.debug(
-            "Scheduling next consumption update at %s (in %.1f seconds)",
-            next_update,
-            delay_seconds,
-        )
-
-        # Safe callback wrapper that ensures timer is always rescheduled on errors
-        def _safe_schedule_callback():
-            """Safe callback wrapper that ensures timer is always rescheduled."""
-            try:
-                self.hass.async_create_task(self.async_request_refresh())
-            except Exception as err:
-                LOGGER.error(
-                    "Failed to schedule consumption update: %s, rescheduling with fallback", err
-                )
-                # Reschedule with fallback delay (next interval) to keep loop running
-                fallback_delay = self._poll_interval_minutes * 60
-                self._update_timer = self.hass.loop.call_later(
-                    fallback_delay, _safe_schedule_callback
-                )
-
-        # Schedule the update
-        self._update_timer = self.hass.loop.call_later(
-            delay_seconds, _safe_schedule_callback
-        )
+        super()._schedule_next_update("consumption")
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch consumption data from the API.
