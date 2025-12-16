@@ -264,11 +264,15 @@ class TestEdgeCasesAPI:
         # Mock timeout on request
         import asyncio
 
-        async def mock_request(*args, **kwargs):
-            raise asyncio.TimeoutError()
+        class MockTimeoutContextManager:
+            async def __aenter__(self):
+                raise asyncio.TimeoutError()
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
         mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.request = MagicMock(return_value=MockTimeoutContextManager())
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -312,13 +316,17 @@ class TestEdgeCasesAPI:
 
         # Mock connection error
         from aiohttp.client_reqrep import ConnectionKey
-        
-        async def mock_request(*args, **kwargs):
-            conn_key = ConnectionKey(host='test', port=443, is_ssl=True, ssl=None, proxy=None, proxy_auth=None, proxy_headers_hash=None)
-            raise ClientConnectorError(conn_key, OSError())
+
+        class MockConnectionErrorContextManager:
+            async def __aenter__(self):
+                conn_key = ConnectionKey(host='test', port=443, is_ssl=True, ssl=None, proxy=None, proxy_auth=None, proxy_headers_hash=None)
+                raise ClientConnectorError(conn_key, OSError())
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
         mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.request = MagicMock(return_value=MockConnectionErrorContextManager())
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)

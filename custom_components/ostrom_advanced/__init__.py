@@ -160,10 +160,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await consumption_coordinator.async_shutdown()
 
         # Remove stored data
-        hass.data[DOMAIN].pop(entry.entry_id)
+        if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
+            hass.data[DOMAIN].pop(entry.entry_id)
 
         # Clean up domain data if no entries left
-        if not hass.data[DOMAIN]:
+        if DOMAIN in hass.data and not hass.data[DOMAIN]:
             hass.data.pop(DOMAIN)
 
     return unload_ok

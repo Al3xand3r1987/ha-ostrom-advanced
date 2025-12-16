@@ -223,9 +223,9 @@ class TestAsyncGetSpotPrices:
         result = await api_client.async_get_spot_prices(start, end)
 
         assert len(result) == 2
-        assert result[0]["total_price"] == 0.20  # (1500 + 500) / 100
-        assert result[1]["total_price"] == 0.26  # (2000 + 600) / 100
-        assert result[0]["net_price"] == 0.10  # 1000 / 100
+        assert result[0]["total_price"] == 20.0  # (1500 + 500) / 100
+        assert result[1]["total_price"] == 26.0  # (2000 + 600) / 100
+        assert result[0]["net_price"] == 10.0  # 1000 / 100
 
     @pytest.mark.asyncio
     async def test_get_spot_prices_missing_data(
@@ -403,20 +403,18 @@ class TestAsyncGetEnergyConsumption:
             }
         )
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        async def mock_request(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_consumption_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
-
-        mock_session.post = AsyncMock(side_effect=mock_post)
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
+        mock_session.request = MagicMock(return_value=MockContextManager(mock_consumption_response))
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -453,11 +451,15 @@ class TestAsyncGetEnergyConsumption:
             async def __aexit__(self, exc_type, exc_val, exc_tb):
                 return None
 
-        async def mock_request(*args, **kwargs):
-            raise error
+        class MockErrorContextManager:
+            async def __aenter__(self):
+                raise error
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
         mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.request = MagicMock(return_value=MockErrorContextManager())
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -482,20 +484,18 @@ class TestAsyncGetEnergyConsumption:
         mock_consumption_response.status = 200
         mock_consumption_response.json = AsyncMock(return_value={})  # Missing 'data'
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        async def mock_request(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_consumption_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
-
-        mock_session.post = AsyncMock(side_effect=mock_post)
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
+        mock_session.request = MagicMock(return_value=MockContextManager(mock_consumption_response))
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)

@@ -54,11 +54,8 @@ def _get_min_price(slots: list[dict[str, Any]]) -> float | None:
     """Get minimum price from slots (generic for today/tomorrow)."""
     if not slots:
         return None
-    # Filter out None values and use 0 as default for missing prices
-    prices = [s.get("total_price", 0) for s in slots if s.get("total_price") is not None]
-    # If all prices were None, include zeros
-    if not prices:
-        prices = [0] * len(slots)
+    # Treat None values and missing total_price as 0
+    prices = [s.get("total_price", 0) or 0 for s in slots]
     return round(min(prices), 5) if prices else None
 
 
