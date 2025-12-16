@@ -28,6 +28,7 @@ from .const import (
     LOGGER,
 )
 from .coordinator import OstromConsumptionCoordinator, OstromPriceCoordinator
+from .utils import get_cheapest_3h_block
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -111,25 +112,6 @@ def _get_most_expensive_hour(slots: list[dict[str, Any]]) -> datetime | None:
     return most_expensive.get("start")
 
 
-def _get_cheapest_3h_block(slots: list[dict[str, Any]]) -> datetime | None:
-    """Get start time of cheapest 3-hour block from slots (generic for today/tomorrow)."""
-    if len(slots) < 3:
-        return None
-
-    # Find the 3-hour block with lowest average price
-    min_avg = float("inf")
-    best_start = None
-
-    for i in range(len(slots) - 2):
-        block = slots[i : i + 3]
-        avg_price = sum(s.get("total_price", 0) for s in block) / 3
-        if avg_price < min_avg:
-            min_avg = avg_price
-            best_start = block[0].get("start")
-
-    return best_start
-
-
 # Wrapper functions for today
 def _get_today_min_price(data: dict[str, Any]) -> float | None:
     """Get minimum price for today."""
@@ -163,7 +145,7 @@ def _get_today_most_expensive_hour(data: dict[str, Any]) -> datetime | None:
 
 def _get_today_cheapest_3h_block(data: dict[str, Any]) -> datetime | None:
     """Get start time of cheapest 3-hour block today."""
-    return _get_cheapest_3h_block(data.get("today_slots", []))
+    return get_cheapest_3h_block(data.get("today_slots", []))
 
 
 # Wrapper functions for tomorrow
@@ -199,7 +181,7 @@ def _get_tomorrow_most_expensive_hour(data: dict[str, Any]) -> datetime | None:
 
 def _get_tomorrow_cheapest_3h_block(data: dict[str, Any]) -> datetime | None:
     """Get start time of cheapest 3-hour block tomorrow."""
-    return _get_cheapest_3h_block(data.get("tomorrow_slots", []))
+    return get_cheapest_3h_block(data.get("tomorrow_slots", []))
 
 
 def _get_price_now_attributes(data: dict[str, Any]) -> dict[str, Any]:

@@ -77,8 +77,10 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                 if not zip_code:
                     errors[CONF_ZIP_CODE] = "required"
                 else:
-                    # Use contract_id if provided and not empty, otherwise use zip_code
-                    unique_id = contract_id if contract_id else f"ostrom_{zip_code}"
+                    # Include environment in unique_id to avoid collisions between sandbox and production
+                    environment = user_input.get(CONF_ENVIRONMENT, ENV_PRODUCTION)
+                    identifier = contract_id if contract_id else f"ostrom_{zip_code}"
+                    unique_id = f"{environment}_{identifier}"
                     await self.async_set_unique_id(unique_id)
                     self._abort_if_unique_id_configured()
 
@@ -158,7 +160,7 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Optional(
                         CONF_UPDATE_OFFSET_SECONDS,
                         default=DEFAULT_UPDATE_OFFSET_SECONDS,
-                    ): vol.All(vol.Coerce(int), vol.Range(min=5, max=60)),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=5, max=59)),
                 }
             ),
             errors=errors,
@@ -235,7 +237,7 @@ class OptionsFlowHandler(OptionsFlowWithReload):
                         CONF_UPDATE_OFFSET_SECONDS,
                         DEFAULT_UPDATE_OFFSET_SECONDS,
                     ),
-                ): vol.All(vol.Coerce(int), vol.Range(min=5, max=60)),
+                ): vol.All(vol.Coerce(int), vol.Range(min=5, max=59)),
             }
         )
 

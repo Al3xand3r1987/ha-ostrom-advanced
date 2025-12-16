@@ -102,6 +102,13 @@ class OstromBaseCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             delay_seconds, _safe_schedule_callback
         )
 
+    async def async_shutdown(self) -> None:
+        """Cancel any pending timer when coordinator is shut down."""
+        if self._update_timer:
+            self._update_timer.cancel()
+            self._update_timer = None
+            LOGGER.debug("Cancelled update timer for %s", self.name)
+
 
 class OstromPriceCoordinator(OstromBaseCoordinator):
     """Coordinator for fetching Ostrom spot price data.

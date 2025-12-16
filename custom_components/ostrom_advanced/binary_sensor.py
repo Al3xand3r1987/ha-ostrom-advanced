@@ -25,44 +25,7 @@ from .const import (
     LOGGER,
 )
 from .coordinator import OstromPriceCoordinator
-
-
-def _get_cheapest_3h_block(slots: list[dict[str, Any]]) -> datetime | None:
-    """Get start time of cheapest 3-hour block from slots."""
-    if len(slots) < 3:
-        return None
-
-    # Find the 3-hour block with lowest average price
-    min_avg = float("inf")
-    best_start = None
-
-    for i in range(len(slots) - 2):
-        block = slots[i : i + 3]
-        avg_price = sum(s.get("total_price", 0) for s in block) / 3
-        if avg_price < min_avg:
-            min_avg = avg_price
-            best_start = block[0].get("start")
-
-    return best_start
-
-
-def _get_cheapest_4h_block(slots: list[dict[str, Any]]) -> datetime | None:
-    """Get start time of cheapest 4-hour block from slots."""
-    if len(slots) < 4:
-        return None
-
-    # Find the 4-hour block with lowest average price
-    min_avg = float("inf")
-    best_start = None
-
-    for i in range(len(slots) - 3):
-        block = slots[i : i + 4]
-        avg_price = sum(s.get("total_price", 0) for s in block) / 4
-        if avg_price < min_avg:
-            min_avg = avg_price
-            best_start = block[0].get("start")
-
-    return best_start
+from .utils import get_cheapest_3h_block, get_cheapest_4h_block
 
 
 def _is_cheapest_3h_block_active(
@@ -77,7 +40,7 @@ def _is_cheapest_3h_block_active(
     Returns:
         Tuple of (is_active, block_start, block_end)
     """
-    block_start = _get_cheapest_3h_block(slots)
+    block_start = get_cheapest_3h_block(slots)
     if not block_start:
         return (False, None, None)
 
@@ -102,7 +65,7 @@ def _is_cheapest_4h_block_active(
     Returns:
         Tuple of (is_active, block_start, block_end)
     """
-    block_start = _get_cheapest_4h_block(slots)
+    block_start = get_cheapest_4h_block(slots)
     if not block_start:
         return (False, None, None)
 
@@ -171,7 +134,7 @@ def _is_tomorrow_cheapest_3h_block_active(
         return (False, None)
 
     # Always calculate the block start/end for attributes, even if we're not in tomorrow yet
-    block_start = _get_cheapest_3h_block(tomorrow_slots)
+    block_start = get_cheapest_3h_block(tomorrow_slots)
     if not block_start:
         return (False, None)
 

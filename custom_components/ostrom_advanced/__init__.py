@@ -145,6 +145,17 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if unload_ok:
+        # Cancel coordinator timers before removing data
+        if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
+            data = hass.data[DOMAIN][entry.entry_id]
+            price_coordinator = data.get("price_coordinator")
+            consumption_coordinator = data.get("consumption_coordinator")
+            
+            if price_coordinator:
+                await price_coordinator.async_shutdown()
+            if consumption_coordinator:
+                await consumption_coordinator.async_shutdown()
+        
         # Remove stored data
         hass.data[DOMAIN].pop(entry.entry_id)
 
