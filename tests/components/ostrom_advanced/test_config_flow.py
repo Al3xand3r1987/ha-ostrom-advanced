@@ -1,4 +1,5 @@
 """Tests for config flow."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -60,7 +61,9 @@ class TestOstromAdvancedConfigFlow:
 
         # Mock authentication failure
         with patch.object(
-            flow, "_test_credentials", side_effect=OstromAuthError("Invalid credentials")
+            flow,
+            "_test_credentials",
+            side_effect=OstromAuthError("Invalid credentials"),
         ):
             result = await flow.async_step_user(
                 {
@@ -157,4 +160,3 @@ class TestOstromAdvancedConfigFlow:
 
             assert result["type"] == FlowResultType.CREATE_ENTRY
             assert result["data"][CONF_CONTRACT_ID] == "contract123"
-

@@ -1,4 +1,5 @@
 """Data coordinators for the Ostrom Advanced integration."""
+
 from __future__ import annotations
 
 import asyncio
@@ -170,9 +171,7 @@ class OstromPriceCoordinator(OstromBaseCoordinator):
             start_utc = yesterday_start.astimezone(dt_util.UTC).replace(tzinfo=None)
             end_utc = end_date.astimezone(dt_util.UTC).replace(tzinfo=None)
 
-            LOGGER.debug(
-                "Fetching prices from %s to %s (UTC)", start_utc, end_utc
-            )
+            LOGGER.debug("Fetching prices from %s to %s (UTC)", start_utc, end_utc)
 
             raw_data = await self._client.async_get_spot_prices(start_utc, end_utc)
 
@@ -328,9 +327,7 @@ class OstromConsumptionCoordinator(OstromBaseCoordinator):
             start_utc = yesterday_start.astimezone(dt_util.UTC).replace(tzinfo=None)
             end_utc = end_date.astimezone(dt_util.UTC).replace(tzinfo=None)
 
-            LOGGER.debug(
-                "Fetching consumption from %s to %s (UTC)", start_utc, end_utc
-            )
+            LOGGER.debug("Fetching consumption from %s to %s (UTC)", start_utc, end_utc)
 
             raw_data = await self._client.async_get_energy_consumption(
                 start_utc, end_utc, RESOLUTION_HOUR

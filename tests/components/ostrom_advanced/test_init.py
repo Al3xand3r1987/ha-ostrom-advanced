@@ -1,4 +1,5 @@
 """Tests for integration setup."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -78,10 +79,10 @@ class TestAsyncSetupEntry:
                         mock_price_coord.return_value = mock_price_coord_instance
 
                         mock_consumption_coord_instance = MagicMock()
-                        mock_consumption_coord_instance.async_config_entry_first_refresh = (
-                            AsyncMock()
+                        mock_consumption_coord_instance.async_config_entry_first_refresh = AsyncMock()
+                        mock_consumption_coord.return_value = (
+                            mock_consumption_coord_instance
                         )
-                        mock_consumption_coord.return_value = mock_consumption_coord_instance
 
                         result = await async_setup_entry(mock_hass, mock_config_entry)
 
@@ -180,4 +181,3 @@ class TestAsyncUnloadEntry:
 
         assert result is True
         assert DOMAIN not in mock_hass.data
-

@@ -1,4 +1,5 @@
 """Tests for sensor calculation functions."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -294,7 +295,10 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.30, "start": start_time},  # Block 1: avg 0.25
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
             {"total_price": 0.25, "start": start_time.replace(hour=12)},
-            {"total_price": 0.10, "start": start_time.replace(hour=13)},  # Block 2: avg 0.15 (cheapest)
+            {
+                "total_price": 0.10,
+                "start": start_time.replace(hour=13),
+            },  # Block 2: avg 0.15 (cheapest)
             {"total_price": 0.15, "start": start_time.replace(hour=14)},
             {"total_price": 0.20, "start": start_time.replace(hour=15)},
         ]
@@ -335,7 +339,10 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.20, "start": start_time},  # Block 1: avg 0.20
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
             {"total_price": 0.20, "start": start_time.replace(hour=12)},
-            {"total_price": 0.20, "start": start_time.replace(hour=13)},  # Block 2: avg 0.20 (tie)
+            {
+                "total_price": 0.20,
+                "start": start_time.replace(hour=13),
+            },  # Block 2: avg 0.20 (tie)
             {"total_price": 0.20, "start": start_time.replace(hour=14)},
             {"total_price": 0.20, "start": start_time.replace(hour=15)},
         ]
@@ -355,4 +362,3 @@ class TestGetCheapest3hBlock:
         # Should still work, but might return None if the best block has missing start
         # In this case, it should return the first block's start
         assert result == start_time
-

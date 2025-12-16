@@ -1,4 +1,5 @@
 """Constants for the Ostrom Advanced integration."""
+
 from __future__ import annotations
 
 import logging
@@ -64,4 +65,3 @@ ATTRIBUTION: Final = "Data provided by Ostrom"
 
 # Developer Portal URL
 DEVELOPER_PORTAL_URL: Final = "https://developer.ostrom-api.io/"
-

@@ -1,4 +1,5 @@
 """Tests for binary sensor functions."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -25,7 +26,10 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.30, "start": start_time},  # Block 1: avg 0.25
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
             {"total_price": 0.25, "start": start_time.replace(hour=12)},
-            {"total_price": 0.10, "start": start_time.replace(hour=13)},  # Block 2: avg 0.15 (cheapest)
+            {
+                "total_price": 0.10,
+                "start": start_time.replace(hour=13),
+            },  # Block 2: avg 0.15 (cheapest)
             {"total_price": 0.15, "start": start_time.replace(hour=14)},
             {"total_price": 0.20, "start": start_time.replace(hour=15)},
         ]
@@ -65,7 +69,10 @@ class TestGetCheapest4hBlock:
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
             {"total_price": 0.25, "start": start_time.replace(hour=12)},
             {"total_price": 0.25, "start": start_time.replace(hour=13)},
-            {"total_price": 0.10, "start": start_time.replace(hour=14)},  # Block 2: avg 0.15 (cheapest)
+            {
+                "total_price": 0.10,
+                "start": start_time.replace(hour=14),
+            },  # Block 2: avg 0.15 (cheapest)
             {"total_price": 0.15, "start": start_time.replace(hour=15)},
             {"total_price": 0.20, "start": start_time.replace(hour=16)},
             {"total_price": 0.15, "start": start_time.replace(hour=17)},
@@ -168,7 +175,10 @@ class TestIsTodayCheapest3hBlockActive:
         start_time = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         now = start_time + timedelta(hours=1)
 
-        with patch("custom_components.ostrom_advanced.binary_sensor.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.binary_sensor.dt_util.now",
+            return_value=now,
+        ):
             data = {
                 "today_slots": [
                     {"total_price": 0.10, "start": start_time},
@@ -187,7 +197,10 @@ class TestIsTodayCheapest3hBlockActive:
         start_time = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         now = start_time - timedelta(hours=1)  # Before block
 
-        with patch("custom_components.ostrom_advanced.binary_sensor.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.binary_sensor.dt_util.now",
+            return_value=now,
+        ):
             data = {
                 "today_slots": [
                     {"total_price": 0.10, "start": start_time},
@@ -208,16 +221,27 @@ class TestIsTomorrowCheapest3hBlockActive:
         start_time = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         now = start_time  # Still today
 
-        with patch("custom_components.ostrom_advanced.binary_sensor.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.binary_sensor.dt_util.now",
+            return_value=now,
+        ):
             with patch(
                 "custom_components.ostrom_advanced.binary_sensor.dt_util.start_of_local_day",
-                return_value=start_time.replace(hour=0, minute=0, second=0, microsecond=0),
+                return_value=start_time.replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                ),
             ):
                 data = {
                     "tomorrow_slots": [
                         {"total_price": 0.10, "start": start_time + timedelta(days=1)},
-                        {"total_price": 0.20, "start": start_time.replace(hour=11) + timedelta(days=1)},
-                        {"total_price": 0.15, "start": start_time.replace(hour=12) + timedelta(days=1)},
+                        {
+                            "total_price": 0.20,
+                            "start": start_time.replace(hour=11) + timedelta(days=1),
+                        },
+                        {
+                            "total_price": 0.15,
+                            "start": start_time.replace(hour=12) + timedelta(days=1),
+                        },
                     ]
                 }
                 is_active, attrs = _is_tomorrow_cheapest_3h_block_active(data)
@@ -228,9 +252,11 @@ class TestIsTomorrowCheapest3hBlockActive:
         """Test tomorrow's block when no slots available."""
         now = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
 
-        with patch("custom_components.ostrom_advanced.binary_sensor.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.binary_sensor.dt_util.now",
+            return_value=now,
+        ):
             data = {"tomorrow_slots": []}
             is_active, attrs = _is_tomorrow_cheapest_3h_block_active(data)
             assert is_active is False
             assert attrs is None
-

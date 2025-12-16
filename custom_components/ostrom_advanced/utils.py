@@ -10,17 +10,17 @@ from .const import LOGGER
 
 def calculate_next_update_time(interval_minutes: int, offset_seconds: int) -> datetime:
     """Calculate the next update time based on interval and offset.
-    
+
     Args:
         interval_minutes: Polling interval in minutes
         offset_seconds: Seconds after full interval to trigger update (0-59)
-    
+
     Returns:
         Next update time as datetime
     """
     # Cap offset_seconds to valid range (0-59) to prevent ValueError
     offset_seconds = min(max(0, offset_seconds), 59)
-    
+
     now = dt_util.now()
     try:
         minutes_past_hour = now.minute
@@ -41,8 +41,9 @@ def calculate_next_update_time(interval_minutes: int, offset_seconds: int) -> da
                 next_hour = now.hour + 1
                 if next_hour >= 24:
                     # Handle day rollover: add one day and reset to midnight
-                    next_time = (now.replace(hour=0, minute=0, second=offset_seconds, microsecond=0) 
-                                + timedelta(days=1))
+                    next_time = now.replace(
+                        hour=0, minute=0, second=offset_seconds, microsecond=0
+                    ) + timedelta(days=1)
                 else:
                     next_time = now.replace(
                         hour=next_hour,
@@ -61,16 +62,18 @@ def calculate_next_update_time(interval_minutes: int, offset_seconds: int) -> da
 
         return next_time
     except (ValueError, OverflowError) as err:
-        LOGGER.error("Time calculation error (DST transition?): %s, using fallback", err)
+        LOGGER.error(
+            "Time calculation error (DST transition?): %s, using fallback", err
+        )
         return now + timedelta(minutes=interval_minutes, seconds=offset_seconds)
 
 
 def get_cheapest_3h_block(slots: list[dict[str, Any]]) -> datetime | None:
     """Get start time of cheapest 3-hour block from slots.
-    
+
     Args:
         slots: List of price slots with 'start' and 'total_price' keys
-    
+
     Returns:
         Start datetime of cheapest 3-hour block, or None if not enough slots
     """
@@ -93,10 +96,10 @@ def get_cheapest_3h_block(slots: list[dict[str, Any]]) -> datetime | None:
 
 def get_cheapest_4h_block(slots: list[dict[str, Any]]) -> datetime | None:
     """Get start time of cheapest 4-hour block from slots.
-    
+
     Args:
         slots: List of price slots with 'start' and 'total_price' keys
-    
+
     Returns:
         Start datetime of cheapest 4-hour block, or None if not enough slots
     """

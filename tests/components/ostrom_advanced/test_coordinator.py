@@ -1,4 +1,5 @@
 """Tests for coordinator classes."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -8,7 +9,11 @@ import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from custom_components.ostrom_advanced.api import OstromApiClient, OstromApiError, OstromAuthError
+from custom_components.ostrom_advanced.api import (
+    OstromApiClient,
+    OstromApiError,
+    OstromAuthError,
+)
 from custom_components.ostrom_advanced.coordinator import (
     OstromConsumptionCoordinator,
     OstromPriceCoordinator,
@@ -44,7 +49,10 @@ class TestOstromPriceCoordinator:
         """Test successful data update."""
         # Mock current time
         now = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
-        with patch("custom_components.ostrom_advanced.coordinator.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.coordinator.dt_util.now",
+            return_value=now,
+        ):
             with patch(
                 "custom_components.ostrom_advanced.coordinator.dt_util.start_of_local_day",
                 return_value=now.replace(hour=0, minute=0, second=0, microsecond=0),
@@ -86,7 +94,10 @@ class TestOstromPriceCoordinator:
     ) -> None:
         """Test update data with authentication error."""
         now = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
-        with patch("custom_components.ostrom_advanced.coordinator.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.coordinator.dt_util.now",
+            return_value=now,
+        ):
             with patch(
                 "custom_components.ostrom_advanced.coordinator.dt_util.start_of_local_day",
                 return_value=now.replace(hour=0, minute=0, second=0, microsecond=0),
@@ -111,7 +122,10 @@ class TestOstromPriceCoordinator:
     ) -> None:
         """Test update data with API error."""
         now = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
-        with patch("custom_components.ostrom_advanced.coordinator.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.coordinator.dt_util.now",
+            return_value=now,
+        ):
             with patch(
                 "custom_components.ostrom_advanced.coordinator.dt_util.start_of_local_day",
                 return_value=now.replace(hour=0, minute=0, second=0, microsecond=0),
@@ -123,7 +137,9 @@ class TestOstromPriceCoordinator:
                     update_offset_seconds=15,
                 )
 
-                mock_api_client.async_get_spot_prices.side_effect = OstromApiError("API error")
+                mock_api_client.async_get_spot_prices.side_effect = OstromApiError(
+                    "API error"
+                )
 
                 with pytest.raises(UpdateFailed, match="API error"):
                     await coordinator._async_update_data()
@@ -134,7 +150,10 @@ class TestOstromPriceCoordinator:
     ) -> None:
         """Test update data with empty API response."""
         now = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
-        with patch("custom_components.ostrom_advanced.coordinator.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.coordinator.dt_util.now",
+            return_value=now,
+        ):
             with patch(
                 "custom_components.ostrom_advanced.coordinator.dt_util.start_of_local_day",
                 return_value=now.replace(hour=0, minute=0, second=0, microsecond=0),
@@ -160,7 +179,10 @@ class TestOstromPriceCoordinator:
     ) -> None:
         """Test update data when tomorrow prices are not available."""
         now = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
-        with patch("custom_components.ostrom_advanced.coordinator.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.coordinator.dt_util.now",
+            return_value=now,
+        ):
             with patch(
                 "custom_components.ostrom_advanced.coordinator.dt_util.start_of_local_day",
                 return_value=now.replace(hour=0, minute=0, second=0, microsecond=0),
@@ -196,7 +218,10 @@ class TestOstromConsumptionCoordinator:
     ) -> None:
         """Test successful consumption data update."""
         now = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
-        with patch("custom_components.ostrom_advanced.coordinator.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.coordinator.dt_util.now",
+            return_value=now,
+        ):
             with patch(
                 "custom_components.ostrom_advanced.coordinator.dt_util.start_of_local_day",
                 return_value=now.replace(hour=0, minute=0, second=0, microsecond=0),
@@ -231,7 +256,10 @@ class TestOstromConsumptionCoordinator:
     ) -> None:
         """Test consumption update with empty response."""
         now = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
-        with patch("custom_components.ostrom_advanced.coordinator.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.coordinator.dt_util.now",
+            return_value=now,
+        ):
             with patch(
                 "custom_components.ostrom_advanced.coordinator.dt_util.start_of_local_day",
                 return_value=now.replace(hour=0, minute=0, second=0, microsecond=0),
@@ -256,7 +284,10 @@ class TestOstromConsumptionCoordinator:
     ) -> None:
         """Test consumption update with authentication error."""
         now = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
-        with patch("custom_components.ostrom_advanced.coordinator.dt_util.now", return_value=now):
+        with patch(
+            "custom_components.ostrom_advanced.coordinator.dt_util.now",
+            return_value=now,
+        ):
             with patch(
                 "custom_components.ostrom_advanced.coordinator.dt_util.start_of_local_day",
                 return_value=now.replace(hour=0, minute=0, second=0, microsecond=0),
@@ -268,10 +299,9 @@ class TestOstromConsumptionCoordinator:
                     update_offset_seconds=15,
                 )
 
-                mock_api_client.async_get_energy_consumption.side_effect = OstromAuthError(
-                    "Invalid credentials"
+                mock_api_client.async_get_energy_consumption.side_effect = (
+                    OstromAuthError("Invalid credentials")
                 )
 
                 with pytest.raises(UpdateFailed, match="Authentication error"):
                     await coordinator._async_update_data()
-

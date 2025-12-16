@@ -18,7 +18,9 @@ def test_calculate_next_update_time_next_interval(monkeypatch) -> None:
     assert result == expected
 
 
-def test_calculate_next_update_time_fallback_invalid_offset(monkeypatch, caplog) -> None:
+def test_calculate_next_update_time_fallback_invalid_offset(
+    monkeypatch, caplog
+) -> None:
     """Fallback is used when offset is invalid for datetime.replace."""
     now = datetime(2024, 1, 1, 10, 7, 30, tzinfo=timezone.utc)
     monkeypatch.setattr(utils.dt_util, "now", lambda: now)

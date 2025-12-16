@@ -1,4 +1,5 @@
 """Tests for edge cases and error handling."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -177,7 +178,9 @@ class TestEdgeCasesAPI:
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 
-        with pytest.raises(OstromApiError, match="Invalid response structure: missing data"):
+        with pytest.raises(
+            OstromApiError, match="Invalid response structure: missing data"
+        ):
             await client.async_get_spot_prices(start, end)
 
     @pytest.mark.asyncio
@@ -317,4 +320,3 @@ class TestEdgeCasesAPI:
 
         with pytest.raises(OstromApiError, match="Network error"):
             await client.async_get_spot_prices(start, end)
-

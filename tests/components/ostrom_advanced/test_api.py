@@ -1,4 +1,5 @@
 """Tests for API client functions."""
+
 from __future__ import annotations
 
 import asyncio
@@ -154,7 +155,9 @@ class TestAsyncAuthenticate:
 
         mock_session.post.return_value.__aenter__.return_value = mock_response
 
-        with pytest.raises(OstromApiError, match="Authentication failed with status 500"):
+        with pytest.raises(
+            OstromApiError, match="Authentication failed with status 500"
+        ):
             await api_client.async_authenticate()
 
 
@@ -260,7 +263,9 @@ class TestAsyncGetSpotPrices:
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 
-        with pytest.raises(OstromApiError, match="Invalid response structure: missing data"):
+        with pytest.raises(
+            OstromApiError, match="Invalid response structure: missing data"
+        ):
             await api_client.async_get_spot_prices(start, end)
 
     @pytest.mark.asyncio
@@ -284,7 +289,16 @@ class TestAsyncGetSpotPrices:
         mock_success_response = AsyncMock()
         mock_success_response.status = 200
         mock_success_response.json = AsyncMock(
-            return_value={"data": [{"date": "2024-01-01T10:00:00.000Z", "grossKwhPrice": 1500, "grossKwhTaxAndLevies": 500, "netKwhPrice": 1000}]}
+            return_value={
+                "data": [
+                    {
+                        "date": "2024-01-01T10:00:00.000Z",
+                        "grossKwhPrice": 1500,
+                        "grossKwhTaxAndLevies": 500,
+                        "netKwhPrice": 1000,
+                    }
+                ]
+            }
         )
         mock_success_response.raise_for_status = AsyncMock()
 
@@ -482,6 +496,7 @@ class TestAsyncGetEnergyConsumption:
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 
-        with pytest.raises(OstromApiError, match="Invalid response structure: missing data"):
+        with pytest.raises(
+            OstromApiError, match="Invalid response structure: missing data"
+        ):
             await api_client.async_get_energy_consumption(start, end)
-

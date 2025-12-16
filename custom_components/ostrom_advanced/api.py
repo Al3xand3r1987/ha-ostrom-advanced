@@ -1,4 +1,5 @@
 """Ostrom API Client for the Ostrom Advanced integration."""
+
 from __future__ import annotations
 
 import asyncio
@@ -27,10 +28,10 @@ from .const import (
 
 class OstromApiError(HomeAssistantError):
     """Exception for Ostrom API errors."""
-    
+
     def __init__(self, message: str, status_code: int | None = None) -> None:
         """Initialize the error.
-        
+
         Args:
             message: Error message
             status_code: Optional HTTP status code
@@ -41,10 +42,10 @@ class OstromApiError(HomeAssistantError):
 
 class OstromAuthError(ConfigEntryAuthFailed):
     """Exception for authentication errors."""
-    
+
     def __init__(self, message: str = "Authentication failed") -> None:
         """Initialize the authentication error.
-        
+
         Args:
             message: Error message
         """
@@ -208,7 +209,7 @@ class OstromApiClient:
         # Check without lock first (fast path)
         if self._is_token_valid():
             return
-        
+
         # Acquire lock for token refresh to prevent race conditions
         async with self._token_lock:
             # Check again after acquiring lock (another request might have refreshed it)
@@ -293,7 +294,9 @@ class OstromApiClient:
                 if response.status == 404:
                     error_text = await response.text()
                     LOGGER.error("Resource not found: %s", error_text)
-                    raise OstromApiError(f"Resource not found: {error_text}", status_code=404)
+                    raise OstromApiError(
+                        f"Resource not found: {error_text}", status_code=404
+                    )
 
                 if response.status == 429:
                     LOGGER.error("Rate limit exceeded")
@@ -301,9 +304,7 @@ class OstromApiClient:
 
                 if response.status != 200:
                     error_text = await response.text()
-                    LOGGER.error(
-                        "API error: %s - %s", response.status, error_text
-                    )
+                    LOGGER.error("API error: %s - %s", response.status, error_text)
                     raise OstromApiError(
                         f"API request failed with status {response.status}"
                     )
@@ -428,7 +429,7 @@ class OstromApiClient:
         except OstromApiError as err:
             # Check if this is a 404 error (data not available)
             # Use getattr to safely access status_code in case it's not set
-            if getattr(err, 'status_code', None) == 404:
+            if getattr(err, "status_code", None) == 404:
                 LOGGER.warning(
                     "No consumption data available for period %s to %s: %s",
                     start,
@@ -468,6 +469,7 @@ class OstromApiClient:
             # Spot prices don't require contract_id
             # Use UTC timezone-aware datetime
             from datetime import timezone
+
             now = datetime.now(timezone.utc)
             start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             end = start + timedelta(hours=1)
@@ -476,7 +478,9 @@ class OstromApiClient:
             start_naive = start.replace(tzinfo=None)
             end_naive = end.replace(tzinfo=None)
 
-            LOGGER.debug("Making test API call for prices from %s to %s", start_naive, end_naive)
+            LOGGER.debug(
+                "Making test API call for prices from %s to %s", start_naive, end_naive
+            )
             await self.async_get_spot_prices(start_naive, end_naive)
             LOGGER.debug("Connection test successful")
 
@@ -489,5 +493,6 @@ class OstromApiClient:
             raise
         except Exception as err:
             LOGGER.exception("Connection test failed: Unexpected error - %s", err)
-            raise OstromApiError(f"Unexpected error during connection test: {err}") from err
-
+            raise OstromApiError(
+                f"Unexpected error during connection test: {err}"
+            ) from err

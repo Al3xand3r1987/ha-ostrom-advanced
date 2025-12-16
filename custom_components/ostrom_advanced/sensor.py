@@ -1,4 +1,5 @@
 """Sensor platform for the Ostrom Advanced integration."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -80,11 +81,11 @@ def _get_median_price(slots: list[dict[str, Any]]) -> float | None:
     prices = [s.get("total_price", 0) for s in slots]
     if not prices:
         return None
-    
+
     # Sort prices
     sorted_prices = sorted(prices)
     length = len(sorted_prices)
-    
+
     # Calculate median
     if length % 2 == 1:
         # Odd number of elements: return middle element
@@ -92,7 +93,7 @@ def _get_median_price(slots: list[dict[str, Any]]) -> float | None:
     else:
         # Even number of elements: return average of two middle elements
         median = (sorted_prices[length // 2 - 1] + sorted_prices[length // 2]) / 2
-    
+
     return round(median, 5)
 
 
@@ -187,63 +188,69 @@ def _get_tomorrow_cheapest_3h_block(data: dict[str, Any]) -> datetime | None:
 def _get_price_now_attributes(data: dict[str, Any]) -> dict[str, Any]:
     """Get attributes for the price_now sensor with total_price data for time series."""
     attrs: dict[str, Any] = {}
-    
+
     # Serialize yesterday's total_price data for time series
     yesterday_prices = []
     for slot in data.get("yesterday_slots", []):
         start = slot.get("start")
         if start:
-            yesterday_prices.append({
-                "timestamp": start.isoformat(),
-                "total_price": round(slot.get("total_price", 0), 5),
-            })
-    
+            yesterday_prices.append(
+                {
+                    "timestamp": start.isoformat(),
+                    "total_price": round(slot.get("total_price", 0), 5),
+                }
+            )
+
     if yesterday_prices:
         attrs["yesterday_total_prices"] = yesterday_prices
-    
+
     # Serialize today's total_price data for time series
     today_prices = []
     for slot in data.get("today_slots", []):
         start = slot.get("start")
         if start:
-            today_prices.append({
-                "timestamp": start.isoformat(),
-                "total_price": round(slot.get("total_price", 0), 5),
-            })
-    
+            today_prices.append(
+                {
+                    "timestamp": start.isoformat(),
+                    "total_price": round(slot.get("total_price", 0), 5),
+                }
+            )
+
     if today_prices:
         attrs["today_total_prices"] = today_prices
-    
+
     # Serialize tomorrow's total_price data for time series (if available)
     tomorrow_prices = []
     for slot in data.get("tomorrow_slots", []):
         start = slot.get("start")
         if start:
-            tomorrow_prices.append({
-                "timestamp": start.isoformat(),
-                "total_price": round(slot.get("total_price", 0), 5),
-            })
-    
+            tomorrow_prices.append(
+                {
+                    "timestamp": start.isoformat(),
+                    "total_price": round(slot.get("total_price", 0), 5),
+                }
+            )
+
     if tomorrow_prices:
         attrs["tomorrow_total_prices"] = tomorrow_prices
-    
+
     # Build timeline data for price-timeline-card compatibility
     # Combine yesterday and today for the first parameter, tomorrow for the second
     # This ensures chronological order: yesterday -> today -> tomorrow
     yesterday_and_today = yesterday_prices + today_prices
     timeline_data = build_timeline_data(yesterday_and_today, tomorrow_prices)
     attrs["data"] = timeline_data
-    
+
     # Build ApexCharts format: array of pairs [timestamp, price]
     # This format is directly usable in ApexCharts time series
     # Contains yesterday, today, and tomorrow in chronological order
     apex_data = [[item["start_time"], item["price_per_kwh"]] for item in timeline_data]
     attrs["apex_data"] = apex_data
-    
+
     # Add last update timestamp
     if data.get("last_update"):
         attrs["last_update"] = data.get("last_update").isoformat()
-    
+
     return attrs
 
 
@@ -252,21 +259,21 @@ def build_timeline_data(
     tomorrow_list: list[dict[str, Any]] | None,
 ) -> list[dict[str, Any]]:
     """Build timeline data array for price-timeline-card compatibility.
-    
+
     Converts price data from various formats into a unified timeline format:
     [{"start_time": "ISO-timestamp", "price_per_kwh": float}, ...]
-    
+
     Args:
         today_list: List of price entries for today. Can be:
             - Format 1: [{"timestamp": "ISO-string", "total_price": float}, ...]
             - Format 2: [{"start": "ISO-string" or datetime, "total_price": float}, ...]
         tomorrow_list: Same format as today_list, but for tomorrow (optional).
-    
+
     Returns:
         Sorted list of timeline entries with start_time and price_per_kwh.
     """
     timeline: list[dict[str, Any]] = []
-    
+
     # Process today's data
     if today_list:
         for item in today_list:
@@ -288,25 +295,27 @@ def build_timeline_data(
                     price = item.get("total_price")
                 else:
                     continue
-                
+
                 # Validate required fields
                 if start_time is None or price is None:
                     continue
-                
+
                 # Convert price to float
                 try:
                     price_per_kwh = float(price)
                 except (ValueError, TypeError):
                     continue
-                
-                timeline.append({
-                    "start_time": str(start_time),
-                    "price_per_kwh": round(price_per_kwh, 5),
-                })
+
+                timeline.append(
+                    {
+                        "start_time": str(start_time),
+                        "price_per_kwh": round(price_per_kwh, 5),
+                    }
+                )
             except (KeyError, TypeError, AttributeError):
                 # Skip invalid entries
                 continue
-    
+
     # Process tomorrow's data (if available)
     if tomorrow_list:
         for item in tomorrow_list:
@@ -328,28 +337,30 @@ def build_timeline_data(
                     price = item.get("total_price")
                 else:
                     continue
-                
+
                 # Validate required fields
                 if start_time is None or price is None:
                     continue
-                
+
                 # Convert price to float
                 try:
                     price_per_kwh = float(price)
                 except (ValueError, TypeError):
                     continue
-                
-                timeline.append({
-                    "start_time": str(start_time),
-                    "price_per_kwh": round(price_per_kwh, 5),
-                })
+
+                timeline.append(
+                    {
+                        "start_time": str(start_time),
+                        "price_per_kwh": round(price_per_kwh, 5),
+                    }
+                )
             except (KeyError, TypeError, AttributeError):
                 # Skip invalid entries
                 continue
-    
+
     # Sort by start_time
     timeline.sort(key=lambda x: x.get("start_time", ""))
-    
+
     # Deduplicate: if duplicate timestamps occur, keep the last entry
     # This handles cases where today and tomorrow might overlap
     seen: dict[str, dict[str, Any]] = {}
@@ -357,11 +368,11 @@ def build_timeline_data(
         start_time = item.get("start_time")
         if start_time:
             seen[start_time] = item  # Last entry with same timestamp wins
-    
+
     # Convert back to list and sort again to ensure order
     timeline = list(seen.values())
     timeline.sort(key=lambda x: x.get("start_time", ""))
-    
+
     return timeline
 
 
@@ -372,39 +383,47 @@ def _get_raw_price_attributes(data: dict[str, Any]) -> dict[str, Any]:
     # Serialize slots for attributes
     yesterday_slots_serialized = []
     for slot in data.get("yesterday_slots", []):
-        yesterday_slots_serialized.append({
-            "start": slot.get("start").isoformat() if slot.get("start") else None,
-            "end": slot.get("end").isoformat() if slot.get("end") else None,
-            "net_price": round(slot.get("net_price", 0), 5),
-            "taxes_price": round(slot.get("taxes_price", 0), 5),
-            "total_price": round(slot.get("total_price", 0), 5),
-        })
+        yesterday_slots_serialized.append(
+            {
+                "start": slot.get("start").isoformat() if slot.get("start") else None,
+                "end": slot.get("end").isoformat() if slot.get("end") else None,
+                "net_price": round(slot.get("net_price", 0), 5),
+                "taxes_price": round(slot.get("taxes_price", 0), 5),
+                "total_price": round(slot.get("total_price", 0), 5),
+            }
+        )
 
     today_slots_serialized = []
     for slot in data.get("today_slots", []):
-        today_slots_serialized.append({
-            "start": slot.get("start").isoformat() if slot.get("start") else None,
-            "end": slot.get("end").isoformat() if slot.get("end") else None,
-            "net_price": round(slot.get("net_price", 0), 5),
-            "taxes_price": round(slot.get("taxes_price", 0), 5),
-            "total_price": round(slot.get("total_price", 0), 5),
-        })
+        today_slots_serialized.append(
+            {
+                "start": slot.get("start").isoformat() if slot.get("start") else None,
+                "end": slot.get("end").isoformat() if slot.get("end") else None,
+                "net_price": round(slot.get("net_price", 0), 5),
+                "taxes_price": round(slot.get("taxes_price", 0), 5),
+                "total_price": round(slot.get("total_price", 0), 5),
+            }
+        )
 
     tomorrow_slots_serialized = []
     for slot in data.get("tomorrow_slots", []):
-        tomorrow_slots_serialized.append({
-            "start": slot.get("start").isoformat() if slot.get("start") else None,
-            "end": slot.get("end").isoformat() if slot.get("end") else None,
-            "net_price": round(slot.get("net_price", 0), 5),
-            "taxes_price": round(slot.get("taxes_price", 0), 5),
-            "total_price": round(slot.get("total_price", 0), 5),
-        })
+        tomorrow_slots_serialized.append(
+            {
+                "start": slot.get("start").isoformat() if slot.get("start") else None,
+                "end": slot.get("end").isoformat() if slot.get("end") else None,
+                "net_price": round(slot.get("net_price", 0), 5),
+                "taxes_price": round(slot.get("taxes_price", 0), 5),
+                "total_price": round(slot.get("total_price", 0), 5),
+            }
+        )
 
     attrs = {
         "yesterday_slots": yesterday_slots_serialized,
         "today_slots": today_slots_serialized,
         "tomorrow_slots": tomorrow_slots_serialized,
-        "last_update": data.get("last_update").isoformat() if data.get("last_update") else None,
+        "last_update": data.get("last_update").isoformat()
+        if data.get("last_update")
+        else None,
     }
 
     if current_slot:
@@ -414,36 +433,48 @@ def _get_raw_price_attributes(data: dict[str, Any]) -> dict[str, Any]:
         attrs["current_slot_end"] = (
             current_slot.get("end").isoformat() if current_slot.get("end") else None
         )
-    
+
     # Build timeline data for price-timeline-card compatibility
     # Map slots to {start, total_price} format for build_timeline_data
     yesterday_timeline_input = []
     for slot in data.get("yesterday_slots", []):
         start = slot.get("start")
         if start:
-            yesterday_timeline_input.append({
-                "start": start.isoformat() if isinstance(start, datetime) else start,
-                "total_price": slot.get("total_price", 0),
-            })
-    
+            yesterday_timeline_input.append(
+                {
+                    "start": start.isoformat()
+                    if isinstance(start, datetime)
+                    else start,
+                    "total_price": slot.get("total_price", 0),
+                }
+            )
+
     today_timeline_input = []
     for slot in data.get("today_slots", []):
         start = slot.get("start")
         if start:
-            today_timeline_input.append({
-                "start": start.isoformat() if isinstance(start, datetime) else start,
-                "total_price": slot.get("total_price", 0),
-            })
-    
+            today_timeline_input.append(
+                {
+                    "start": start.isoformat()
+                    if isinstance(start, datetime)
+                    else start,
+                    "total_price": slot.get("total_price", 0),
+                }
+            )
+
     tomorrow_timeline_input = []
     for slot in data.get("tomorrow_slots", []):
         start = slot.get("start")
         if start:
-            tomorrow_timeline_input.append({
-                "start": start.isoformat() if isinstance(start, datetime) else start,
-                "total_price": slot.get("total_price", 0),
-            })
-    
+            tomorrow_timeline_input.append(
+                {
+                    "start": start.isoformat()
+                    if isinstance(start, datetime)
+                    else start,
+                    "total_price": slot.get("total_price", 0),
+                }
+            )
+
     # Build timeline data from yesterday, today, and tomorrow
     # Note: build_timeline_data accepts two lists, so we combine yesterday and today for the first parameter
     yesterday_and_today = yesterday_timeline_input + today_timeline_input
@@ -627,11 +658,15 @@ async def async_setup_entry(
 ) -> None:
     """Set up Ostrom sensors from a config entry."""
     LOGGER.info("Setting up Ostrom Advanced sensors for entry %s", entry.entry_id)
-    
+
     data = hass.data[DOMAIN][entry.entry_id]
     price_coordinator: OstromPriceCoordinator = data["price_coordinator"]
-    consumption_coordinator: OstromConsumptionCoordinator | None = data.get("consumption_coordinator")
-    contract_id = entry.data.get(CONF_CONTRACT_ID, "") or entry.data.get(CONF_ZIP_CODE, "")
+    consumption_coordinator: OstromConsumptionCoordinator | None = data.get(
+        "consumption_coordinator"
+    )
+    contract_id = entry.data.get(CONF_CONTRACT_ID, "") or entry.data.get(
+        CONF_ZIP_CODE, ""
+    )
 
     entities: list[SensorEntity] = []
 
@@ -870,7 +905,7 @@ class OstromCostSensor(SensorEntity):
             if start:
                 # Normalize to hour precision for matching
                 hour_start = start.replace(minute=0, second=0, microsecond=0)
-                
+
                 if hour_start in price_by_datetime:
                     # Exact match found
                     total_cost += kwh * price_by_datetime[hour_start]
@@ -899,9 +934,7 @@ class OstromCostSensor(SensorEntity):
         """Register callbacks when entity is added."""
         # Listen to both coordinators for updates
         self.async_on_remove(
-            self._price_coordinator.async_add_listener(
-                self._handle_coordinator_update
-            )
+            self._price_coordinator.async_add_listener(self._handle_coordinator_update)
         )
         self.async_on_remove(
             self._consumption_coordinator.async_add_listener(
@@ -912,4 +945,3 @@ class OstromCostSensor(SensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from coordinators."""
         self.async_write_ha_state()
-

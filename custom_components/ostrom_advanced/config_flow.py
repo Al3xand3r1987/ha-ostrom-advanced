@@ -1,4 +1,5 @@
 """Config flow for Ostrom Advanced integration."""
+
 from __future__ import annotations
 
 import re
@@ -66,9 +67,13 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
             if not errors:
                 # Use zip_code as unique_id if contract_id is not provided
                 # Ensure unique_id is never empty
-                contract_id = user_input.get(CONF_CONTRACT_ID, "").strip() if user_input.get(CONF_CONTRACT_ID) else ""
+                contract_id = (
+                    user_input.get(CONF_CONTRACT_ID, "").strip()
+                    if user_input.get(CONF_CONTRACT_ID)
+                    else ""
+                )
                 zip_code = user_input.get(CONF_ZIP_CODE, "").strip()
-                
+
                 if not zip_code:
                     errors[CONF_ZIP_CODE] = "required"
                 else:
@@ -83,19 +88,23 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     try:
                         await self._test_credentials(user_input)
                     except OstromAuthError as err:
-                        LOGGER.warning("Authentication failed during config flow: %s", err)
+                        LOGGER.warning(
+                            "Authentication failed during config flow: %s", err
+                        )
                         errors["base"] = "invalid_auth"
                     except OstromApiError as err:
                         LOGGER.warning("API error during config flow: %s", err)
                         errors["base"] = "cannot_connect"
                     except Exception as err:  # pylint: disable=broad-except
-                        LOGGER.exception("Unexpected exception during config flow: %s", err)
+                        LOGGER.exception(
+                            "Unexpected exception during config flow: %s", err
+                        )
                         errors["base"] = "unknown"
-                    
+
                     if not errors:
                         # Success - create the config entry
                         contract_id_value = contract_id if contract_id else ""
-                        
+
                         if contract_id_value:
                             title = f"Ostrom Contract {contract_id_value[-4:]}"
                         else:
@@ -112,7 +121,8 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
 
                         options = {
                             CONF_POLL_INTERVAL_MINUTES: user_input.get(
-                                CONF_POLL_INTERVAL_MINUTES, DEFAULT_POLL_INTERVAL_MINUTES
+                                CONF_POLL_INTERVAL_MINUTES,
+                                DEFAULT_POLL_INTERVAL_MINUTES,
                             ),
                             CONF_CONSUMPTION_INTERVAL_MINUTES: user_input.get(
                                 CONF_CONSUMPTION_INTERVAL_MINUTES,
@@ -124,24 +134,27 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                             ),
                         }
 
-                        return self.async_create_entry(title=title, data=data, options=options)
+                        return self.async_create_entry(
+                            title=title, data=data, options=options
+                        )
 
         # Show the form
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(
-                        CONF_ENVIRONMENT, default=ENV_PRODUCTION
-                    ): vol.In({ENV_SANDBOX: "Sandbox", ENV_PRODUCTION: "Production"}),
+                    vol.Required(CONF_ENVIRONMENT, default=ENV_PRODUCTION): vol.In(
+                        {ENV_SANDBOX: "Sandbox", ENV_PRODUCTION: "Production"}
+                    ),
                     vol.Required(CONF_CLIENT_ID): str,
                     vol.Required(CONF_CLIENT_SECRET): str,
-                    vol.Required(
-                        CONF_ZIP_CODE
-                    ): vol.All(
+                    vol.Required(CONF_ZIP_CODE): vol.All(
                         str,
                         vol.Length(min=5, max=5),
-                        vol.Match(r"^\d{5}$", msg="Postleitzahl muss genau 5 Ziffern enthalten"),
+                        vol.Match(
+                            r"^\d{5}$",
+                            msg="Postleitzahl muss genau 5 Ziffern enthalten",
+                        ),
                     ),
                     vol.Optional(CONF_CONTRACT_ID, default=""): str,
                     vol.Optional(
@@ -179,7 +192,7 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
 
         # Contract ID is optional - only needed for consumption data
         contract_id = user_input.get(CONF_CONTRACT_ID, "")
-        
+
         client = OstromApiClient(
             hass=self.hass,
             session=session,
@@ -243,4 +256,3 @@ class OptionsFlowHandler(OptionsFlowWithReload):
                 self.config_entry.options,
             ),
         )
-

@@ -1,4 +1,5 @@
 """Binary sensor platform for the Ostrom Advanced integration."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -78,7 +79,9 @@ def _is_cheapest_4h_block_active(
     return (is_active, block_start, block_end)
 
 
-def _is_today_cheapest_3h_block_active(data: dict[str, Any]) -> tuple[bool, dict[str, Any] | None]:
+def _is_today_cheapest_3h_block_active(
+    data: dict[str, Any],
+) -> tuple[bool, dict[str, Any] | None]:
     """Check if today's cheapest 3-hour block is currently active.
 
     Returns:
@@ -98,7 +101,9 @@ def _is_today_cheapest_3h_block_active(data: dict[str, Any]) -> tuple[bool, dict
     return (is_active, attrs)
 
 
-def _is_today_cheapest_4h_block_active(data: dict[str, Any]) -> tuple[bool, dict[str, Any] | None]:
+def _is_today_cheapest_4h_block_active(
+    data: dict[str, Any],
+) -> tuple[bool, dict[str, Any] | None]:
     """Check if today's cheapest 4-hour block is currently active.
 
     Returns:
@@ -185,11 +190,15 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Ostrom binary sensors from a config entry."""
-    LOGGER.info("Setting up Ostrom Advanced binary sensors for entry %s", entry.entry_id)
+    LOGGER.info(
+        "Setting up Ostrom Advanced binary sensors for entry %s", entry.entry_id
+    )
 
     data = hass.data[DOMAIN][entry.entry_id]
     price_coordinator: OstromPriceCoordinator = data["price_coordinator"]
-    contract_id = entry.data.get(CONF_CONTRACT_ID, "") or entry.data.get(CONF_ZIP_CODE, "")
+    contract_id = entry.data.get(CONF_CONTRACT_ID, "") or entry.data.get(
+        CONF_ZIP_CODE, ""
+    )
 
     entities: list[BinarySensorEntity] = []
 
@@ -206,7 +215,9 @@ async def async_setup_entry(
 
     LOGGER.info("Adding %d binary sensor entities to Home Assistant", len(entities))
     async_add_entities(entities)
-    LOGGER.info("Successfully added %d Ostrom Advanced binary sensor entities", len(entities))
+    LOGGER.info(
+        "Successfully added %d Ostrom Advanced binary sensor entities", len(entities)
+    )
 
 
 class OstromCheapest3hBlockBinarySensor(
@@ -283,4 +294,3 @@ class OstromCheapest3hBlockBinarySensor(
             return attrs
 
         return None
-
