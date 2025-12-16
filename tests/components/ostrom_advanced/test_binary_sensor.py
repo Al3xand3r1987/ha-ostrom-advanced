@@ -4,8 +4,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
-import pytest
-from homeassistant.util import dt as dt_util
 
 from custom_components.ostrom_advanced.binary_sensor import (
     _get_cheapest_3h_block,
@@ -13,7 +11,6 @@ from custom_components.ostrom_advanced.binary_sensor import (
     _is_cheapest_3h_block_active,
     _is_cheapest_4h_block_active,
     _is_today_cheapest_3h_block_active,
-    _is_today_cheapest_4h_block_active,
     _is_tomorrow_cheapest_3h_block_active,
 )
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-import pytest
 
 from custom_components.ostrom_advanced.sensor import (
     _get_avg_price,

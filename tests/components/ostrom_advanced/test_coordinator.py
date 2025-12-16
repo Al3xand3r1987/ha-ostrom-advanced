@@ -1,13 +1,12 @@
 """Tests for coordinator classes."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import UpdateFailed
-from homeassistant.util import dt as dt_util
 
 from custom_components.ostrom_advanced.api import OstromApiClient, OstromApiError, OstromAuthError
 from custom_components.ostrom_advanced.coordinator import (

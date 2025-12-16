@@ -4,7 +4,6 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
@@ -16,7 +15,6 @@ from custom_components.ostrom_advanced.const import (
     CONF_CONTRACT_ID,
     CONF_ENVIRONMENT,
     CONF_ZIP_CODE,
-    DOMAIN,
     ENV_PRODUCTION,
 )
 

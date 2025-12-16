@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from aiohttp import ClientConnectorError
 
-from custom_components.ostrom_advanced.api import OstromApiClient, OstromApiError, OstromAuthError
+from custom_components.ostrom_advanced.api import OstromApiClient, OstromApiError
 from custom_components.ostrom_advanced.sensor import (
     _get_avg_price,
     _get_cheapest_3h_block,

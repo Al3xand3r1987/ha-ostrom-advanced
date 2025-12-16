@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
 import pytest
-from aiohttp import ClientConnectorError, ClientResponseError, ClientTimeout
+from aiohttp import ClientConnectorError
 
 from custom_components.ostrom_advanced.api import (
     OstromApiClient,
@@ -15,11 +15,7 @@ from custom_components.ostrom_advanced.api import (
     OstromAuthError,
 )
 from custom_components.ostrom_advanced.const import (
-    API_BASE_URLS,
-    AUTH_URLS,
-    ENDPOINT_ENERGY_CONSUMPTION,
     ENDPOINT_OAUTH_TOKEN,
-    ENDPOINT_SPOT_PRICES,
 )
 
 

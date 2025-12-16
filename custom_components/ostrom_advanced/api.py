@@ -5,7 +5,6 @@ import asyncio
 import base64
 from datetime import datetime, timedelta
 from typing import Any
-from urllib.parse import urlencode
 
 import aiohttp
 from aiohttp import ClientConnectorError, ClientResponseError, ClientTimeout, FormData

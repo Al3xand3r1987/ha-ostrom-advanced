@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
 
 from custom_components.ostrom_advanced import async_setup_entry, async_unload_entry
 from custom_components.ostrom_advanced.const import (
