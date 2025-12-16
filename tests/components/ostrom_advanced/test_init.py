@@ -162,17 +162,29 @@ class TestAsyncUnloadEntry:
     ) -> None:
         """Test successful entry unload."""
         # Setup data - ensure data is a real dict, not a MagicMock
-        if not isinstance(mock_hass.data, dict):
-            mock_hass.data = {}
-        mock_hass.data[DOMAIN] = {mock_config_entry.entry_id: {
-            "price_coordinator": MagicMock(async_shutdown=AsyncMock()),
-            "consumption_coordinator": MagicMock(async_shutdown=AsyncMock())
-        }}
+        # Force it to be a real dict to avoid MagicMock issues
+        mock_hass.data = {}
+        # Add multiple entries so DOMAIN is not removed when one entry is unloaded
+        other_entry_id = "other_entry_id"
+        mock_hass.data[DOMAIN] = {
+            mock_config_entry.entry_id: {
+                "price_coordinator": MagicMock(async_shutdown=AsyncMock()),
+                "consumption_coordinator": MagicMock(async_shutdown=AsyncMock())
+            },
+            other_entry_id: {
+                "price_coordinator": MagicMock(async_shutdown=AsyncMock()),
+                "consumption_coordinator": MagicMock(async_shutdown=AsyncMock())
+            }
+        }
 
         result = await async_unload_entry(mock_hass, mock_config_entry)
 
         assert result is True
+        # Entry should be removed, but DOMAIN should still exist (other entry remains)
+        assert DOMAIN in mock_hass.data
         assert mock_config_entry.entry_id not in mock_hass.data[DOMAIN]
+        # Other entry should still be present
+        assert other_entry_id in mock_hass.data[DOMAIN]
 
     @pytest.mark.asyncio
     async def test_unload_entry_removes_domain_if_empty(
