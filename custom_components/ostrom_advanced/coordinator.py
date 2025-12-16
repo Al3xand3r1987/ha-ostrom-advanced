@@ -18,6 +18,7 @@ from .const import (
     LOGGER,
     RESOLUTION_HOUR,
 )
+from .utils import calculate_next_update_time
 
 
 class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -56,69 +57,6 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._update_offset_seconds = update_offset_seconds
         self._update_timer: asyncio.TimerHandle | None = None
 
-    def _calculate_next_update_time(
-        self, interval_minutes: int, offset_seconds: int
-    ) -> datetime:
-        """Calculate the next update time based on interval and offset.
-
-        Example: With 15-minute interval and 15-second offset:
-        - Currently 10:07:30 → Next update: 10:15:15
-        - Currently 10:15:20 → Next update: 10:30:15
-        - Currently 10:00:00 → Next update: 10:00:15
-        - Currently 10:00:20 → Next update: 10:15:15
-
-        Args:
-            interval_minutes: Update interval in minutes
-            offset_seconds: Seconds after full interval to trigger update
-
-        Returns:
-            Next update datetime
-        """
-        now = dt_util.now()
-        try:
-            # Calculate minutes past the hour
-            minutes_past_hour = now.minute
-
-            # Find which interval we're in
-            interval_count = minutes_past_hour // interval_minutes
-            interval_start_minute = interval_count * interval_minutes
-            interval_start_time = now.replace(
-                minute=interval_start_minute, second=offset_seconds, microsecond=0
-            )
-
-            # If we're before the offset time of the current interval, use current interval
-            if now < interval_start_time:
-                next_time = interval_start_time
-            else:
-                # Otherwise, use next interval
-                next_minute = interval_start_minute + interval_minutes
-                if next_minute >= 60:
-                    next_time = now.replace(
-                        hour=now.hour + 1,
-                        minute=0,
-                        second=offset_seconds,
-                        microsecond=0,
-                    )
-                else:
-                    next_time = now.replace(
-                        minute=next_minute, second=offset_seconds, microsecond=0
-                    )
-
-            # Validate that next_time is in the future (handles DST edge cases)
-            if next_time <= now:
-                # If calculated time is in the past, add one interval
-                next_time = next_time + timedelta(minutes=interval_minutes)
-
-            return next_time
-        except (ValueError, OverflowError) as err:
-            # Fallback for DST transitions or other time calculation errors
-            LOGGER.error(
-                "Time calculation error (DST transition?): %s, using fallback", err
-            )
-            # Simple fallback: schedule for next interval from now
-            fallback_time = now + timedelta(minutes=interval_minutes, seconds=offset_seconds)
-            return fallback_time
-
     @callback
     def _schedule_next_update(self) -> None:
         """Schedule the next update based on interval and offset."""
@@ -127,7 +65,7 @@ class OstromPriceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._update_timer.cancel()
 
         # Calculate next update time
-        next_update = self._calculate_next_update_time(
+        next_update = calculate_next_update_time(
             self._poll_interval_minutes, self._update_offset_seconds
         )
         now = dt_util.now()
@@ -322,69 +260,6 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._update_offset_seconds = update_offset_seconds
         self._update_timer: asyncio.TimerHandle | None = None
 
-    def _calculate_next_update_time(
-        self, interval_minutes: int, offset_seconds: int
-    ) -> datetime:
-        """Calculate the next update time based on interval and offset.
-
-        Example: With 15-minute interval and 15-second offset:
-        - Currently 10:07:30 → Next update: 10:15:15
-        - Currently 10:15:20 → Next update: 10:30:15
-        - Currently 10:00:00 → Next update: 10:00:15
-        - Currently 10:00:20 → Next update: 10:15:15
-
-        Args:
-            interval_minutes: Update interval in minutes
-            offset_seconds: Seconds after full interval to trigger update
-
-        Returns:
-            Next update datetime
-        """
-        now = dt_util.now()
-        try:
-            # Calculate minutes past the hour
-            minutes_past_hour = now.minute
-
-            # Find which interval we're in
-            interval_count = minutes_past_hour // interval_minutes
-            interval_start_minute = interval_count * interval_minutes
-            interval_start_time = now.replace(
-                minute=interval_start_minute, second=offset_seconds, microsecond=0
-            )
-
-            # If we're before the offset time of the current interval, use current interval
-            if now < interval_start_time:
-                next_time = interval_start_time
-            else:
-                # Otherwise, use next interval
-                next_minute = interval_start_minute + interval_minutes
-                if next_minute >= 60:
-                    next_time = now.replace(
-                        hour=now.hour + 1,
-                        minute=0,
-                        second=offset_seconds,
-                        microsecond=0,
-                    )
-                else:
-                    next_time = now.replace(
-                        minute=next_minute, second=offset_seconds, microsecond=0
-                    )
-
-            # Validate that next_time is in the future (handles DST edge cases)
-            if next_time <= now:
-                # If calculated time is in the past, add one interval
-                next_time = next_time + timedelta(minutes=interval_minutes)
-
-            return next_time
-        except (ValueError, OverflowError) as err:
-            # Fallback for DST transitions or other time calculation errors
-            LOGGER.error(
-                "Time calculation error (DST transition?): %s, using fallback", err
-            )
-            # Simple fallback: schedule for next interval from now
-            fallback_time = now + timedelta(minutes=interval_minutes, seconds=offset_seconds)
-            return fallback_time
-
     @callback
     def _schedule_next_update(self) -> None:
         """Schedule the next update based on interval and offset."""
@@ -393,7 +268,7 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._update_timer.cancel()
 
         # Calculate next update time
-        next_update = self._calculate_next_update_time(
+        next_update = calculate_next_update_time(
             self._poll_interval_minutes, self._update_offset_seconds
         )
         now = dt_util.now()
@@ -539,4 +414,3 @@ class OstromConsumptionCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Schedule next update even on error
             self._schedule_next_update()
             raise UpdateFailed(f"Unexpected error: {err}") from err
-
