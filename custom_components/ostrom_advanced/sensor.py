@@ -54,7 +54,11 @@ def _get_min_price(slots: list[dict[str, Any]]) -> float | None:
     """Get minimum price from slots (generic for today/tomorrow)."""
     if not slots:
         return None
-    prices = [s.get("total_price", 0) for s in slots]
+    # Filter out None values and use 0 as default for missing prices
+    prices = [s.get("total_price", 0) for s in slots if s.get("total_price") is not None]
+    # If all prices were None, include zeros
+    if not prices:
+        prices = [0] * len(slots)
     return round(min(prices), 5) if prices else None
 
 
@@ -101,7 +105,11 @@ def _get_cheapest_hour(slots: list[dict[str, Any]]) -> datetime | None:
     """Get start time of cheapest hour from slots (generic for today/tomorrow)."""
     if not slots:
         return None
-    cheapest = min(slots, key=lambda s: s.get("total_price", float("inf")))
+    # Filter slots that have a start field
+    slots_with_start = [s for s in slots if "start" in s]
+    if not slots_with_start:
+        return None
+    cheapest = min(slots_with_start, key=lambda s: s.get("total_price", float("inf")))
     return cheapest.get("start")
 
 

@@ -161,8 +161,13 @@ class TestAsyncUnloadEntry:
         self, mock_hass: MagicMock, mock_config_entry: MagicMock
     ) -> None:
         """Test successful entry unload."""
-        # Setup data
-        mock_hass.data[DOMAIN] = {mock_config_entry.entry_id: {}}
+        # Setup data - ensure data is a real dict, not a MagicMock
+        if not isinstance(mock_hass.data, dict):
+            mock_hass.data = {}
+        mock_hass.data[DOMAIN] = {mock_config_entry.entry_id: {
+            "price_coordinator": MagicMock(async_shutdown=AsyncMock()),
+            "consumption_coordinator": MagicMock(async_shutdown=AsyncMock())
+        }}
 
         result = await async_unload_entry(mock_hass, mock_config_entry)
 

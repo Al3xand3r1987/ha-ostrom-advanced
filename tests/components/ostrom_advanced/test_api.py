@@ -127,9 +127,10 @@ class TestAsyncAuthenticate:
         self, api_client: OstromApiClient, mock_session: AsyncMock
     ) -> None:
         """Test authentication with network error."""
-        mock_session.post.side_effect = ClientConnectorError(
-            request_info=MagicMock(), history=MagicMock()
-        )
+        # Create a connection key for ClientConnectorError
+        from aiohttp.client_reqrep import ConnectionKey
+        conn_key = ConnectionKey(host='test', port=443, is_ssl=True, ssl=None, proxy=None, proxy_auth=None, proxy_headers_hash=None)
+        mock_session.post.side_effect = ClientConnectorError(conn_key, OSError())
 
         with pytest.raises(OstromApiError, match="Network error"):
             await api_client.async_authenticate()
@@ -203,20 +204,18 @@ class TestAsyncGetSpotPrices:
         )
 
         # Setup mock to return different responses for auth and spot prices
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        async def mock_request(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_spot_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
-
-        mock_session.post = AsyncMock(side_effect=mock_post)
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
+        mock_session.request = MagicMock(return_value=MockContextManager(mock_spot_response))
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -245,20 +244,18 @@ class TestAsyncGetSpotPrices:
         mock_spot_response.status = 200
         mock_spot_response.json = AsyncMock(return_value={})  # Missing 'data' field
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        async def mock_request(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_spot_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
-
-        mock_session.post = AsyncMock(side_effect=mock_post)
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
+        mock_session.request = MagicMock(return_value=MockContextManager(mock_spot_response))
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -302,27 +299,32 @@ class TestAsyncGetSpotPrices:
         )
         mock_success_response.raise_for_status = AsyncMock()
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        request_count = 0
+        class MockRequestContextManager:
+            def __init__(self):
+                self.count = 0
+            
+            async def __aenter__(self):
+                if self.count == 0:
+                    self.count += 1
+                    return mock_401_response
+                else:
+                    return mock_success_response
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        async def mock_request(*args, **kwargs):
-            nonlocal request_count
-            mock = AsyncMock()
-            if request_count == 0:
-                mock.__aenter__ = AsyncMock(return_value=mock_401_response)
-            else:
-                mock.__aenter__ = AsyncMock(return_value=mock_success_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            request_count += 1
-            return mock
-
-        mock_session.post = AsyncMock(side_effect=mock_post)
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
+        mock_session.request = MagicMock(return_value=MockRequestContextManager())
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -347,20 +349,18 @@ class TestAsyncGetSpotPrices:
         mock_404_response.status = 404
         mock_404_response.text = AsyncMock(return_value="Not Found")
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        async def mock_request(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_404_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
-
-        mock_session.post = AsyncMock(side_effect=mock_post)
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
+        mock_session.request = MagicMock(return_value=MockContextManager(mock_404_response))
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -443,16 +443,20 @@ class TestAsyncGetEnergyConsumption:
         # Create 404 error
         error = OstromApiError("Resource not found", status_code=404)
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
         async def mock_request(*args, **kwargs):
             raise error
 
-        mock_session.post = AsyncMock(side_effect=mock_post)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
         mock_session.request = AsyncMock(side_effect=mock_request)
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)

@@ -34,7 +34,10 @@ class TestOstromAdvancedConfigFlow:
         """Test successful user step."""
         flow = OstromAdvancedConfigFlow()
         flow.hass = mock_hass
-        flow._async_get_unique_id = AsyncMock(return_value="test_unique_id")
+        
+        # Mock async_set_unique_id and _abort_if_unique_id_configured
+        flow.async_set_unique_id = AsyncMock()
+        flow._abort_if_unique_id_configured = MagicMock()
 
         # Mock successful authentication
         with patch.object(flow, "_test_credentials", new_callable=AsyncMock):
@@ -57,7 +60,10 @@ class TestOstromAdvancedConfigFlow:
         """Test user step with invalid authentication."""
         flow = OstromAdvancedConfigFlow()
         flow.hass = mock_hass
-        flow._async_get_unique_id = AsyncMock(return_value="test_unique_id")
+        
+        # Mock async_set_unique_id and _abort_if_unique_id_configured
+        flow.async_set_unique_id = AsyncMock()
+        flow._abort_if_unique_id_configured = MagicMock()
 
         # Mock authentication failure
         with patch.object(
@@ -76,14 +82,17 @@ class TestOstromAdvancedConfigFlow:
             )
 
             assert result["type"] == FlowResultType.FORM
-            assert result["errors"]["base"] == "invalid_auth"
+            assert result.get("errors", {}).get("base") == "invalid_auth"
 
     @pytest.mark.asyncio
     async def test_flow_user_step_cannot_connect(self, mock_hass: MagicMock) -> None:
         """Test user step with connection error."""
         flow = OstromAdvancedConfigFlow()
         flow.hass = mock_hass
-        flow._async_get_unique_id = AsyncMock(return_value="test_unique_id")
+        
+        # Mock async_set_unique_id and _abort_if_unique_id_configured
+        flow.async_set_unique_id = AsyncMock()
+        flow._abort_if_unique_id_configured = MagicMock()
 
         # Mock connection error
         with patch.object(
@@ -100,7 +109,7 @@ class TestOstromAdvancedConfigFlow:
             )
 
             assert result["type"] == FlowResultType.FORM
-            assert result["errors"]["base"] == "cannot_connect"
+            assert result.get("errors", {}).get("base") == "cannot_connect"
 
     @pytest.mark.asyncio
     async def test_flow_user_step_invalid_zip_code(self, mock_hass: MagicMock) -> None:
@@ -145,7 +154,10 @@ class TestOstromAdvancedConfigFlow:
         """Test user step with contract ID provided."""
         flow = OstromAdvancedConfigFlow()
         flow.hass = mock_hass
-        flow._async_get_unique_id = AsyncMock(return_value="test_unique_id")
+        
+        # Mock async_set_unique_id and _abort_if_unique_id_configured
+        flow.async_set_unique_id = AsyncMock()
+        flow._abort_if_unique_id_configured = MagicMock()
 
         with patch.object(flow, "_test_credentials", new_callable=AsyncMock):
             result = await flow.async_step_user(

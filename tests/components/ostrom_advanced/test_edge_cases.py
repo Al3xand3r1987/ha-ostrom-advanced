@@ -110,20 +110,18 @@ class TestEdgeCasesAPI:
         mock_spot_response.status = 200
         mock_spot_response.json = AsyncMock(return_value={"data": []})  # Empty data
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        async def mock_request(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_spot_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
-
-        mock_session.post = AsyncMock(side_effect=mock_post)
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
+        mock_session.request = MagicMock(return_value=MockContextManager(mock_spot_response))
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -160,20 +158,18 @@ class TestEdgeCasesAPI:
         mock_spot_response.status = 200
         mock_spot_response.json = AsyncMock(return_value={})  # Missing 'data'
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        async def mock_request(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_spot_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
-
-        mock_session.post = AsyncMock(side_effect=mock_post)
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
+        mock_session.request = MagicMock(return_value=MockContextManager(mock_spot_response))
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -212,20 +208,18 @@ class TestEdgeCasesAPI:
         mock_429_response.status = 429
         mock_429_response.text = AsyncMock(return_value="Too Many Requests")
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
-        async def mock_request(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_429_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
-
-        mock_session.post = AsyncMock(side_effect=mock_post)
-        mock_session.request = AsyncMock(side_effect=mock_request)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
+        mock_session.request = MagicMock(return_value=MockContextManager(mock_429_response))
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         end = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -257,11 +251,15 @@ class TestEdgeCasesAPI:
         )
         mock_auth_response.text = AsyncMock(return_value="")
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
         # Mock timeout on request
         import asyncio
@@ -269,7 +267,7 @@ class TestEdgeCasesAPI:
         async def mock_request(*args, **kwargs):
             raise asyncio.TimeoutError()
 
-        mock_session.post = AsyncMock(side_effect=mock_post)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
         mock_session.request = AsyncMock(side_effect=mock_request)
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
@@ -302,17 +300,24 @@ class TestEdgeCasesAPI:
         )
         mock_auth_response.text = AsyncMock(return_value="")
 
-        async def mock_post(*args, **kwargs):
-            mock = AsyncMock()
-            mock.__aenter__ = AsyncMock(return_value=mock_auth_response)
-            mock.__aexit__ = AsyncMock(return_value=None)
-            return mock
+        class MockContextManager:
+            def __init__(self, return_value):
+                self.return_value = return_value
+            
+            async def __aenter__(self):
+                return self.return_value
+            
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
         # Mock connection error
+        from aiohttp.client_reqrep import ConnectionKey
+        
         async def mock_request(*args, **kwargs):
-            raise ClientConnectorError(request_info=MagicMock(), history=MagicMock())
+            conn_key = ConnectionKey(host='test', port=443, is_ssl=True, ssl=None, proxy=None, proxy_auth=None, proxy_headers_hash=None)
+            raise ClientConnectorError(conn_key, OSError())
 
-        mock_session.post = AsyncMock(side_effect=mock_post)
+        mock_session.post = MagicMock(return_value=MockContextManager(mock_auth_response))
         mock_session.request = AsyncMock(side_effect=mock_request)
 
         start = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
