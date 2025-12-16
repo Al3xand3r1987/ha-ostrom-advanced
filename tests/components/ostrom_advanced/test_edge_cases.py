@@ -11,10 +11,10 @@ from aiohttp import ClientConnectorError
 from custom_components.ostrom_advanced.api import OstromApiClient, OstromApiError
 from custom_components.ostrom_advanced.sensor import (
     _get_avg_price,
-    _get_cheapest_3h_block,
     _get_median_price,
     _get_min_price,
 )
+from custom_components.ostrom_advanced.utils import get_cheapest_3h_block
 
 
 class TestEdgeCasesSensorCalculations:
@@ -65,7 +65,7 @@ class TestEdgeCasesSensorCalculations:
             {"total_price": 0.20, "start": start_time.replace(hour=12)},
             {"total_price": 0.20, "start": start_time.replace(hour=13)},
         ]
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         # Should return the first block
         assert result == start_time
 
@@ -75,7 +75,7 @@ class TestEdgeCasesSensorCalculations:
         assert _get_min_price(slots) is None
         assert _get_avg_price(slots) is None
         assert _get_median_price(slots) is None
-        assert _get_cheapest_3h_block(slots) is None
+        assert get_cheapest_3h_block(slots) is None
 
 
 class TestEdgeCasesAPI:

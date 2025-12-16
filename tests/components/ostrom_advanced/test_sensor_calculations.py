@@ -8,13 +8,13 @@ from zoneinfo import ZoneInfo
 
 from custom_components.ostrom_advanced.sensor import (
     _get_avg_price,
-    _get_cheapest_3h_block,
     _get_cheapest_hour,
     _get_max_price,
     _get_median_price,
     _get_min_price,
     _get_most_expensive_hour,
 )
+from custom_components.ostrom_advanced.utils import get_cheapest_3h_block
 
 
 class TestGetMinPrice:
@@ -302,7 +302,7 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.15, "start": start_time.replace(hour=14)},
             {"total_price": 0.20, "start": start_time.replace(hour=15)},
         ]
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         assert result == start_time.replace(hour=13)
 
     def test_cheapest_3h_block_less_than_3_slots(self) -> None:
@@ -312,7 +312,7 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.30, "start": start_time},
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
         ]
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         assert result is None
 
     def test_cheapest_3h_block_exactly_3_slots(self) -> None:
@@ -323,13 +323,13 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
             {"total_price": 0.25, "start": start_time.replace(hour=12)},
         ]
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         assert result == start_time
 
     def test_cheapest_3h_block_empty_list(self) -> None:
         """Test cheapest 3h block with empty list."""
         slots: list[dict[str, float | datetime]] = []
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         assert result is None
 
     def test_cheapest_3h_block_tie(self) -> None:
@@ -346,7 +346,7 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.20, "start": start_time.replace(hour=14)},
             {"total_price": 0.20, "start": start_time.replace(hour=15)},
         ]
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         # Should return the first block with the lowest average
         assert result == start_time
 
@@ -358,7 +358,7 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
             {"total_price": 0.20},  # Missing start
         ]
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         # Should still work, but might return None if the best block has missing start
         # In this case, it should return the first block's start
         assert result == start_time

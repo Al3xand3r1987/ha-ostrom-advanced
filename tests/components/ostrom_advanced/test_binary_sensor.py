@@ -7,12 +7,14 @@ from unittest.mock import patch
 
 
 from custom_components.ostrom_advanced.binary_sensor import (
-    _get_cheapest_3h_block,
-    _get_cheapest_4h_block,
     _is_cheapest_3h_block_active,
     _is_cheapest_4h_block_active,
     _is_today_cheapest_3h_block_active,
     _is_tomorrow_cheapest_3h_block_active,
+)
+from custom_components.ostrom_advanced.utils import (
+    get_cheapest_3h_block,
+    get_cheapest_4h_block,
 )
 
 
@@ -33,7 +35,7 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.15, "start": start_time.replace(hour=14)},
             {"total_price": 0.20, "start": start_time.replace(hour=15)},
         ]
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         assert result == start_time.replace(hour=13)
 
     def test_cheapest_3h_block_less_than_3_slots(self) -> None:
@@ -43,7 +45,7 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.30, "start": start_time},
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
         ]
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         assert result is None
 
     def test_cheapest_3h_block_exactly_3_slots(self) -> None:
@@ -54,7 +56,7 @@ class TestGetCheapest3hBlock:
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
             {"total_price": 0.25, "start": start_time.replace(hour=12)},
         ]
-        result = _get_cheapest_3h_block(slots)
+        result = get_cheapest_3h_block(slots)
         assert result == start_time
 
 
@@ -77,7 +79,7 @@ class TestGetCheapest4hBlock:
             {"total_price": 0.20, "start": start_time.replace(hour=16)},
             {"total_price": 0.15, "start": start_time.replace(hour=17)},
         ]
-        result = _get_cheapest_4h_block(slots)
+        result = get_cheapest_4h_block(slots)
         assert result == start_time.replace(hour=14)
 
     def test_cheapest_4h_block_less_than_4_slots(self) -> None:
@@ -88,7 +90,7 @@ class TestGetCheapest4hBlock:
             {"total_price": 0.20, "start": start_time.replace(hour=11)},
             {"total_price": 0.25, "start": start_time.replace(hour=12)},
         ]
-        result = _get_cheapest_4h_block(slots)
+        result = get_cheapest_4h_block(slots)
         assert result is None
 
 
