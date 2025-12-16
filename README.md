@@ -5,157 +5,80 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Was ist Ostrom Advanced?
+## Die intelligente Verbindung zwischen deinem Ostrom-Dynamik-Tarif und deinem Smart Home – spare Geld, ohne Komfortverlust.
 
-Eine benutzerdefinierte Home Assistant Integration für [Ostrom](https://www.ostrom.de/) dynamische Stromtarife in Deutschland. Die Integration verbindet sich mit der offiziellen Ostrom API und stellt umfassende Sensoren für Preisüberwachung, Verbrauchserfassung und Kostenberechnung bereit.
+### Features auf einen Blick
 
-### Kern-Entitäten
-
-Die Integration liefert folgende Hauptkategorien von Sensoren:
-
-- **Aktueller Preis**: Echtzeit-Strompreise mit detaillierten Attributen für Charts und Automatisierungen
-- **Preisstatistiken**: Minimal-, Maximal-, Durchschnitts- und Medianpreise für heute und morgen
-- **Zeitbasierte Sensoren**: Günstigste Stunde, günstigster 3-Stunden-Block und teuerste Stunde (heute und morgen)
-- **Binärsensoren**: Zeigen an, ob der günstigste 3-Stunden-Block gerade aktiv ist
-- **Verbrauch und Kosten**: Täglicher Energieverbrauch und berechnete Kosten (erfordert Vertrags-ID und Smart Meter Gateway)
-
-### Praktische Anwendungen
-
-Mit dieser Integration können Sie:
-
-- **Wärmepumpen** im günstigsten Zeitfenster betreiben
-- **E-Autos** zu optimalen Zeiten laden
-- **Haushaltsgeräte** (Waschmaschine, Trockner) in günstigen Zeiträumen starten
-- **Batteriespeicher** intelligent laden und entladen
-- **Preisverläufe** in Dashboards visualisieren
-- **Kosten** basierend auf tatsächlichem Verbrauch berechnen
-
-### Unterstützung / Buy Me a Coffee ☕
-
-Dieses Projekt entsteht in meiner Freizeit.  
-Wenn dir die Ostrom Advanced Integration hilft und du mich unterstützen möchtest, kannst du mir hier freiwillig einen „Coffee" spendieren:
-
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/alexanderb8k)
-
-Unterstützung ist komplett optional, die Integration bleibt natürlich kostenlos und open source.
+- 💰 **Automatische Kostenoptimierung** – Wärmepumpe/E-Auto laden, wenn es günstig ist
+- ⚡ **Echtzeit-Preise & 48h Vorschau** – Heute & Morgen immer im Blick
+- 📊 **Exakte Kostenverfolgung** – Tagesverbrauch & Kosten in Euro
+- 🔌 **Smart Grid Ready** – Steuerung basierend auf günstigsten Zeitfenstern
 
 ---
-### Unterstützung & Ostrom Bonus (optional)
 
-> 💡 **Hinweis:** Dieses Projekt ist ein privates Open-Source-Projekt und steht in keiner offiziellen Beziehung zur Ostrom GmbH. Wenn dir die Integration hilft und du Ostrom-Neukund:in werden möchtest, kannst du das Ostrom-Empfehlungsprogramm nutzen und dabei auch mich unterstützen.
+## Installation & Konfiguration
 
-- Ostrom bietet aktuell ein Empfehlungsprogramm mit Bonus für Neukund:innen  
-  (z. B. Rechnungs­gutschrift oder Guthaben für den Ostrom Store – Details stehen auf der Ostrom-Webseite).
-- Alle Konditionen, Bonusbeträge und Auszahlungen werden ausschließlich von Ostrom geregelt.
-- Die Integration funktioniert vollständig, auch wenn du kein Empfehlungsprogramm nutzt.
+### Voraussetzungen
 
-👉 Wenn du mich unterstützen möchtest, kannst du dich gern bei mir melden (z. B. über GitHub Issues).  
-Ich teile dir dann einen persönlichen Empfehlungscode mit, sofern er verfügbar und gültig ist.  
-Ich prüfe den Code nicht vor jeder Nutzung, daher kann es vorkommen, dass er künftig nicht mehr akzeptiert wird.
----
+Du benötigst:
+- Ein aktives **Ostrom-Konto** mit Dynamik-Tarif
+- **OAuth2 Credentials** vom [Ostrom Developer Portal](https://developer.ostrom-api.io/) (Client ID & Client Secret)
+- Deine deutsche **Postleitzahl** für genaue Steuer-/Abgabenberechnungen
+- **Vertrags-ID** (optional, nur für Verbrauchsdaten erforderlich)
 
-## Installation
+### Installation über HACS (Empfohlen)
 
-## Voraussetzungen
-
-1. **Ostrom-Konto**: Sie benötigen einen aktiven Ostrom-Stromvertrag
-2. **Ostrom Developer Portal Zugang**: 
-   - Melden Sie sich im [Ostrom Developer Portal](https://developer.ostrom-api.io/) an
-   - Erstellen Sie einen API-Client, um Ihre **Client ID** und **Client Secret** zu erhalten
-3. **Vertrags-ID**: Ihre Ostrom-Vertragsnummer (optional, nur für Verbrauchsdaten erforderlich)
-4. **Postleitzahl**: Ihre deutsche Postleitzahl für genaue Steuer-/Abgabenberechnungen
-
-### HACS (Empfohlen)
-
-1. Öffnen Sie HACS in Home Assistant
-2. Gehen Sie zu **Integrations**
-3. Klicken Sie auf das Drei-Punkte-Menü (⋮) → **Custom repositories**
-4. Fügen Sie die Repository-URL hinzu: `https://github.com/Al3xand3r1987/ha-ostrom-advanced`
-5. Wählen Sie die Kategorie: **Integration**
-6. Klicken Sie auf **Add**
-7. Suchen Sie nach "Ostrom Advanced" und installieren Sie es
-8. Starten Sie Home Assistant neu
+1. Öffne HACS in Home Assistant
+2. Gehe zu **Integrations** → Drei-Punkte-Menü (⋮) → **Custom repositories**
+3. Füge die Repository-URL hinzu: `https://github.com/Al3xand3r1987/ha-ostrom-advanced`
+4. Wähle die Kategorie: **Integration**
+5. Suche nach "Ostrom Advanced" und installiere es
+6. Starte Home Assistant neu
 
 ### Manuelle Installation
 
-1. Laden Sie die neueste Version herunter
-2. Kopieren Sie den Ordner `custom_components/ostrom_advanced` in Ihr Home Assistant `config/custom_components/` Verzeichnis
-3. Starten Sie Home Assistant neu
+1. Lade die neueste Version herunter
+2. Kopiere den Ordner `custom_components/ostrom_advanced` in dein Home Assistant `config/custom_components/` Verzeichnis
+3. Starte Home Assistant neu
 
-## Konfiguration
+### Konfiguration
 
-1. Gehen Sie zu **Einstellungen** → **Geräte & Dienste**
-2. Klicken Sie auf **+ Integration hinzufügen**
-3. Suchen Sie nach "Ostrom Advanced"
-4. Füllen Sie das Konfigurationsformular aus:
+1. Gehe zu **Einstellungen** → **Geräte & Dienste**
+2. Klicke auf **+ Integration hinzufügen**
+3. Suche nach "Ostrom Advanced"
+4. Fülle das Konfigurationsformular aus:
 
 | Feld | Beschreibung | Erforderlich | Standard |
 |------|--------------|-------------|---------|
 | Environment | `Production` für echte Daten, `Sandbox` zum Testen | Ja | Production |
-| Client ID | Ihre OAuth2 Client ID vom Developer Portal | Ja | - |
-| Client Secret | Ihr OAuth2 Client Secret vom Developer Portal | Ja | - |
+| Client ID | Deine OAuth2 Client ID vom Developer Portal | Ja | - |
+| Client Secret | Dein OAuth2 Client Secret vom Developer Portal | Ja | - |
 | Postleitzahl | Deutsche Postleitzahl (z.B. `10115`) | Ja | - |
-| Vertrags-ID | Ihre Ostrom-Vertragsnummer (optional, nur für Verbrauchsdaten) | Nein | - |
+| Vertrags-ID | Deine Ostrom-Vertragsnummer (optional, nur für Verbrauchsdaten) | Nein | - |
 | Preis-Aktualisierungsintervall | Wie oft Preise abgerufen werden (5-120 Minuten) | Ja | 15 Min |
 | Verbrauch-Aktualisierungsintervall | Wie oft Verbrauch abgerufen wird (15-1440 Minuten) | Nein | 60 Min |
 | Update Offset | Sekunden nach Intervall-Raster für synchronisierte Updates (5-60 Sekunden) | Nein | 15 Sek |
 
-**Hinweis zur Vertrags-ID**: Die Vertrags-ID ist optional. Wenn sie nicht angegeben wird, sind nur Preis-Sensoren verfügbar. Verbrauchs- und Kosten-Sensoren erfordern eine Vertrags-ID.
-
-### Hinweis zu Verbrauchsdaten
-
-Verbrauchsdaten sind optional und werden nur angezeigt, wenn Ostrom stündliche Messwerte bereitstellt. Das ist typischerweise der Fall, wenn ein Smart Meter mit Gateway aktiv ist und die Messwerte bei Ostrom freigeschaltet sind.
-
-Wenn keine stündlichen Verbrauchsdaten verfügbar sind, bleiben die Verbrauchsentitäten auf `unknown` oder `unavailable`. Das ist normal und kann ignoriert werden. Sobald Ostrom Verbrauchsdaten liefert, werden die Werte automatisch bei den nächsten Updates sichtbar.
-
-### Synchronisierte Updates: Intervall und Offset
-
-Die Integration unterstützt synchronisierte Updates mit einem konfigurierbaren Offset. Der Offset ist eine feste Verschiebung nach dem Intervall-Raster, die sicherstellt, dass Updates zu konstanten Zeiten erfolgen.
-
-**Beispiele:**
-
-- **15 Minuten Intervall + 15 Sekunden Offset**: Updates erfolgen um 00:00:15, 00:15:15, 00:30:15, 00:45:15
-- **60 Minuten Intervall + 10 Sekunden Offset**: Updates erfolgen um 01:00:10, 02:00:10, 03:00:10
-
-**Vorteile:**
-- Konstante Update-Zeiten, kein Drift über die Zeit
-- Vermeidung von Lastspitzen durch gleichmäßige Verteilung
-- Vorhersagbare Zeiten für Automatisierungen
-
-### Standardwerte
-
-- **Preis-Aktualisierungsintervall: 15 Minuten**: Dieser Wert ist als Vorbereitung für mögliche feinere Preis-Raster gewählt. Falls Ostrom in Zukunft feinere Preisintervalle anbietet, ist die Integration bereits darauf vorbereitet.
-- **Verbrauch-Aktualisierungsintervall: 60 Minuten**: Verbrauchsdaten ändern sich langsamer als Preise, daher ist ein 60-Minuten-Intervall ausreichend und respektiert API-Rate-Limits.
+**Hinweis zur Vertrags-ID**: Die Vertrags-ID ist optional. Wenn sie nicht angegeben wird, sind nur Preis-Sensoren verfügbar. Verbrauchs- und Kosten-Sensoren erfordern eine Vertrags-ID und ein Smart Meter Gateway mit aktivierten stündlichen Messwerten bei Ostrom.
 
 ### Optionen später ändern
 
-Sie können die Konfigurationsoptionen jederzeit ändern, ohne die Integration zu entfernen oder neu zu installieren:
+Du kannst die Konfigurationsoptionen jederzeit ändern, ohne die Integration zu entfernen oder neu zu installieren:
 
-1. Gehen Sie zu **Einstellungen** → **Geräte & Dienste**
-2. Suchen Sie nach "Ostrom Advanced" und klicken Sie auf die Integration
-3. Klicken Sie auf **Optionen**
-4. Ändern Sie die gewünschten Werte (Preis-Intervall, Verbrauch-Intervall, Update Offset)
-5. Klicken Sie auf **Absenden**
+1. Gehe zu **Einstellungen** → **Geräte & Dienste**
+2. Suche nach "Ostrom Advanced" und klicke auf die Integration
+3. Klicke auf **Optionen**
+4. Ändere die gewünschten Werte (Preis-Intervall, Verbrauch-Intervall, Update Offset)
+5. Klicke auf **Absenden**
 
 Die Änderungen werden sofort wirksam, ein Neustart von Home Assistant ist nicht erforderlich.
 
-## Entitäten
-
-Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserfassung und Kostenberechnung. Alle Sensoren enthalten intuitive Material Design Icons zur einfachen visuellen Identifikation in Ihrem Dashboard.
-
-### Wichtigste Entitäten für normale Nutzer
-
-- **Aktueller Preis**: Zeigt den aktuellen stündlichen Strompreis mit Zeitreihen-Daten für Charts
-- **Günstigster 3-Stunden-Block**: Startzeit des günstigsten zusammenhängenden 3-Stunden-Zeitraums (heute und morgen) - ideal für Wärmepumpen und Haushaltsgeräte
-- **Günstigste und teuerste Stunde**: Beste und schlechteste Zeitpunkte für energieintensive Aktivitäten
-- **Preisstatistiken**: Minimal-, Maximal-, Durchschnitts- und Medianpreise für heute und morgen
-- **Binärsensoren**: Zeigen an, ob der günstigste 3-Stunden-Block gerade aktiv ist (Ein/Aus) - perfekt für einfache Automatisierungen
-- **Verbrauch und Kosten**: Täglicher Energieverbrauch und berechnete Kosten (erfordert Vertrags-ID und Smart Meter Gateway)
+## Verfügbare Sensoren & Entitäten
 
 <details>
-<summary>Alle Entitäten im Detail</summary>
+<summary>📸 Alle Sensoren und Entitäten anzeigen (Klicken zum Ausklappen)</summary>
 
-#### 1. Preis-Sensoren
+### Preis-Sensoren
 
 **Zweck**: Zeigen den aktuellen Strompreis mit verschiedenen Detailgraden für unterschiedliche Anwendungsfälle.
 
@@ -164,7 +87,7 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 | `sensor.ostrom_spot_prices_raw` | Aktueller All-in-Preis mit detaillierten Attributen (enthält alle stündlichen Slots mit Netto- und Steuerpreisen) | €/kWh | Alle 15 Min (Standard) | ⚡ |
 | `sensor.ostrom_price_now` | Aktueller stündlicher All-in-Preis mit Zeitreihen-Attributen optimiert für Charts (z.B. Apex Charts) | €/kWh | Alle 15 Min (Standard) | ⚡ |
 
-#### 2. Statistik-Sensoren
+### Statistik-Sensoren
 
 **Zweck**: Berechnen statistische Werte (Minimal-, Maximal-, Durchschnitts- und Medianpreis) für heute und morgen.
 
@@ -186,7 +109,7 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 
 **Hinweis**: Die Sensoren für morgen werden als `unavailable` angezeigt, bis die Day-Ahead-Preise veröffentlicht werden (typischerweise nach 13:00 MEZ).
 
-#### 3. Zeit-Sensoren
+### Zeit-Sensoren
 
 **Zweck**: Finden die optimalen Zeitpunkte für energieintensive Aktivitäten. Verwenden die `timestamp` Device-Class für direkte Verwendung in Automatisierungen.
 
@@ -206,7 +129,7 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 
 **Zeitzone**: Alle Zeitstempel verwenden die lokale Zeitzone (MEZ/MESZ) im ISO-Format.
 
-#### 4. Binary-Sensoren
+### Binary-Sensoren
 
 **Zweck**: Zeigen an, ob der günstigste Zeitblock gerade aktiv ist. Ideal für einfache Automatisierungen ohne Zeitberechnungen.
 
@@ -222,7 +145,7 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 - `block_start`: Startzeit des Blocks (ISO-Format, z.B. `2024-01-15T14:00:00+01:00`)
 - `block_end`: Endzeit des Blocks (ISO-Format)
 
-#### 5. Verbrauchs-Sensoren
+### Verbrauchs-Sensoren
 
 **Zweck**: Erfassen den täglichen Energieverbrauch basierend auf Smart Meter Daten von Ostrom.
 
@@ -233,7 +156,7 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 
 **Hinweis zu Verbrauchsdaten**: Diese Sensoren werden angelegt, wenn eine Vertrags-ID konfiguriert ist. Sie zeigen `unknown` oder `unavailable`, wenn keine stündlichen Messwerte von Ostrom verfügbar sind. Das ist normal und kann ignoriert werden, wenn kein Smart Meter mit Gateway aktiv ist oder die Messwerte bei Ostrom noch nicht freigeschaltet sind. Sobald Ostrom Verbrauchsdaten liefert, werden die Werte automatisch bei den nächsten Updates sichtbar.
 
-#### 6. Kosten-Sensoren
+### Kosten-Sensoren
 
 **Zweck**: Berechnen die tatsächlichen Energiekosten basierend auf Verbrauch und Preisen.
 
@@ -245,8 +168,6 @@ Die Integration bietet umfassende Sensoren für Preisüberwachung, Verbrauchserf
 **Berechnung**: Kosten = Verbrauch (kWh) × Preis (€/kWh) für jede Stunde, summiert über den Tag.
 
 **Hinweis zu historischen Kosten**: Der Sensor `cost_yesterday_eur` verwendet die gestern-Daten aus dem 72-Stunden-Fenster der Integration. Die historischen Kostenberechnungen basieren auf den tatsächlichen Preisen von gestern, die bei jedem Update aus dem 72-Stunden-Fenster abgerufen werden. Dies gewährleistet präzise Kostenberechnungen für vergangene Zeiträume.
-
-</details>
 
 ### Attribute und Datenstrukturen
 
@@ -309,9 +230,30 @@ Der `sensor.ostrom_contract_*_price_now` Sensor enthält das Attribut `apex_data
 ]
 ```
 
-## Praxis-Beispiele
+</details>
 
-### Wärmepumpe im günstigsten 3-Stunden-Block
+## Für Fortgeschrittene
+
+### Synchronisierte Updates: Intervall und Offset
+
+Die Integration unterstützt synchronisierte Updates mit einem konfigurierbaren Offset. Der Offset ist eine feste Verschiebung nach dem Intervall-Raster, die sicherstellt, dass Updates zu konstanten Zeiten erfolgen.
+
+**Beispiele:**
+- **15 Minuten Intervall + 15 Sekunden Offset**: Updates erfolgen um 00:00:15, 00:15:15, 00:30:15, 00:45:15
+- **60 Minuten Intervall + 10 Sekunden Offset**: Updates erfolgen um 01:00:10, 02:00:10, 03:00:10
+
+**Warum ist das wichtig?**
+- **Synchronisation zur vollen Stunde**: Updates erfolgen zu konstanten Zeiten, kein Drift über die Zeit
+- **Vermeidung von Lastspitzen**: Gleichmäßige Verteilung der API-Anfragen
+- **Vorhersagbare Zeiten**: Perfekt für Automatisierungen, die zu bestimmten Zeiten ausgelöst werden sollen
+
+**Standardwerte:**
+- **Preis-Aktualisierungsintervall: 15 Minuten**: Dieser Wert ist als Vorbereitung für mögliche feinere Preis-Raster gewählt. Falls Ostrom in Zukunft feinere Preisintervalle anbietet, ist die Integration bereits darauf vorbereitet.
+- **Verbrauch-Aktualisierungsintervall: 60 Minuten**: Verbrauchsdaten ändern sich langsamer als Preise, daher ist ein 60-Minuten-Intervall ausreichend und respektiert API-Rate-Limits.
+
+### Praxis-Beispiele
+
+#### Wärmepumpe im günstigsten 3-Stunden-Block
 
 Der günstigste 3-Stunden-Block ist ideal für Wärmepumpen, da ein zusammenhängender Zeitraum mit stabil niedrigen Preisen wichtiger ist als einzelne kurze Preistiefs.
 
@@ -329,7 +271,7 @@ automation:
           temperature: 22
 ```
 
-### Haushaltsgeräte mit Binärsensor
+#### Haushaltsgeräte mit Binärsensor
 
 Einfache Automatisierung ohne Zeitberechnungen - nutzt den Binärsensor, der automatisch prüft, ob der günstigste Block aktiv ist.
 
@@ -348,7 +290,7 @@ automation:
             - switch.dryer
 ```
 
-### Dashboard Charts mit Apex Charts
+#### Dashboard Charts mit Apex Charts
 
 Der `sensor.ostrom_contract_*_price_now` Sensor enthält das Attribut `apex_data`, das direkt für ApexCharts Zeitreihen verwendet werden kann. Dieses Attribut ist bereits im richtigen Format (Array von Paaren) und erfordert keine weitere Transformation - perfekt für Anfänger!
 
@@ -380,11 +322,11 @@ series:
 - ✅ Automatisch dedupliziert (keine doppelten Timestamps)
 - ✅ Perfekt für Anfänger - einfach kopieren und einfügen
 
-**Hinweis**: Ersetzen Sie `sensor.ostrom_advanced_XXXX_price_now` durch Ihre tatsächliche Entity-ID. Die Entity-ID hat das Format `sensor.ostrom_advanced_{Vertrags-ID oder PLZ}_{key}` (z.B. `sensor.ostrom_advanced_10115_price_now`).
+**Hinweis**: Ersetze `sensor.ostrom_advanced_XXXX_price_now` durch deine tatsächliche Entity-ID. Die Entity-ID hat das Format `sensor.ostrom_advanced_{Vertrags-ID oder PLZ}_{key}` (z.B. `sensor.ostrom_advanced_10115_price_now`).
 
 **Alternative - Heute und Morgen getrennt darstellen:**
 
-Falls Sie heute und morgen als separate Serien darstellen möchten:
+Falls du heute und morgen als separate Serien darstellen möchtest:
 
 ```yaml
 type: custom:apexcharts-card
@@ -402,7 +344,7 @@ data_generator: |
   ]
 ```
 
-### E-Auto-Ladung zur optimalen Zeit
+#### E-Auto-Ladung zur optimalen Zeit
 
 ```yaml
 automation:
@@ -468,7 +410,7 @@ Der günstigste 3-Stunden-Block verwendet einen **gleitendes Fenster**-Algorithm
 3. Das Fenster mit dem niedrigsten Durchschnittspreis wird ausgewählt
 4. Die Startzeit dieses Fensters wird zurückgegeben
 
-**Vorteil**: Sie erhalten den wirklich optimalen 3-Stunden-Zeitraum, nicht nur drei aufeinanderfolgende günstige Stunden. Dies ist besonders wichtig für Wärmepumpen, da ein zusammenhängender Zeitraum mit stabil niedrigen Preisen wichtiger ist als einzelne kurze Preistiefs.
+**Vorteil**: Du erhältst den wirklich optimalen 3-Stunden-Zeitraum, nicht nur drei aufeinanderfolgende günstige Stunden. Dies ist besonders wichtig für Wärmepumpen, da ein zusammenhängender Zeitraum mit stabil niedrigen Preisen wichtiger ist als einzelne kurze Preistiefs.
 
 ### Zeitbasierte Sensoren (Timestamp Device Class)
 
@@ -493,7 +435,7 @@ Die Integration verwendet generische Hilfsfunktionen zur Berechnung von Statisti
 - **Binärsensoren nutzen**: Für einfache Ein/Aus-Logik ohne Zeitberechnungen
 - **Timestamp-Sensoren**: Direkt in `time`-Triggern verwenden (`at: sensor.ostrom_price_today_cheapest_3h_block_start`)
 - **Template-Bedingungen**: Preisvergleiche mit Durchschnittspreis für dynamische Schwellenwerte
-- **Verzögerungen vermeiden**: Nutzen Sie die synchronisierten Updates für vorhersagbare Zeiten
+- **Verzögerungen vermeiden**: Nutze die synchronisierten Updates für vorhersagbare Zeiten
 
 ### Day-Ahead-Preise
 
@@ -522,9 +464,9 @@ Alle Sensoren enthalten Material Design Icons zur visuellen Identifikation:
 
 ### Authentifizierungsprobleme
 
-1. Überprüfen Sie Ihre Client ID und Client Secret im Developer Portal
-2. Stellen Sie sicher, dass Ihr API-Client die korrekten Berechtigungen hat
-3. Stellen Sie sicher, dass Sie die korrekte Umgebung verwenden (Production vs Sandbox)
+1. Überprüfe deine Client ID und Client Secret im Developer Portal
+2. Stelle sicher, dass dein API-Client die korrekten Berechtigungen hat
+3. Stelle sicher, dass du die korrekte Umgebung verwendest (Production vs Sandbox)
 
 ### Fehlende morgige Preise
 
@@ -547,10 +489,10 @@ Verbrauchssensoren werden angelegt, wenn eine Vertrags-ID konfiguriert ist. Sie 
 
 Beiträge sind willkommen! Bitte:
 
-1. Forken Sie das Repository
-2. Erstellen Sie einen Feature-Branch
-3. Nehmen Sie Ihre Änderungen vor
-4. Reichen Sie einen Pull Request ein
+1. Forke das Repository
+2. Erstelle einen Feature-Branch
+3. Nimm deine Änderungen vor
+4. Reiche einen Pull Request ein
 
 ## Lizenz
 
@@ -564,3 +506,14 @@ Dies ist eine inoffizielle Integration und steht nicht in Verbindung mit Ostrom 
 
 - [GitHub Issues](https://github.com/Al3xand3r1987/ha-ostrom-advanced/issues)
 - [Home Assistant Community](https://community.home-assistant.io/)
+
+---
+
+## Unterstützung / Buy Me a Coffee ☕
+
+Dieses Projekt entsteht in meiner Freizeit.  
+Wenn dir die Ostrom Advanced Integration hilft und du mich unterstützen möchtest, kannst du mir hier freiwillig einen „Coffee" spendieren:
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/alexanderb8k)
+
+Unterstützung ist komplett optional, die Integration bleibt natürlich kostenlos und open source.
