@@ -89,7 +89,12 @@ secrets.yaml
 
 # Cursor AI - Entwickler-Tools (nur lokal, nicht im Repository)
 .cursor/
+.cursorignore
 
 # Brands Repository (lokaler Fork für Logo-Upload, nicht auf GitHub)
 brands/
+
+# Entwickler-Skripte und temporäre Dateien (nur lokal, nicht im Repository)
+PR_BODY.txt
+auto_logo_upload.py
 
