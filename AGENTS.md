@@ -12,7 +12,7 @@
 
 ## Codex-spezifisches Verhalten
 - Bei mehrdeutigen Anweisungen: **FRAGEN** statt raten.
-- Keine parallelen Dateien gleichzeitig aendern (arbeite sequentiell).
+- Paralleles Lesen/Suchen ist OK und erwuenscht; bei **Code-Aenderungen** aber nacheinander arbeiten (nicht mehrere Dateien gleichzeitig editieren).
 - Bei groesseren Aenderungen: In kleinere Commits aufteilen.
 - Wenn unsicher, ob eine Aenderung zum Scope gehoert: erst vorschlagen, dann auf OK warten.
 
