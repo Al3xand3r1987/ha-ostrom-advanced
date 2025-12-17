@@ -103,7 +103,7 @@
 - Code "aufraeumen" der nicht zum aktuellen Task gehoert
 - Automatische Formatierung auf Dateien anwenden, die nicht geaendert werden
 
-→ Du kannst das alles **vorschlagen**, aber warte auf mein OK bevor du es umsetzt.
+- Du kannst das alles **vorschlagen**, aber warte auf mein OK bevor du es umsetzt.
 
 ## Security / Secrets
 - Niemals echte Tokens/Keys/Passwoerter in Code, Tickets oder Ausgaben einfuegen.

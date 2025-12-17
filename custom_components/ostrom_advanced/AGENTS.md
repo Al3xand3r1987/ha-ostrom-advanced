@@ -29,7 +29,7 @@
 - Sensoren/Binary Sensoren: Keine neuen Entities ohne Auftrag hinzufuegen
 - Bestehende Entity-IDs oder Attribute umbenennen (bricht Automationen)
 
-→ Du kannst Verbesserungen **vorschlagen**, aber warte auf mein OK bevor du sie umsetzt.
+- Du kannst Verbesserungen **vorschlagen**, aber warte auf mein OK bevor du sie umsetzt.
 
 ## Release/Versioning (Spiegel aus Cursor Rules)
 - SemVer `X.Y.Z`, Git Tag `vX.Y.Z`, Manifest-Version ohne `v`.
