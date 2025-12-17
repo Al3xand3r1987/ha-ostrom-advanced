@@ -10,10 +10,25 @@
 - Bei `UMSETZEN`: Aendere nur das, was zum Ziel gehoert, und frage nach, wenn der Scope wachsen wuerde.
 - Pragmatisch: Bei `ANALYSE` schaue ich in `.cursor/rules/*.mdc` nur, wenn es fuer die Frage wirklich relevant ist (z. B. Architektur/Patterns); bei `UMSETZEN` in `custom_components/` lese ich sie vorher kurz, damit ich sicher nach deinen Regeln arbeite.
 
+## Codex-spezifisches Verhalten
+- Bei mehrdeutigen Anweisungen: **FRAGEN** statt raten.
+- Keine parallelen Dateien gleichzeitig aendern (arbeite sequentiell).
+- Bei groesseren Aenderungen: In kleinere Commits aufteilen.
+- Wenn unsicher, ob eine Aenderung zum Scope gehoert: erst vorschlagen, dann auf OK warten.
+
 ## Kommunikationsstil
 - Erklaere **WAS** der Code macht und **WARUM** (nicht Zeile fuer Zeile).
 - Verwende **keinen Nerd-Jargon**; falls ein Fachbegriff noetig ist, erklaere ihn in **einem Satz**.
 - Keine Fuellsatz-Abschnitte: Jeder Punkt muss echten Mehrwert liefern.
+
+## Beispiel fuer gute Antwort
+**Frage:** "Was macht coordinator.py?"
+
+**Gut:**
+> "Der Coordinator holt alle 5 Minuten Preisdaten von der API und verteilt sie an die Sensoren. Er kuemmert sich auch darum, dass bei Fehlern keine veralteten Daten angezeigt werden."
+
+**Schlecht:**
+> "Diese Klasse implementiert das DataUpdateCoordinator Pattern und ueberschreibt die _async_update_data Methode zur asynchronen Datenaktualisierung..."
 
 ## Fakten vs. Annahmen
 - Erfinde keine Dateien, Funktionen oder Konfigurationen.
@@ -73,12 +88,22 @@
 - Immer kurz liefern: (1) Was geaendert, (2) warum, (3) moegliche Side-Effects/Risiko, (4) wie verifizieren (ein konkreter Befehl).
 
 ## Schutzbereiche (Cursor/Workspace)
-- Aenderungen an folgenden Bereichen **nur nach explizitem OK**, auch wenn sie “harmlos” wirken:
+- Aenderungen an folgenden Bereichen **nur nach explizitem OK**, auch wenn sie "harmlos" wirken:
   - `.cursor/`, `.vscode/`, `*.code-workspace`
   - `settings.json`, `tasks.json`, `launch.json`
   - Format-/Lint-Konfigs (z. B. `pyproject.toml`, `.ruff.toml`, `.prettierrc*`, `.eslintrc*`)
   - Dependency-Dateien (z. B. `package.json`) und Lockfiles (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `poetry.lock`)
 - Keine destruktiven Aktionen (z. B. `rm`, `git reset`, grosse Umstrukturierungen) ohne ausdrueckliche Zustimmung.
+
+## Bitte erst fragen bei...
+- Neue Dependencies hinzufuegen (z.B. in `manifest.json`, `requirements.txt`)
+- Bestehende Funktionssignaturen aendern
+- Dateien loeschen oder umbenennen
+- Groessere Refactorings oder Architektur-Aenderungen
+- Code "aufraeumen" der nicht zum aktuellen Task gehoert
+- Automatische Formatierung auf Dateien anwenden, die nicht geaendert werden
+
+→ Du kannst das alles **vorschlagen**, aber warte auf mein OK bevor du es umsetzt.
 
 ## Security / Secrets
 - Niemals echte Tokens/Keys/Passwoerter in Code, Tickets oder Ausgaben einfuegen.

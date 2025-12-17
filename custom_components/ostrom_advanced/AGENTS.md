@@ -22,6 +22,15 @@
 - Fehlerbehandlung fuer API/fehlende Daten nicht "vereinfachen", sondern stabil halten.
 - Wenn sich Verhalten/Features aendern: `README.md`/`info.md` mit anpassen.
 
+## Bitte erst fragen bei... (fuer diese Integration)
+- `coordinator.py`: Fehlerbehandlung nicht "vereinfachen" oder entfernen
+- `api.py`: API-Endpunkte oder Auth-Logik nicht ohne Grund aendern
+- `manifest.json`: Version nur bei explizitem Release-Auftrag aendern
+- Sensoren/Binary Sensoren: Keine neuen Entities ohne Auftrag hinzufuegen
+- Bestehende Entity-IDs oder Attribute umbenennen (bricht Automationen)
+
+→ Du kannst Verbesserungen **vorschlagen**, aber warte auf mein OK bevor du sie umsetzt.
+
 ## Release/Versioning (Spiegel aus Cursor Rules)
 - SemVer `X.Y.Z`, Git Tag `vX.Y.Z`, Manifest-Version ohne `v`.
 - Releases nur, wenn du explizit "Release" beauftragst.
