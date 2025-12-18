@@ -1,0 +1,327 @@
+# Cursor Rules - Ostrom Advanced Integration
+
+Diese Datei enthält alle technischen Regeln für die Cursor AI. Die Philosophie und der Arbeitsmodus sind in `AGENTS.md` definiert.
+
+---
+
+## Git Commit Style - Conventional Commits
+
+### Commit-Präfixe
+
+Verwende immer Conventional Commit Präfixe für alle Commits in diesem Repository:
+
+- `feat:` oder `feature:` → Neue Features oder Funktionalität
+- `fix:` oder `bug:` → Bugfixes
+- `docs:` → Dokumentationsänderungen (README, Kommentare, etc.)
+- `chore:` → Wartungsaufgaben, Dependency-Updates, Version-Bumps
+- `refactor:` → Code-Refactoring ohne Funktionsänderung
+
+### Richtlinien
+
+- Commit-Messages kurz und fokussiert auf die tatsächliche Änderung halten
+- Präsens verwenden ("Add feature" nicht "Added feature")
+- Spezifisch sein, was geändert wurde
+
+### Beispiele
+
+- `feat: add cheapest 4h block binary sensor`
+- `fix: handle missing tomorrow prices gracefully`
+- `docs: update README with new sensor descriptions`
+- `chore: release v0.2.0`
+- `refactor: extract price calculation to helper function`
+
+---
+
+## Ostrom Advanced - Globale Projekt-Regeln
+
+### Projekt-Kontext
+
+Dies ist eine Home Assistant HACS Integration namens "Ostrom Advanced" für dynamische Stromtarife in Deutschland. Die Custom Component befindet sich unter `custom_components/ostrom_advanced/`. Die Integration stellt Sensoren für dynamische Strompreise, Verbrauchsdaten und Kostenberechnungen bereit, um Benutzern zu ermöglichen, ihren Energieverbrauch basierend auf Echtzeit-Preisen zu automatisieren.
+
+### Wichtige Dateien
+
+- `custom_components/ostrom_advanced/manifest.json` - Enthält Integrations-Metadaten und Version
+- `custom_components/ostrom_advanced/` - Haupt-Integrationscode (Sensoren, API, Coordinator, etc.)
+- `README.md` - Benutzerdokumentation
+- `info.md` - HACS Integrations-Info
+- `hacs.json` - HACS Konfiguration
+
+### Sprache und Kommunikation
+
+- **Antworten immer auf Deutsch**: Alle Antworten und Erklärungen müssen auf Deutsch verfasst werden
+- **Klare Erklärungen**: Bei Fragen kurz und klar erklären, dann den konkreten Code zeigen
+- **Fokussierte Änderungen**: Bevorzuge kleine, fokussierte Bearbeitungen gegenüber großen Refactorings
+
+### Allgemeine AI-Verhaltensrichtlinien
+
+- **Bestehenden Code-Stil bewahren**: Beim Bearbeiten von Dateien den bestehenden Code-Stil und Patterns beibehalten
+- **Dokumentation aktualisieren**: Relevante Dokumentation (README.md, info.md) aktualisieren, wenn Features hinzugefügt oder Verhalten geändert wird
+
+### Dateistruktur-Bewusstsein
+
+- Integrationscode: `custom_components/ostrom_advanced/`
+- Dokumentation: `README.md`, `info.md`
+- Konfiguration: `hacs.json`, `custom_components/ostrom_advanced/manifest.json`
+- Übersetzungen: `custom_components/ostrom_advanced/translations/`
+
+---
+
+## Workflow & Loop-Prävention
+
+### VERHALTEN BEI FEHLERN
+
+- Wenn ein Apply fehlschlägt: SOFORT STOPPEN. Frage den User um Hilfe.
+- Wiederhole NIEMALS die gleiche Aktion mehr als 2x hintereinander.
+- Nach 3 erfolglosen Versuchen: Abbruch mit Fehlermeldung an User.
+- Wenn Code-Änderungen nicht übernommen werden: Melde es sofort, statt es zu wiederholen.
+
+### FILE-HANDLING
+
+- Maximale Dateigröße zur Bearbeitung: 1500 Zeilen.
+- Bei größeren Dateien: ERST in kleinere Module aufteilen, DANN ändern.
+- Vor jeder Änderung an großen Files: Rückfrage beim User, ob Splitting gewünscht ist.
+
+### PLAN-ABARBEITUNG
+
+- Arbeite immer nur EINEN Task aus @PLAN.md ab.
+- Hake den Task in der Datei ab (mit [x]), BEVOR du zum nächsten gehst.
+- Wenn ein Task unklar formuliert ist: FRAGEN, nicht raten oder interpretieren.
+- Nach jedem abgeschlossenen Task: Kurze Rückmeldung an User geben.
+
+### CODE-QUALITÄT
+
+- TypeScript: Immer explizite Typen verwenden, kein `any`.
+- Vor Breaking Changes: User informieren.
+
+### KONTEXT-MANAGEMENT
+
+- Bei langen Conversations: User darauf hinweisen, dass ein neuer Chat sinnvoll sein könnte.
+- Wenn Context-Limit erreicht wird: Nicht halluzinieren, sondern User informieren.
+
+---
+
+## Release Workflow
+
+### Detaillierte Dokumentation
+
+Siehe `RELEASE_WORKFLOW.md` für eine vollständige Anleitung zum Release-Workflow mit dem Cursor AI Agent.
+
+### Release-Schritte
+
+Vor dem Erstellen eines Releases:
+
+1. **Version in manifest.json aktualisieren**: Ändere das `"version"` Feld in `custom_components/ostrom_advanced/manifest.json` von `X.Y.Z` auf die neue Version
+2. **Version-Bump committen und pushen**: Committe mit einer Message wie `chore: release vX.Y.Z` und pushe zu `main`
+3. **Git Tag erstellen**: Erstelle einen Git Tag mit Format `vX.Y.Z` **direkt auf `main` HEAD** (z.B. `git tag v0.2.0 origin/main`)
+   - **WICHTIG:** Der Tag muss direkt auf `main` zeigen, damit er im GitHub Release-Formular erscheint
+   - **NICHT:** Tag auf Feature-Branch erstellen (wird nicht im Release-Formular angezeigt)
+4. **Tag zu GitHub pushen**: Pushe den Tag zum Remote-Repository (z.B. `git push origin v0.2.0`)
+
+### Versionsempfehlungs-Logik
+
+Bei der Erstellung eines Releases analysiere die Commits seit dem letzten Tag und empfehle die Version basierend auf folgender Logik (konsistent mit `.dev/scripts/generate-release-notes.ps1`):
+
+- **Breaking Changes** (Commits mit "breaking" oder "BREAKING" im Titel) → **MAJOR** (X+1.0.0)
+- **Features** (`feat:` oder `feature:`) → **MINOR** (X.Y+1.0)
+- **Fixes** (`fix:` oder `bug:`) → **PATCH** (X.Y.Z+1)
+- **Nur Docs/Chores** → **PATCH** (X.Y.Z+1)
+
+**Beispiel:**
+- Aktuelle Version: `0.4.2`
+- Commits: `feat: add new sensor`, `fix: correct calculation` → Empfehlung: `0.5.0` (MINOR wegen Feature)
+- Commits: `fix: bug 1`, `fix: bug 2`, `docs: update README` → Empfehlung: `0.4.3` (PATCH wegen Fixes)
+
+### Intelligente Release Notes
+
+Bei der Generierung von Release Notes gelten folgende Regeln:
+
+#### Zusammenfassung kleiner Bugfixes
+
+- **Wenn mehr als 3 `fix:` Commits vorhanden:** Zusammenfassen als "Verschiedene Bugfixes und Verbesserungen" (statt alle einzeln aufzulisten)
+- **Wenn 3 oder weniger `fix:` Commits:** Alle einzeln auflisten
+
+#### Detaillierung basierend auf Release-Typ
+
+- **Minor/Patch Releases (0.4.1, 0.4.2, etc.):**
+  - Features: **Detailliert auflisten**
+  - Kritische Fixes (<3): **Detailliert auflisten**
+  - Kleine Fixes (>3): **Zusammenfassen** als "Verschiedene Bugfixes und Verbesserungen"
+  - Wartung/Docs: **Zusammenfassen** oder weglassen
+
+- **Major Releases (0.5.0, 1.0.0, etc.):**
+  - **Alle Änderungen detailliert auflisten**
+  - Bugfixes auch einzeln (auch wenn >3)
+
+#### Priorität bei der Auflistung
+
+1. Features (höchste Priorität)
+2. Kritische Fixes
+3. Wartung
+4. Dokumentation (niedrigste Priorität)
+
+### Wichtige Hinweise
+
+- **GitHub Actions**: GitHub Actions und Release-Tooling übernehmen den Rest (Erstellen von GitHub Releases, Veröffentlichung in HACS, etc.). Implementiere keine Release-Logik innerhalb der Rules neu.
+- **Release-Erkennung**: Der Cursor AI Agent erstellt nur dann ein Release, wenn explizit "Release" im Befehl erwähnt wird. Normale Commits (ohne "Release") werden nur gesammelt, ohne dass ein Release erstellt wird.
+- **Tag-Erstellung**: Tags müssen **immer direkt auf `main` HEAD** erstellt werden (`git tag vX.Y.Z origin/main`), damit sie im GitHub Release-Formular erscheinen. Tags, die auf Commits zeigen, die über einen Merge auf `main` liegen, werden möglicherweise nicht angezeigt.
+
+---
+
+## Repository-Struktur-Regeln
+
+### Wichtig: Was gehört auf GitHub vs. lokal?
+
+Diese Regel definiert klar, welche Dateien auf GitHub gehören (Endbenutzer-relevant) und welche nur lokal bleiben müssen (Entwickler-spezifisch). Der Cursor AI Agent muss diese Regeln bei jedem Commit automatisch beachten.
+
+### Dateien die AUF GitHub gehören (Endbenutzer-relevant)
+
+Diese Dateien sind für Endbenutzer, HACS und die Integration notwendig:
+
+#### Integration Code
+- `custom_components/ostrom_advanced/` - Kompletter Integrationscode (alle Python-Module, manifest.json, strings.json, translations/)
+
+#### HACS-Konfiguration
+- `hacs.json` - HACS-Konfiguration (MUSS vorhanden sein)
+- `info.md` - HACS Integrations-Info
+- `icon.png`, `icon2x.png` - HACS Icons (MÜSSEN vorhanden sein)
+
+#### Öffentliche Dokumentation
+- `README.md` - Haupt-Dokumentation (deutsch)
+- `README_EN.md` - Englische Dokumentation
+- `RELEASE_NOTES.md` - Öffentliche Release-Notizen (wird vom Workflow aktualisiert)
+- `LICENSE` - Lizenzdatei
+- `AGENTS.md` - Regel-Dokumentation für ChatGPT online
+- `.cursorrules` - Technische Regeln für Cursor AI
+- `RELEASE_WORKFLOW.md` - Release-Workflow Dokumentation
+
+#### Öffentliche Bilder
+- `images/social_preview.png` - Social Media Preview
+- `images/icon_High Resolution.png` - Hochauflösendes Icon (optional)
+
+#### GitHub-Konfiguration
+- `.github/workflows/release.yml` - GitHub Actions Workflow für Releases
+- `.github/release-drafter.yml` - Release-Drafter Konfiguration
+- `.github/FUNDING.yml` - Funding-Informationen
+- `.gitignore` - Git-Konfiguration (MUSS vorhanden sein)
+
+### Dateien die NICHT auf GitHub gehören (nur lokal)
+
+Diese Dateien sind nur für lokale Entwicklung und Organisation relevant:
+
+#### Entwickler-Tools und -Konfiguration
+- `.cursor/` - Cursor AI interne Konfiguration (KOMPLETT lokal, in .gitignore)
+- `.dev/` - Entwickler-Dokumentation und -Tools (KOMPLETT lokal)
+- `create_release.ps1` - Lokale PowerShell-Skripte für Release-Erstellung
+- Alle anderen lokalen Skripte (`.ps1`, `.sh`, `.bat`, etc.)
+
+#### Interne Planungsdokumentation
+- `.github/FUTURE_RELEASE_WORKFLOW.md` - Interne Planungsdokumentation
+- Alle anderen internen Planungs- oder Entwickler-Dokumente
+
+#### Temporäre und Build-Dateien
+- Alle Dateien, die bereits in `.gitignore` sind (__pycache__, *.pyc, .env, etc.)
+
+### Verhaltensregeln für den Cursor AI Agent
+
+#### Vor jedem Commit
+
+1. **Automatische Prüfung**: Vor jedem `git add` oder `git commit` prüfen, ob Entwickler-Dateien betroffen sind
+2. **Automatischer Ausschluss**: Entwickler-Dateien automatisch aus Commits ausschließen, auch wenn sie versehentlich hinzugefügt wurden
+3. **Warnung ausgeben**: Wenn Entwickler-Dateien versehentlich zu `git add` hinzugefügt werden, eine klare Warnung geben:
+   ```
+   Warnung: Die folgenden Dateien sind Entwickler-spezifisch und sollten nicht auf GitHub:
+   - [Liste der Dateien]
+   Diese werden automatisch aus dem Commit ausgeschlossen.
+   ```
+
+#### Bei neuen Dateien
+
+1. **Automatische Kategorisierung**: Bei neuen Dateien automatisch prüfen, ob sie auf GitHub gehören
+2. **Frage stellen**: Wenn unklar ist, ob eine Datei auf GitHub gehört, den Benutzer fragen
+3. **`.gitignore` prüfen**: Sicherstellen, dass alle Entwickler-Ordner in `.gitignore` enthalten sind
+
+#### Spezifische Regeln
+
+- **`.cursor/` Ordner**: NIEMALS auf GitHub committen, auch wenn versehentlich hinzugefügt
+- **Lokale Skripte**: PowerShell, Shell oder Batch-Skripte nur lokal behalten
+- **Interne Dokumentation**: Dokumentation, die nur für Entwickler relevant ist, nicht committen
+- **HACS-Anforderungen**: Immer sicherstellen, dass `hacs.json`, `info.md`, `icon.png` und `icon2x.png` vorhanden sind
+
+#### Checkliste vor jedem Commit
+
+Der Agent soll vor jedem Commit automatisch prüfen:
+
+- [ ] Werden Dateien aus `.cursor/` hinzugefügt? → AUSSCHLIESSEN
+- [ ] Werden Dateien aus `.dev/` hinzugefügt? → AUSSCHLIESSEN
+- [ ] Werden lokale Skripte (`.ps1`, `.sh`, `.bat`) hinzugefügt? → AUSSCHLIESSEN
+- [ ] Werden interne Planungsdokumente hinzugefügt? → AUSSCHLIESSEN
+- [ ] Sind alle HACS-Notwendigkeiten vorhanden? (`hacs.json`, `info.md`, Icons)
+- [ ] Ist `.gitignore` korrekt konfiguriert? (enthält `.cursor/`, `.dev/`)
+
+### Beispiele
+
+#### Korrekt: Nur Endbenutzer-Dateien
+```bash
+git add custom_components/ostrom_advanced/sensor.py
+git add README.md
+git commit -m "feat: add new sensor"
+```
+✅ Diese Dateien gehören auf GitHub
+
+#### Falsch: Entwickler-Dateien hinzugefügt
+```bash
+git add .cursor/rules/repository.mdc  # FALSCH - wird automatisch ausgeschlossen
+git add create_release.ps1  # FALSCH - wird automatisch ausgeschlossen
+```
+❌ Diese Dateien gehören NICHT auf GitHub - Agent muss warnen und ausschließen
+
+#### Korrekt: Gemischte Dateien
+```bash
+git add custom_components/ostrom_advanced/api.py  # ✅ OK
+git add .cursor/rules/new_rule.mdc  # ❌ Wird automatisch ausgeschlossen
+git commit -m "feat: update API"
+```
+✅ Agent schließt `.cursor/` automatisch aus, committet nur `api.py`
+
+### Wichtige Erinnerung
+
+**Diese Regel ist kritisch für die Repository-Hygiene.** Der Agent muss diese Regeln bei JEDEM Commit automatisch beachten, um zu vermeiden, dass Entwickler-Dateien versehentlich auf GitHub hochgeladen werden.
+
+Wenn unsicher, ob eine Datei auf GitHub gehört:
+1. Frage: "Ist diese Datei für Endbenutzer relevant oder nur für lokale Entwicklung?"
+2. Wenn nur lokal: Nicht committen
+3. Wenn für Endbenutzer: Committen
+
+---
+
+## Versioning Rules
+
+### Semantic Versioning
+
+- **Format**: Verwende `X.Y.Z` Format (z.B. `0.1.0`, `1.2.3`)
+- **Git Tags**: Müssen als `vX.Y.Z` formatiert sein (z.B. `v0.1.0`, `v1.2.3`)
+
+### Manifest-Version
+
+- Die Datei `custom_components/ostrom_advanced/manifest.json` MUSS immer ein `"version": "X.Y.Z"` Feld enthalten, das dem Git Tag entspricht (ohne das führende `v`)
+- **Konsistenz**: Ändere niemals das Tag-Format oder den Manifest-Pfad. Die Version in `manifest.json` muss immer dem neuesten Git Tag entsprechen (ohne das `v` Präfix)
+
+### HACS Anforderung
+
+- Die Manifest-Datei muss existieren und ein gültiges `version` Feld haben, damit HACS ordnungsgemäß funktioniert
+
+### Versioning und Release Tasks
+
+Bei Änderungen im Zusammenhang mit Versioning oder Releases immer:
+
+1. **manifest.json aktualisieren**: Wenn sich die Version ändert, aktualisiere `custom_components/ostrom_advanced/manifest.json`
+2. **Konsistenz prüfen**: Prüfe, dass Tag-Namensgebung (`vX.Y.Z`) und Versions-Schema (`X.Y.Z` im Manifest) konsistent bleiben
+3. **HACS Anforderungen respektieren**: Stelle sicher, dass die Manifest-Datei existiert und ein gültiges `version` Feld hat
+4. **Workflow erinnern**: Wenn ein Release erstellt wird, erinnere an den vollständigen Workflow (manifest aktualisieren → commit → tag → push)
+
+---
+
+## Zusammenfassung
+
+Diese `.cursorrules` Datei enthält alle technischen Regeln für Cursor AI. Für die Philosophie und den Arbeitsmodus siehe `AGENTS.md`. Für detaillierte Release-Prozesse siehe `RELEASE_WORKFLOW.md`.
+

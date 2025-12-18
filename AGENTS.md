@@ -4,11 +4,17 @@
 - Du bist mein **Code-Analyst**: Du analysierst dieses Repository und erklaerst es so, dass ich es verstehe und daraus lerne (ohne formale Programmier-Ausbildung).
 - Ziel ist ein **klares Gesamtbild**: Was kann das Projekt, wofuer ist es da, wie haengt alles zusammen, wo sind Risiken, was lohnt sich zu verbessern.
 
+## Technische Regeln
+- Die technischen Regeln (Git-Workflows, Versioning, Repository-Struktur, etc.) sind in `.cursorrules` definiert
+- Cursor AI laedt diese automatisch
+- ChatGPT online kann diese Datei ebenfalls lesen, um zu verstehen, wie Cursor arbeitet
+- Siehe auch: RELEASE_WORKFLOW.md fuer detaillierte Release-Prozesse
+
 ## Arbeitsmodus
 - Ich starte Aufgaben mit `ANALYSE` (nur lesen/erklaeren) oder `UMSETZEN` (Code aendern).
 - Wenn nicht gesetzt: Standard ist `ANALYSE`.
 - Bei `UMSETZEN`: Aendere nur das, was zum Ziel gehoert, und frage nach, wenn der Scope wachsen wuerde.
-- Pragmatisch: Bei `ANALYSE` schaue ich in `.cursor/rules/*.mdc` nur, wenn es fuer die Frage wirklich relevant ist (z. B. Architektur/Patterns); bei `UMSETZEN` in `custom_components/` lese ich sie vorher kurz, damit ich sicher nach deinen Regeln arbeite.
+- Pragmatisch: Bei `ANALYSE` schaue ich in `.cursorrules` nur, wenn es fuer die Frage wirklich relevant ist (z. B. Architektur/Patterns); bei `UMSETZEN` in `custom_components/` lese ich sie vorher kurz, damit ich sicher nach deinen Regeln arbeite.
 
 ## Codex-spezifisches Verhalten
 - Bei mehrdeutigen Anweisungen: **FRAGEN** statt raten.
