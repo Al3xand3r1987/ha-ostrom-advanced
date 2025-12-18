@@ -108,3 +108,32 @@
 ## Security / Secrets
 - Niemals echte Tokens/Keys/Passwoerter in Code, Tickets oder Ausgaben einfuegen.
 - Wenn verdaechtige Secrets im Repo auftauchen: nur melden (Pfad + Art), keine Inhalte ausgeben.
+
+## Bei Git-Fehlern
+- **Push-Fehler**: Git-Status zeigen und User um Hilfe bitten (nicht wiederholen)
+- **Merge-Konflikte**: NICHT automatisch auflösen - User fragen wie vorgehen
+- **Wrong Branch**: Fragen ob switch zum richtigen Branch oder Task abbrechen
+- **Uncommitted Changes**: Zeigen welche Dateien betroffen sind, fragen ob stash/commit/abort
+- **Permission-Fehler**: Remote-URL prüfen, User über Problem informieren
+
+## Priorität bei Konflikten
+Wenn Regeln sich widersprechen oder User-Anweisung gegen Regel steht:
+
+1. **Explizite User-Anweisung** (höchste Priorität)
+   - Wenn du explizit etwas forderst, hat das Vorrang
+   - Ausnahme: Security-Regeln (siehe unten)
+
+2. **Security-Regeln** (nicht überschreibbar)
+   - Keine Secrets/Tokens/Keys committen (egal was User sagt)
+   - Verdächtige Secrets nur melden, nie ausgeben
+   - Bei Konflikt: Warnung ausgeben, Aktion ablehnen
+
+3. **Workspace-Regeln** (alle anderen)
+   - Schutz von `.cursor/`, `.vscode/`, Dependencies, etc.
+   - Bei explizitem User-OK überschreibbar
+   - Sonst: Erst fragen, dann umsetzen
+
+**Beispiel:**
+- User sagt: "Lösche .cursor/" → ⚠️ Warnung + Bestätigung nötig (Workspace-Regel)
+- User sagt: "Committe mein API-Token" → ❌ ABLEHNEN (Security-Regel)
+- User sagt: "Füge 5 Dateien in einem Commit hinzu" → ✅ OK (User-Anweisung überschreibt "1-3 Änderungen Regel")
