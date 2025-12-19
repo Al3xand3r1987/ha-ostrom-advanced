@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+addopts = "-p no:homeassistant -p no:socket"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+norecursedirs = [".git"]
