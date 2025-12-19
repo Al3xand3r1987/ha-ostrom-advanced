@@ -4,15 +4,21 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 import threading
 import warnings
+from typing import TYPE_CHECKING
 
 import pytest
 import pytest_socket
-from homeassistant.core import HassJob
-from pytest_homeassistant_custom_component.common import INSTANCES
+
+if TYPE_CHECKING:
+    from homeassistant.core import HassJob
 
 pytest_plugins = "pytest_homeassistant_custom_component.plugins"
+
+# Ensure recorder util is not imported before pytest_homeassistant_custom_component patches it.
+sys.modules.pop("homeassistant.components.recorder.util", None)
 
 warnings.filterwarnings(
     "ignore",
@@ -64,6 +70,12 @@ def verify_cleanup(
     expected_lingering_timers: bool,
 ) -> None:
     """Verify resources are cleaned up while allowing asyncio shutdown helper thread."""
+    from pytest_homeassistant_custom_component.common import INSTANCES
+    try:
+        from homeassistant.core import HassJob as _HassJob
+    except ImportError:
+        _HassJob = None
+
     threads_before = frozenset(threading.enumerate())
     tasks_before = asyncio.all_tasks(event_loop)
     yield
@@ -92,7 +104,7 @@ def verify_cleanup(
         if expected_lingering_timers:
             handle.cancel()
             continue
-        if handle._args and isinstance(job := handle._args[-1], HassJob):
+        if _HassJob and handle._args and isinstance(job := handle._args[-1], _HassJob):
             if job.cancel_on_shutdown:
                 continue
             pytest.fail(f"Lingering timer after job {job!r}")
