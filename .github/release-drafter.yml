@@ -1,5 +1,8 @@
 name-template: 'Ostrom Advanced v$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
+template: |
+  ## Changes
+  $CHANGES
 
 categories:
   - title: '🚀 New Features'
