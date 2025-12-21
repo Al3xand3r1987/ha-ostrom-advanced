@@ -167,7 +167,7 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Optional(
                         CONF_UPDATE_OFFSET_SECONDS,
                         default=DEFAULT_UPDATE_OFFSET_SECONDS,
-                    ): vol.All(vol.Coerce(int), vol.Range(min=5, max=59)),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=59)),
                 }
             ),
             errors=errors,
@@ -244,7 +244,7 @@ class OptionsFlowHandler(OptionsFlow):
                         CONF_UPDATE_OFFSET_SECONDS,
                         DEFAULT_UPDATE_OFFSET_SECONDS,
                     ),
-                ): vol.All(vol.Coerce(int), vol.Range(min=5, max=59)),
+                ): vol.All(vol.Coerce(int), vol.Range(min=0, max=59)),
             }
         )
 
