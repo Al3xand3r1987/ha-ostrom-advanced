@@ -147,14 +147,7 @@ class OstromAdvancedConfigFlow(ConfigFlow, domain=DOMAIN):
                     ),
                     vol.Required(CONF_CLIENT_ID): str,
                     vol.Required(CONF_CLIENT_SECRET): str,
-                    vol.Required(CONF_ZIP_CODE): vol.All(
-                        str,
-                        vol.Length(min=5, max=5),
-                        vol.Match(
-                            r"^\d{5}$",
-                            msg="Postleitzahl muss genau 5 Ziffern enthalten",
-                        ),
-                    ),
+                    vol.Required(CONF_ZIP_CODE): str,
                     vol.Optional(CONF_CONTRACT_ID, default=""): str,
                     vol.Optional(
                         CONF_POLL_INTERVAL_MINUTES,
