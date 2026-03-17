@@ -21,6 +21,8 @@ from .const import (
 )
 from .utils import calculate_next_update_time
 
+RETRY_ON_ERROR_SECONDS = 120  # 2 Minuten bei Fehler erneut versuchen
+
 
 class OstromBaseCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Base coordinator with common scheduling logic."""
@@ -51,15 +53,46 @@ class OstromBaseCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._update_timer: asyncio.TimerHandle | None = None
 
     @callback
-    def _schedule_next_update(self, log_name: str = "update") -> None:
+    def _schedule_next_update(self, log_name: str = "update", retry_on_error: bool = False) -> None:
         """Schedule the next update based on interval and offset.
 
         Args:
             log_name: Name for logging (e.g., "price" or "consumption")
+            retry_on_error: If True, schedule a quick retry instead of full interval
         """
         # Cancel existing timer if any
         if self._update_timer:
             self._update_timer.cancel()
+
+        # Safe callback wrapper that ensures timer is always rescheduled on errors
+        def _safe_schedule_callback():
+            """Safe callback wrapper that ensures timer is always rescheduled."""
+            try:
+                self.hass.async_create_task(self.async_request_refresh())
+            except Exception as err:
+                LOGGER.error(
+                    "Failed to schedule %s update: %s, rescheduling with fallback",
+                    log_name,
+                    err,
+                )
+                # Reschedule with fallback delay (next interval) to keep loop running
+                fallback_delay = self._poll_interval_minutes * 60
+                self._update_timer = self.hass.loop.call_later(
+                    fallback_delay, _safe_schedule_callback
+                )
+
+        # Quick retry after error (2 minutes) instead of waiting full interval
+        if retry_on_error:
+            delay_seconds = RETRY_ON_ERROR_SECONDS
+            LOGGER.debug(
+                "Scheduling retry %s update in %.0f seconds due to error",
+                log_name,
+                delay_seconds,
+            )
+            self._update_timer = self.hass.loop.call_later(
+                delay_seconds, _safe_schedule_callback
+            )
+            return
 
         # Calculate next update time
         next_update = calculate_next_update_time(
@@ -80,23 +113,6 @@ class OstromBaseCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             next_update,
             delay_seconds,
         )
-
-        # Safe callback wrapper that ensures timer is always rescheduled on errors
-        def _safe_schedule_callback():
-            """Safe callback wrapper that ensures timer is always rescheduled."""
-            try:
-                self.hass.async_create_task(self.async_request_refresh())
-            except Exception as err:
-                LOGGER.error(
-                    "Failed to schedule %s update: %s, rescheduling with fallback",
-                    log_name,
-                    err,
-                )
-                # Reschedule with fallback delay (next interval) to keep loop running
-                fallback_delay = self._poll_interval_minutes * 60
-                self._update_timer = self.hass.loop.call_later(
-                    fallback_delay, _safe_schedule_callback
-                )
 
         # Schedule the update
         self._update_timer = self.hass.loop.call_later(
@@ -145,9 +161,9 @@ class OstromPriceCoordinator(OstromBaseCoordinator):
         self._client = client
 
     @callback
-    def _schedule_next_update(self) -> None:
+    def _schedule_next_update(self, retry_on_error: bool = False) -> None:
         """Schedule the next update based on interval and offset."""
-        super()._schedule_next_update("price")
+        super()._schedule_next_update("price", retry_on_error=retry_on_error)
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch price data from the API.
@@ -255,18 +271,18 @@ class OstromPriceCoordinator(OstromBaseCoordinator):
             raise
         except OstromAuthError as err:
             LOGGER.error("Authentication error fetching prices: %s", err)
-            # Schedule next update even on error
-            self._schedule_next_update()
+            # Quick retry after error
+            self._schedule_next_update(retry_on_error=True)
             raise UpdateFailed(f"Authentication error: {err}") from err
         except OstromApiError as err:
             LOGGER.error("API error fetching prices: %s", err)
-            # Schedule next update even on error
-            self._schedule_next_update()
+            # Quick retry after error
+            self._schedule_next_update(retry_on_error=True)
             raise UpdateFailed(f"API error: {err}") from err
         except Exception as err:
             LOGGER.error("Unexpected error fetching prices: %s", err)
-            # Schedule next update even on error
-            self._schedule_next_update()
+            # Quick retry after error
+            self._schedule_next_update(retry_on_error=True)
             raise UpdateFailed(f"Unexpected error: {err}") from err
 
 
@@ -302,9 +318,9 @@ class OstromConsumptionCoordinator(OstromBaseCoordinator):
         self._client = client
 
     @callback
-    def _schedule_next_update(self) -> None:
+    def _schedule_next_update(self, retry_on_error: bool = False) -> None:
         """Schedule the next update based on interval and offset."""
-        super()._schedule_next_update("consumption")
+        super()._schedule_next_update("consumption", retry_on_error=retry_on_error)
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch consumption data from the API.
@@ -399,16 +415,16 @@ class OstromConsumptionCoordinator(OstromBaseCoordinator):
             raise
         except OstromAuthError as err:
             LOGGER.error("Authentication error fetching consumption: %s", err)
-            # Schedule next update even on error
-            self._schedule_next_update()
+            # Quick retry after error
+            self._schedule_next_update(retry_on_error=True)
             raise UpdateFailed(f"Authentication error: {err}") from err
         except OstromApiError as err:
             LOGGER.error("API error fetching consumption: %s", err)
-            # Schedule next update even on error
-            self._schedule_next_update()
+            # Quick retry after error
+            self._schedule_next_update(retry_on_error=True)
             raise UpdateFailed(f"API error: {err}") from err
         except Exception as err:
             LOGGER.error("Unexpected error fetching consumption: %s", err)
-            # Schedule next update even on error
-            self._schedule_next_update()
+            # Quick retry after error
+            self._schedule_next_update(retry_on_error=True)
             raise UpdateFailed(f"Unexpected error: {err}") from err

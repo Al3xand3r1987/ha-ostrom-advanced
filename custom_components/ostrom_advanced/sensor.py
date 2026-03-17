@@ -755,6 +755,11 @@ class OstromPriceSensor(CoordinatorEntity[OstromPriceCoordinator], SensorEntity)
         )
 
     @property
+    def available(self) -> bool:
+        """Return True if we have data, even if the last update failed."""
+        return self.coordinator.data is not None
+
+    @property
     def native_value(self) -> Any:
         """Return the state of the sensor."""
         if self.coordinator.data is None:
@@ -814,6 +819,11 @@ class OstromConsumptionSensor(
         )
 
     @property
+    def available(self) -> bool:
+        """Return True if we have data, even if the last update failed."""
+        return self.coordinator.data is not None
+
+    @property
     def native_value(self) -> Any:
         """Return the state of the sensor."""
         if self.coordinator.data is None:
@@ -867,8 +877,8 @@ class OstromCostSensor(SensorEntity):
     def available(self) -> bool:
         """Return if entity is available."""
         return (
-            self._price_coordinator.last_update_success
-            and self._consumption_coordinator.last_update_success
+            self._price_coordinator.data is not None
+            and self._consumption_coordinator.data is not None
         )
 
     @property

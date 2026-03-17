@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -88,15 +90,34 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             update_offset_seconds=update_offset_seconds,
         )
 
-    # Perform initial data fetch
-    # This will raise ConfigEntryNotReady if it fails
-    try:
-        await price_coordinator.async_config_entry_first_refresh()
-        LOGGER.info("Successfully fetched initial price data")
-    except Exception as err:
-        LOGGER.error("Failed to fetch initial price data: %s", err)
-        # Re-raise to trigger ConfigEntryNotReady
-        raise
+    # Perform initial data fetch with retries to handle temporary network issues at startup
+    _initial_retry_delays = [10, 30]  # seconds between attempts
+    last_error = None
+    for attempt in range(len(_initial_retry_delays) + 1):
+        try:
+            await price_coordinator.async_config_entry_first_refresh()
+            LOGGER.info("Successfully fetched initial price data")
+            last_error = None
+            break
+        except Exception as err:
+            last_error = err
+            if attempt < len(_initial_retry_delays):
+                delay = _initial_retry_delays[attempt]
+                LOGGER.warning(
+                    "Initial price fetch failed (attempt %d/%d), retrying in %ds: %s",
+                    attempt + 1,
+                    len(_initial_retry_delays) + 1,
+                    delay,
+                    err,
+                )
+                await asyncio.sleep(delay)
+    if last_error is not None:
+        LOGGER.error(
+            "Failed to fetch initial price data after %d attempts: %s",
+            len(_initial_retry_delays) + 1,
+            last_error,
+        )
+        raise last_error
 
     # Consumption data only if contract_id is provided
     if consumption_coordinator:
