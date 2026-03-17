@@ -19,6 +19,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import (
     ATTRIBUTION,
@@ -756,8 +757,17 @@ class OstromPriceSensor(CoordinatorEntity[OstromPriceCoordinator], SensorEntity)
 
     @property
     def available(self) -> bool:
-        """Return True if we have data, even if the last update failed."""
-        return self.coordinator.data is not None
+        """Return True if coordinator has data from today.
+
+        Stays available during transient failures, but goes unavailable if
+        cached data has crossed a date boundary to avoid showing stale slots.
+        """
+        if self.coordinator.data is None:
+            return False
+        last_update = self.coordinator.data.get("last_update")
+        if last_update is None:
+            return True
+        return last_update.date() == dt_util.now().date()
 
     @property
     def native_value(self) -> Any:
@@ -820,8 +830,17 @@ class OstromConsumptionSensor(
 
     @property
     def available(self) -> bool:
-        """Return True if we have data, even if the last update failed."""
-        return self.coordinator.data is not None
+        """Return True if coordinator has data from today.
+
+        Stays available during transient failures, but goes unavailable if
+        cached data has crossed a date boundary to avoid showing stale slots.
+        """
+        if self.coordinator.data is None:
+            return False
+        last_update = self.coordinator.data.get("last_update")
+        if last_update is None:
+            return True
+        return last_update.date() == dt_util.now().date()
 
     @property
     def native_value(self) -> Any:
