@@ -8,7 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import OstromApiClient
+from .api import OstromApiClient, OstromAuthError
 from .const import (
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
@@ -99,6 +99,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             LOGGER.info("Successfully fetched initial price data")
             last_error = None
             break
+        except OstromAuthError:
+            # Permanent failure (bad credentials/config) — no point retrying
+            raise
         except Exception as err:
             last_error = err
             if attempt < len(_initial_retry_delays):
