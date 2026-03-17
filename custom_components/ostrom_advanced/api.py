@@ -25,6 +25,9 @@ from .const import (
     RESOLUTION_HOUR,
 )
 
+MAX_NETWORK_RETRIES = 2
+NETWORK_RETRY_DELAYS = [5, 15]  # seconds between retries
+
 
 class OstromApiError(HomeAssistantError):
     """Exception for Ostrom API errors."""
@@ -253,76 +256,98 @@ class OstromApiClient:
             {k: v for k, v in headers.items() if k != "Authorization"},
         )
 
-        try:
-            async with self._session.request(
-                method,
-                url,
-                headers=headers,
-                params=params,
-                json=json_data,
-                timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
-            ) as response:
-                if response.status == 401:
-                    # Token might be expired, try to refresh
-                    LOGGER.warning("Token expired, attempting to refresh")
-                    self._access_token = None
-                    # Use lock to prevent race conditions during token refresh
-                    async with self._token_lock:
-                        # Check again after acquiring lock
-                        if not self._is_token_valid():
-                            await self.async_authenticate()
-                    # Retry the request once
-                    headers["Authorization"] = f"Bearer {self._access_token}"
-                    async with self._session.request(
-                        method,
-                        url,
-                        headers=headers,
-                        params=params,
-                        json=json_data,
-                        timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
-                    ) as retry_response:
-                        if retry_response.status == 401:
-                            raise OstromAuthError("Authentication failed after refresh")
-                        retry_response.raise_for_status()
-                        return await retry_response.json()
+        for attempt in range(MAX_NETWORK_RETRIES + 1):
+            try:
+                async with self._session.request(
+                    method,
+                    url,
+                    headers=headers,
+                    params=params,
+                    json=json_data,
+                    timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
+                ) as response:
+                    if response.status == 401:
+                        # Token might be expired, try to refresh
+                        LOGGER.warning("Token expired, attempting to refresh")
+                        self._access_token = None
+                        # Use lock to prevent race conditions during token refresh
+                        async with self._token_lock:
+                            # Check again after acquiring lock
+                            if not self._is_token_valid():
+                                await self.async_authenticate()
+                        # Retry the request once
+                        headers["Authorization"] = f"Bearer {self._access_token}"
+                        async with self._session.request(
+                            method,
+                            url,
+                            headers=headers,
+                            params=params,
+                            json=json_data,
+                            timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
+                        ) as retry_response:
+                            if retry_response.status == 401:
+                                raise OstromAuthError("Authentication failed after refresh")
+                            retry_response.raise_for_status()
+                            return await retry_response.json()
 
-                if response.status == 400:
-                    error_text = await response.text()
-                    LOGGER.error("Bad request: %s", error_text)
-                    raise OstromApiError(f"Bad request: {error_text}")
+                    if response.status == 400:
+                        error_text = await response.text()
+                        LOGGER.error("Bad request: %s", error_text)
+                        raise OstromApiError(f"Bad request: {error_text}")
 
-                if response.status == 404:
-                    error_text = await response.text()
-                    LOGGER.error("Resource not found: %s", error_text)
-                    raise OstromApiError(
-                        f"Resource not found: {error_text}", status_code=404
+                    if response.status == 404:
+                        error_text = await response.text()
+                        LOGGER.error("Resource not found: %s", error_text)
+                        raise OstromApiError(
+                            f"Resource not found: {error_text}", status_code=404
+                        )
+
+                    if response.status == 429:
+                        LOGGER.error("Rate limit exceeded")
+                        raise OstromApiError("Rate limit exceeded")
+
+                    if response.status != 200:
+                        error_text = await response.text()
+                        LOGGER.error("API error: %s - %s", response.status, error_text)
+                        raise OstromApiError(
+                            f"API request failed with status {response.status}"
+                        )
+
+                    return await response.json()
+
+            except ClientConnectorError as err:
+                if attempt < MAX_NETWORK_RETRIES:
+                    delay = NETWORK_RETRY_DELAYS[attempt]
+                    LOGGER.warning(
+                        "Network error (attempt %d/%d), retrying in %ds: %s",
+                        attempt + 1,
+                        MAX_NETWORK_RETRIES + 1,
+                        delay,
+                        err,
                     )
-
-                if response.status == 429:
-                    LOGGER.error("Rate limit exceeded")
-                    raise OstromApiError("Rate limit exceeded")
-
-                if response.status != 200:
-                    error_text = await response.text()
-                    LOGGER.error("API error: %s - %s", response.status, error_text)
-                    raise OstromApiError(
-                        f"API request failed with status {response.status}"
+                    await asyncio.sleep(delay)
+                    continue
+                LOGGER.error("Network connection error: %s", err)
+                raise OstromApiError(f"Network error: {err}") from err
+            except asyncio.TimeoutError as err:
+                if attempt < MAX_NETWORK_RETRIES:
+                    delay = NETWORK_RETRY_DELAYS[attempt]
+                    LOGGER.warning(
+                        "Request timeout (attempt %d/%d), retrying in %ds",
+                        attempt + 1,
+                        MAX_NETWORK_RETRIES + 1,
+                        delay,
                     )
-
-                return await response.json()
-
-        except ClientConnectorError as err:
-            LOGGER.error("Network connection error: %s", err)
-            raise OstromApiError(f"Network error: {err}") from err
-        except asyncio.TimeoutError as err:
-            LOGGER.error("Request timeout: %s", err)
-            raise OstromApiError("Request timeout") from err
-        except ClientResponseError as err:
-            LOGGER.error("HTTP error: %s - %s", err.status, err.message)
-            raise OstromApiError(f"HTTP error {err.status}: {err.message}") from err
-        except aiohttp.ClientError as err:
-            LOGGER.error("Connection error: %s", err)
-            raise OstromApiError(f"Connection error: {err}") from err
+                    await asyncio.sleep(delay)
+                    continue
+                LOGGER.error("Request timeout: %s", err)
+                raise OstromApiError("Request timeout") from err
+            except ClientResponseError as err:
+                LOGGER.error("HTTP error: %s - %s", err.status, err.message)
+                raise OstromApiError(f"HTTP error {err.status}: {err.message}") from err
+            except aiohttp.ClientError as err:
+                LOGGER.error("Connection error: %s", err)
+                raise OstromApiError(f"Connection error: {err}") from err
 
     async def async_get_spot_prices(
         self, start: datetime, end: datetime

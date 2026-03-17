@@ -19,6 +19,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import (
     ATTRIBUTION,
@@ -755,6 +756,20 @@ class OstromPriceSensor(CoordinatorEntity[OstromPriceCoordinator], SensorEntity)
         )
 
     @property
+    def available(self) -> bool:
+        """Return True if coordinator has data from today.
+
+        Stays available during transient failures, but goes unavailable if
+        cached data has crossed a date boundary to avoid showing stale slots.
+        """
+        if self.coordinator.data is None:
+            return False
+        last_update = self.coordinator.data.get("last_update")
+        if last_update is None:
+            return True
+        return last_update.date() == dt_util.now().date()
+
+    @property
     def native_value(self) -> Any:
         """Return the state of the sensor."""
         if self.coordinator.data is None:
@@ -814,6 +829,20 @@ class OstromConsumptionSensor(
         )
 
     @property
+    def available(self) -> bool:
+        """Return True if coordinator has data from today.
+
+        Stays available during transient failures, but goes unavailable if
+        cached data has crossed a date boundary to avoid showing stale slots.
+        """
+        if self.coordinator.data is None:
+            return False
+        last_update = self.coordinator.data.get("last_update")
+        if last_update is None:
+            return True
+        return last_update.date() == dt_util.now().date()
+
+    @property
     def native_value(self) -> Any:
         """Return the state of the sensor."""
         if self.coordinator.data is None:
@@ -867,8 +896,8 @@ class OstromCostSensor(SensorEntity):
     def available(self) -> bool:
         """Return if entity is available."""
         return (
-            self._price_coordinator.last_update_success
-            and self._consumption_coordinator.last_update_success
+            self._price_coordinator.data is not None
+            and self._consumption_coordinator.data is not None
         )
 
     @property
