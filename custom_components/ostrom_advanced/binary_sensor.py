@@ -253,6 +253,11 @@ class OstromCheapest3hBlockBinarySensor(
         )
 
     @property
+    def available(self) -> bool:
+        """Return True if we have data, even if the last update failed."""
+        return self.coordinator.data is not None
+
+    @property
     def is_on(self) -> bool | None:
         """Return the state of the binary sensor."""
         if self.coordinator.data is None:
